@@ -22,6 +22,7 @@ def _():
     )
     from wave_plots import (
         arrow_figure,
+        flat_vs_lump_figure,
         interference_figure,
         interference_schematic,
         moving_wave_figure,
@@ -43,6 +44,7 @@ def _():
 
     return (
         arrow_figure,
+        flat_vs_lump_figure,
         group_velocity,
         hole_amplitude,
         intensity,
@@ -889,7 +891,29 @@ def _(mo):
     ## 6 Wave packets: when a lump moves like a particle
 
     A single plane wave has the same probability everywhere, so it cannot describe a particle that is
-    somewhere. A localized particle is described by adding plane waves whose wave numbers $k$ are close to one
+    somewhere. The figure below shows this. On the left, $|e^{ikx}|^2 = 1$ at every $x$, while a packet has a
+    lump. On the right is the total probability found between $-X$ and $X$. For the packet it levels off at 1:
+    the particle is somewhere in a finite region. For the plane wave it grows without limit as $2X$, so the
+    probability of finding the particle somewhere in space is not even finite and cannot be set to 1.
+    (The plane wave is drawn with amplitude 1 and the packet with total probability 1, so compare the shapes
+    and the trend on the right, not the heights on the left.)
+    """)
+    return
+
+
+@app.cell
+def _(flat_vs_lump_figure, mo, plt):
+    _fig = flat_vs_lump_figure(5.0, 1.5)
+    _out = mo.vstack([_fig])
+    plt.close(_fig)
+    _out
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    A localized particle is described by adding plane waves whose wave numbers $k$ are close to one
     value $k_0$. Where the waves are in step their amplitudes add, and elsewhere they cancel, which leaves a
     lump of probability. The amplitude is
 

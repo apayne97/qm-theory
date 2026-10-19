@@ -167,6 +167,37 @@ def probability_figure(k, omega, t):
     return fig
 
 
+def flat_vs_lump_figure(k0, sigma_x, half_range=12.0):
+    """|psi|^2 of a plane wave (flat) and a packet (lump), and the probability inside |x| < X as X grows."""
+    x = np.linspace(-half_range, half_range, 4000)
+    plane = np.abs(plane_wave(x, 0.0, k0, 0.0)) ** 2
+    lump = np.abs(packet(x, 0.0, k0, sigma_x)) ** 2
+    X = np.linspace(0.0, half_range, 400)
+    inside_plane = 2 * X  # integral of the constant 1 over -X..X
+    inside_lump = np.array([np.trapezoid(lump[np.abs(x) <= r], x[np.abs(x) <= r]) for r in X])
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 3.4))
+    ax1.plot(x, plane, color=RE_COLOR, lw=2.5, label=r"plane wave $|e^{ikx}|^2$")
+    ax1.fill_between(x, 0, lump, color="0.75", alpha=0.8)
+    ax1.plot(x, lump, color="0.4", lw=1.5, label=r"packet $|\psi|^2$")
+    ax1.set_ylim(0, 1.3)
+    ax1.set_xlabel("position $x$")
+    ax1.set_ylabel("probability density")
+    ax1.legend(loc="upper right", fontsize=8)
+
+    ax2.plot(X, inside_plane, color=RE_COLOR, lw=2.5, label="plane wave")
+    ax2.plot(X, inside_lump, color="0.4", lw=2, label="packet")
+    ax2.axhline(1, color="0.7", ls="--", lw=1)
+    ax2.set_yscale("log")
+    ax2.set_ylim(1e-3, 40)
+    ax2.set_xlim(0, half_range)
+    ax2.set_xlabel(r"half-width $X$ of the region $-X < x < X$")
+    ax2.set_ylabel("total probability inside")
+    ax2.legend(loc="lower right", fontsize=8)
+    fig.tight_layout()
+    return fig
+
+
 def packet_times_figure(k0, sigma_x, times, xlim=None):
     """|psi|^2 and Re psi of the packet at several times, with the classical position marked."""
     v = group_velocity(k0)
