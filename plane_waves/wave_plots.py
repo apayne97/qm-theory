@@ -560,6 +560,39 @@ def spreading_figure(k0, sigma_x, t):
     return fig
 
 
+def width_vs_distance_figure(k0, sigma0, d, d_max=20.0):
+    """Uncertainty in position, Delta x, against the distance d = v t from the source (hbar = m = 1), and the packet
+    at distance d. sigma0 is the width sigma_x at the source: Delta x(d) = sigma0 sqrt(1 + (d / d_s)^2) with
+    d_s = v t_s = 2 k0 sigma0^2."""
+    d_s = 2 * k0 * sigma0**2
+    ds = np.linspace(0, d_max, 600)
+    sig = sigma0 * np.sqrt(1 + (ds / d_s) ** 2)
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10.5, 3.5), gridspec_kw={"width_ratios": [1.15, 1]})
+    ax1.plot(ds, sig, color=RE_COLOR, lw=2.4, label=r"uncertainty $\Delta x(d)$")
+    ax1.axhline(sigma0, color="0.6", lw=1.0, ls="--", label=r"at the source, $\sigma_x$")
+    ax1.plot(ds, ds / (2 * k0 * sigma0), color="0.5", lw=1.0, ls=":", label=r"far from the source: $d/2k_0\sigma_x$")
+    ax1.axvline(d_s, color=ARROW_COLOR, lw=1.0, ls="--")
+    ax1.text(d_s, 11.4, r" $d_s=2k_0\sigma_x^2$", fontsize=8, va="top", color=ARROW_COLOR)
+    ax1.plot([d], [sigma0 * np.sqrt(1 + (d / d_s) ** 2)], "o", color=OMEGA_COLOR, ms=9, zorder=3)
+    ax1.set_xlim(0, d_max)
+    ax1.set_ylim(0, 12)
+    ax1.set_xlabel("distance from the source, $d = vt$")
+    ax1.set_ylabel(r"uncertainty in position, $\Delta x$")
+    ax1.legend(fontsize=7, loc="center right")
+    x = np.linspace(-14, 14, 3000)
+    now = np.abs(packet(x + d, d / group_velocity(k0), k0, sigma0)) ** 2
+    start = np.abs(packet(x, 0.0, k0, sigma0)) ** 2
+    ax2.fill_between(x, 0, start, color="0.8", label="at the source")
+    ax2.plot(x, now, color=RE_COLOR, lw=2.2, label=f"at distance {d:g}")
+    ax2.set_xlim(-14, 14)
+    ax2.set_ylim(0, 0.9)
+    ax2.set_xlabel(r"position relative to the classical position, $x - d$")
+    ax2.set_ylabel(r"$|\psi|^2$")
+    ax2.legend(fontsize=8, loc="upper right")
+    fig.tight_layout()
+    return fig
+
+
 def interference_figure(x, wavelength, d, L=20.0, x_range=15.0, show_arrows=True):
     """Two holes: the heights over two periods and the pattern, and (optionally) the complex amplitudes as arrows."""
     k = 2 * np.pi / wavelength

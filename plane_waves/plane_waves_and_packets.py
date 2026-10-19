@@ -49,6 +49,7 @@ def _():
         travelling_features_figure,
         wave_surface_figure,
         width_tradeoff_figure,
+        width_vs_distance_figure,
     )
 
     return (
@@ -88,6 +89,7 @@ def _():
         two_hole_distances,
         wave_surface_figure,
         width_tradeoff_figure,
+        width_vs_distance_figure,
         wavelengths_in_lump,
         widths_travelled_before_spreading,
         width,
@@ -1434,6 +1436,52 @@ def _(mo):
 def _(mo, plt, spacetime_figure):
     _fig = spacetime_figure(5.0, 1.5, 9)
     _out = mo.vstack([_fig])
+    plt.close(_fig)
+    _out
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    **The uncertainty in position against distance from the source.** Suppose the electron leaves a source (an
+    electron gun) at $x=0$ at $t=0$, with wave number $k_0$ and with the width $\sigma_x$ that the lump has
+    there. At time $t$ it has travelled the distance $d = vt$ along the classical path, so $t = d/v$, and the
+    uncertainty in position, $\Delta x$, is the width $\sigma(t)$ above written in terms of $d$:
+
+    $$
+    \Delta x(d) = \sigma_x\sqrt{1 + \left(\frac{d}{d_s}\right)^{2}}, \qquad d_s = v\,t_s = 2\textcolor{#6B913C}{k}_0\,\sigma_x^2 .
+    $$
+
+    Close to the source ($d \ll d_s$) the uncertainty stays near its initial value $\sigma_x$. Far from the source
+    ($d \gg d_s$) it grows in proportion to the distance, $\Delta x \approx \sigma_x\,d/d_s = d/(2k_0\sigma_x)$.
+    The reason is that the lump has a spread of wave numbers $\sigma_k = 1/2\sigma_x$ (section 6.1), and
+    components with different $k$ move at different speeds $\hbar k/m$. After a distance $d$ the faster ones
+    are ahead of the slower ones by an amount proportional to $d$. A narrower lump at the source has a broader
+    range of wave numbers, so it begins to spread sooner and then spreads faster. The figure uses
+    $\hbar = m = 1$. Move the point along the curve with the distance $d$, and change $k_0$ and $\sigma_x$ to
+    see how $d_s$ changes. The right panel shows the lump at that distance.
+
+    For orientation with real units, an electron of 100 eV has a wavelength of about $0.12$ nm, so
+    $k_0 = 2\pi/\lambda \approx 5\times 10^{10}\ \mathrm{m^{-1}}$. If it is localized to $\sigma_x = 1\ \mu\mathrm{m}$ at the
+    source, then $d_s = 2k_0\sigma_x^2 \approx 0.1\ \mathrm{m}$. If it is localized to $\sigma_x = 1\ \mathrm{nm}$,
+    then $d_s \approx 0.1\ \mu\mathrm{m}$, so it spreads almost at once.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    gun_k0 = mo.ui.slider(2.0, 10.0, step=0.5, value=4.0, label=r"$k_0$", show_value=True)
+    gun_sigma = mo.ui.slider(0.5, 2.0, step=0.1, value=1.0, label=r"$\sigma_x$ at the source", show_value=True)
+    gun_d = mo.ui.slider(0.0, 20.0, step=0.5, value=12.0, label=r"distance $d$", show_value=True)
+    return gun_d, gun_k0, gun_sigma
+
+
+@app.cell
+def _(gun_d, gun_k0, gun_sigma, mo, plt, width_vs_distance_figure):
+    _fig = width_vs_distance_figure(gun_k0.value, gun_sigma.value, gun_d.value)
+    _out = mo.vstack([mo.hstack([gun_k0, gun_sigma, gun_d], justify="start"), _fig])
     plt.close(_fig)
     _out
     return
