@@ -29,6 +29,7 @@ def _():
         width,
     )
     from wave_plots import (
+        conservation_figure,
         arrow_figure,
         band_shapes_figure,
         entropy_family_figure,
@@ -60,18 +61,19 @@ def _():
     )
 
     return (
-        md,
+        conservation_figure,
         arrow_figure,
         band_shapes_figure,
         entropy_family_figure,
-        heat_vs_schrodinger_figure,
         flat_vs_lump_figure,
         group_velocity,
+        heat_vs_schrodinger_figure,
         hole_amplitude,
         intensity,
         interference_figure,
         interference_schematic,
         lump_buildup_figure,
+        md,
         min_uncertainty_figure,
         mo,
         moving_wave_figure,
@@ -96,11 +98,11 @@ def _():
         travelling_features_figure,
         two_hole_distances,
         wave_surface_figure,
+        wavelengths_in_lump,
+        width,
         width_tradeoff_figure,
         width_vs_distance_figure,
-        wavelengths_in_lump,
         widths_travelled_before_spreading,
-        width,
     )
 
 
@@ -162,8 +164,8 @@ def _(mo):
           of position (section 6.1).
         - **Entropy** $S$: the average of $-\ln\rho$, a measure of how spread out a distribution is (section 6.2).
         - **Schrödinger equation**: the equation for how $\psi$ changes in time (section 7).
-        - **Continuity equation**: a conservation law saying that the rate of change of a density at a point is minus
-          the derivative in position of what flows past it (section 7).
+        - **Probability flow** $j$: the probability crossing a point per unit time, positive towards larger $x$ (section 7).
+        - **Continuity equation**: a conservation law, $\partial\rho/\partial t = -\partial j/\partial x$ (section 7).
         """)
     })
     return
@@ -794,7 +796,16 @@ def _(interference_figure, mo, plt, slit_d, slit_wavelength, slit_x):
 
 
 @app.cell
-def _(hole_amplitude, intensity, mo, np, slit_d, slit_wavelength, slit_x, two_hole_distances):
+def _(
+    hole_amplitude,
+    intensity,
+    mo,
+    np,
+    slit_d,
+    slit_wavelength,
+    slit_x,
+    two_hole_distances,
+):
     _k = 2 * np.pi / slit_wavelength.value
     _r1, _r2 = two_hole_distances(slit_x.value, slit_d.value, 20.0)
     _h1, _h2 = hole_amplitude(_r1, _k), hole_amplitude(_r2, _k)
@@ -1591,8 +1602,8 @@ def _(
     spreading_figure,
     spreading_time,
     wavelengths_in_lump,
-    widths_travelled_before_spreading,
     width,
+    widths_travelled_before_spreading,
 ):
     _k0 = 5.0
     _s = sigma_slider.value
@@ -1627,24 +1638,59 @@ def _(md):
 
     **Step 1: what the law must respect.** The probability density is $\rho = |\psi|^2 = \psi^{*}\psi$, and the
     total probability $P(t) = \int \rho\,dx$ must stay equal to 1 at all times (Eq. \eqref{eq:normalization}). The
-    natural way for this to hold is a conservation law: the density at a point changes only because
-    probability flows past it,
+    natural way for this to hold is a conservation law. Write $j(x,t)$ for the **probability flow**: the
+    probability crossing the point $x$ per unit time, counted positive towards larger $x$. Consider a short
+    stretch from $x$ to $x+dx$. Probability enters at its left end at the rate $j(x)$ and leaves at its right
+    end at the rate $j(x+dx)$, so the stretch gains probability at the net rate
+    $j(x) - j(x+dx) = -\frac{\partial j}{\partial x}\,dx$. Dividing by the length $dx$ gives the rate of change of the
+    density:
 
     $$
-    \frac{\partial \rho}{\partial t} = -\frac{\partial}{\partial x}\Big(\text{probability flow}\Big) . \label{eq:conservation-form}
+    \frac{\partial \rho}{\partial t} = -\frac{\partial j}{\partial x} . \label{eq:conservation-form}
     $$
 
-    Integrate over all $x$. The integral of a derivative is the difference of the differentiated quantity
-    between the two ends, and the flow vanishes far away, because a normalizable $\psi$ goes to zero there:
+    (A density carried along at a velocity $v$ has the flow $j = v\rho$.) Integrate over all $x$. The integral
+    of a derivative is the difference of the differentiated quantity between the two ends, and the flow
+    vanishes far away, because a normalizable $\psi$ goes to zero there:
 
     $$
-    \frac{dP}{dt} = \int_{-\infty}^{\infty} \frac{\partial \rho}{\partial t}\,dx = -\Big[\text{probability flow}\Big]_{-\infty}^{\infty} = 0 . \label{eq:conservation-total}
+    \frac{dP}{dt} = \int_{-\infty}^{\infty} \frac{\partial \rho}{\partial t}\,dx = -\Big[\,j\,\Big]_{-\infty}^{\infty} = 0 . \label{eq:conservation-total}
     $$
 
-    So if the total is 1 at one time it is 1 at every time. We now ask which laws for $\psi$ have this
-    property. Two facts already in hand narrow the choice. Amplitudes add (section 3), so the law is linear: if
-    two wave functions each obey it, so does their sum. And the wave function now fixes the wave function
-    later, so the law is first order in time.
+    So if the total is 1 at one time it is 1 at every time. The figure shows the simplest case, a Gaussian
+    density carried along at the velocity $v$, so that $j = v\rho$. The top panel is the density at the time $t$
+    (the dotted curve is the density at $t=0$), the middle panel is the flow, and the bottom panel is
+    $-\partial j/\partial x$, the rate of change of the density. Where the flow grows with $x$, more probability
+    leaves a point than enters it and the density falls (orange). Where the flow falls with $x$ the density
+    rises (blue). The area under the bottom curve is zero, because the flow vanishes at both ends, so the area
+    under the density, the total probability, stays 1 for every setting of the sliders.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    cons_sigma = mo.ui.slider(0.8, 2.0, step=0.1, value=1.0, label=r"width of the density $\sigma$", show_value=True)
+    cons_v = mo.ui.slider(-1.5, 1.5, step=0.1, value=1.0, label=r"flow velocity $v$", show_value=True)
+    cons_t = mo.ui.slider(0.0, 3.0, step=0.1, value=1.0, label=r"time $t$", show_value=True)
+    return cons_sigma, cons_t, cons_v
+
+
+@app.cell
+def _(cons_sigma, cons_t, cons_v, conservation_figure, mo, plt):
+    _fig = conservation_figure(cons_sigma.value, cons_v.value, cons_t.value)
+    _out = mo.vstack([mo.hstack([cons_sigma, cons_v, cons_t], justify="start"), _fig])
+    plt.close(_fig)
+    _out
+    return
+
+
+@app.cell
+def _(md):
+    md(r"""
+    We now ask which laws for $\psi$ have this property. Two facts already in hand narrow the choice.
+    Amplitudes add (section 3), so the law is linear: if two wave functions each obey it, so does their sum.
+    And the wave function now fixes the wave function later, so the law is first order in time.
 
     **Step 2: the general linear law, and what conservation requires.** The simplest laws of this kind give
     $\partial\psi/\partial t$ as a combination of $\psi$ and its first two derivatives in position, with
@@ -1817,20 +1863,18 @@ def _(md):
     (the terms $\psi^{*\prime}\psi'$ that appear in the derivative cancel). So
 
     $$
-    \frac{\partial \rho}{\partial t} = -\frac{\partial}{\partial x}\left[\frac{\hbar}{2mi}\left(\textcolor{#5ECCF3}{\psi}^{*}\frac{\partial \textcolor{#5ECCF3}{\psi}}{\partial x} -
-    \textcolor{#5ECCF3}{\psi}\frac{\partial \textcolor{#5ECCF3}{\psi}^{*}}{\partial x}\right)\right]. \label{eq:continuity}
+    \frac{\partial \rho}{\partial t} = -\frac{\partial j}{\partial x}, \qquad
+    j(x,t) = \frac{\hbar}{2mi}\left(\textcolor{#5ECCF3}{\psi}^{*}\frac{\partial \textcolor{#5ECCF3}{\psi}}{\partial x} - \textcolor{#5ECCF3}{\psi}\frac{\partial \textcolor{#5ECCF3}{\psi}^{*}}{\partial x}\right) . \label{eq:continuity}
     $$
 
-    This is the conservation form of Eq. \eqref{eq:conservation-form}, a **continuity equation**, with a definite
-    probability flow: the expression in the square brackets is the rate at which probability flows past the
-    point $x$, towards larger $x$. For a plane wave $\psi = e^{ikx}$ we have $\psi^{*}\psi' = ik$ and
-    $\psi\,\psi^{*\prime} = -ik$, so the bracket is $\frac{\hbar}{2mi}\cdot 2ik = \hbar k/m = p/m = v$, with
-    $\rho = 1$: the flat density flows at the classical velocity. By Eq. \eqref{eq:conservation-total} the total
-    probability is constant:
+    This is the conservation form of Eq. \eqref{eq:conservation-form}, a **continuity equation**, and it gives
+    the probability flow $j$ a definite value in terms of $\psi$. For a plane wave $\psi = e^{ikx}$ we have
+    $\psi^{*}\psi' = ik$ and $\psi\,\psi^{*\prime} = -ik$, so $j = \frac{\hbar}{2mi}\cdot 2ik = \hbar k/m = p/m = v$,
+    with $\rho = 1$: the flat density flows at the classical velocity, $j = v\rho$ as in the figure of Step 1. By
+    Eq. \eqref{eq:conservation-total} the total probability is constant. Written out,
 
     $$
-    \frac{dP}{dt} = \int_{-\infty}^{\infty} \frac{\partial \rho}{\partial t}\,dx
-    = -\left[\frac{\hbar}{2mi}\left(\textcolor{#5ECCF3}{\psi}^{*}\frac{\partial \textcolor{#5ECCF3}{\psi}}{\partial x} - \textcolor{#5ECCF3}{\psi}\frac{\partial \textcolor{#5ECCF3}{\psi}^{*}}{\partial x}\right)\right]_{-\infty}^{\infty} = 0 . \label{eq:total-probability}
+    \frac{dP}{dt} = -\Big[\,j\,\Big]_{-\infty}^{\infty} = 0 . \label{eq:total-probability}
     $$
 
     The two properties used were that the equation is linear, with the conjugate equation obtained by
@@ -1913,8 +1957,8 @@ def _(mo):
     - The squared length $|\psi|^2$, the intensity of the water waves, is the probability density $\rho$ for a
       particle. The probability of an interval is $\int_a^b\rho\,dx$ and the total must be 1. A plane wave has
       $\rho=1$ everywhere and total $2X\to\infty$, so it cannot be normalized.
-    - Probability must be conserved, so the rate of change of the density is minus a derivative in position of a
-      flow. For a linear law $\partial_t\psi = \alpha\,\partial_x^2\psi + \gamma\,\partial_x\psi + \delta\psi$ this requires
+    - Probability must be conserved, so the rate of change of the density is $\partial_t\rho = -\partial_x j$,
+      minus a derivative in position of the probability flow $j$. For a linear law $\partial_t\psi = \alpha\,\partial_x^2\psi + \gamma\,\partial_x\psi + \delta\psi$ this requires
       $\alpha$ and $\delta$ to be purely imaginary and $\gamma$ real. A free electron has no preferred direction,
       which removes $\gamma$, and the classical velocity fixes the remaining constant, giving the Schrödinger
       equation $i\hbar\,\partial_t\psi = -\tfrac{\hbar^2}{2m}\,\partial_x^2\psi$. With a real potential $V$ it still

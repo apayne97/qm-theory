@@ -429,6 +429,49 @@ def heat_vs_schrodinger_figure(t, sigma_k=1.0):
     return fig
 
 
+def conservation_figure(sigma, v, t):
+    """A Gaussian probability density carried along by a flow of velocity v, so that the probability flow is j = v rho.
+
+    Top: rho(x, t), with rho at t = 0 dashed. Middle: the flow j. Bottom: the rate of change d rho/dt = -d j/dx,
+    positive where probability is gained and negative where it is lost. The areas under rho and under
+    d rho/dt are printed: the first stays 1 and the second is 0."""
+    x = np.linspace(-10, 10, 2001)
+
+    def gaussian(centre):
+        return np.exp(-((x - centre) ** 2) / (2 * sigma**2)) / (sigma * np.sqrt(2 * np.pi))
+
+    rho = gaussian(v * t)
+    j = v * rho
+    rate = -np.gradient(j, x)
+    fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(9, 6.4), sharex=True)
+
+    _density(ax1, x, rho, rf"$\rho(x,t)$ at $t={t:g}$")
+    ax1.plot(x, gaussian(0.0), color="0.5", lw=1.0, ls=":", label=r"$\rho$ at $t=0$")
+    ax1.set_ylim(0, 0.6)
+    ax1.set_ylabel(r"density $\rho$")
+    ax1.set_title(rf"total probability $\int\rho\,dx = {np.trapezoid(rho, x):.3f}$", fontsize=10)
+    ax1.legend(loc="upper right", fontsize=8)
+
+    ax2.axhline(0, color="0.85", lw=0.8)
+    ax2.plot(x, j, color=OMEGA_COLOR, lw=2.2)
+    ax2.fill_between(x, 0, j, color=OMEGA_COLOR, alpha=0.2)
+    ax2.set_ylim(-0.9, 0.9)
+    ax2.set_ylabel(r"flow $j = v\rho$")
+
+    ax3.axhline(0, color="0.85", lw=0.8)
+    ax3.fill_between(x, 0, rate, where=rate >= 0, color=CX_COLOR, alpha=0.8, label="probability gained")
+    ax3.fill_between(x, 0, rate, where=rate < 0, color=OMEGA_COLOR, alpha=0.5, label="probability lost")
+    ax3.plot(x, rate, color="0.35", lw=1.4)
+    ax3.set_ylim(-0.7, 0.7)
+    ax3.set_xlim(-10, 10)
+    ax3.set_xlabel("position $x$")
+    ax3.set_ylabel(r"$\partial\rho/\partial t = -\partial j/\partial x$")
+    ax3.set_title(rf"total change $\int \partial\rho/\partial t\,dx = {np.trapezoid(rate, x):+.3f}$", fontsize=10)
+    ax3.legend(loc="upper right", fontsize=8)
+    fig.tight_layout()
+    return fig
+
+
 def rest_energy_phase_figure(phase, k0=5.0, sigma_x=1.5, t=2.0):
     """A packet with and without the factor exp(-i phase) from the rest energy: Re psi changes, |psi|^2 does not."""
     v = group_velocity(k0)
