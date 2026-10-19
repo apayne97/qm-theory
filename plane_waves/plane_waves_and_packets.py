@@ -1227,9 +1227,14 @@ def _(mo):
     two curves are exactly the same function (of $k$ and of $x$), so that bell curve is its own transform. For
     other widths the result is a bell curve that is narrower or wider.
 
-    **Reading off the widths.** The probability density is $|\psi|^2 \propto e^{-2\sigma_k^2x^2}$. A bell curve
-    of root-mean-square width $\sigma_x$ is $e^{-x^2/2\sigma_x^2}$, so matching the exponents gives
-    $1/2\sigma_x^2 = 2\sigma_k^2$, that is
+    **Reading off the widths.** The probability density is $|\psi|^2 \propto e^{-2\sigma_k^2x^2}$. The width
+    $\sigma_x$ is the root-mean-square width of the density: $\sigma_x^2$ is the average value of $x^2$, the
+    typical squared distance from the centre. For the bell curve $e^{-x^2/2s^2}$ this average is exactly
+    $s^2$,[^rmswidth] so that curve has width $\sigma_x = s$. This is why a bell curve of width $\sigma_x$ is
+    written $e^{-x^2/2\sigma_x^2}$, with the factor 2 in the denominator. (As a picture, at a distance
+    $\sigma_x$ from the centre the curve has fallen to $e^{-1/2}\approx 0.61$ of its peak.) Both
+    $e^{-2\sigma_k^2x^2}$ and $e^{-x^2/2\sigma_x^2}$ are bell curves, and they are the same curve when the
+    coefficients of $x^2$ in the exponents are equal, $1/2\sigma_x^2 = 2\sigma_k^2$, that is
 
     $$
     \sigma_x = \frac{1}{2\sigma_k}, \qquad\text{so that}\qquad \sigma_x\,\sigma_{\textcolor{#6B913C}{k}} = \frac12 .
@@ -1240,6 +1245,13 @@ def _(mo):
     width of the band of waves that made it: squeeze one and the other widens. The figure shows both densities
     with their widths, each drawn with total probability 1 on a fixed scale, so the height changes as the width
     does. The right panel is the curve $\sigma_x = 1/2\sigma_k$ with a point for the current slider value.
+
+    [^rmswidth]: The average of $x^2$ is $\int x^2 e^{-x^2/2s^2}dx$ divided by $\int e^{-x^2/2s^2}dx$, where the
+        division normalizes the density. Write $x\,e^{-x^2/2s^2} = -s^2\,\dfrac{d}{dx}e^{-x^2/2s^2}$ and integrate
+        by parts, $\int u\,dv = uv - \int v\,du$ with $u=x$:
+        $\int x^2 e^{-x^2/2s^2}dx = -s^2\big[x\,e^{-x^2/2s^2}\big]_{-\infty}^{\infty} + s^2\int e^{-x^2/2s^2}dx$.
+        The bracket is zero, because the exponential goes to zero faster than $x$ grows, so the ratio of the two
+        integrals is $s^2$.
     """)
     return
 
