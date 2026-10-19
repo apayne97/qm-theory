@@ -1194,7 +1194,10 @@ def _(lump_buildup_figure, lump_time, lump_waves, mo, plt):
 @app.cell
 def _(mo):
     mo.md(r"""
-    With no waves on each side there is only $k=0$, which is flat. Each wave added makes the sum more
+    With no waves on each side there is only $k=0$, which is flat and stays flat as time passes, because
+    the rest-energy rate of section 5 is left out. With it included the arrow of this wave would turn at the
+    rate $mc^2/\hbar$ and its real part would oscillate, while $|\psi|^2$ would still be constant: a wave of
+    definite energy changes only by an overall phase. Each wave added makes the sum more
     concentrated. All the waves are in step at $x=0$, where their heights add, and away from $x=0$ they are out
     of step and cancel. Two waves whose wave numbers differ by $\Delta k$ drift out of step after a distance of
     order $1/\Delta k$, so the larger the spread of wave numbers, the sooner the cancelling sets in and the
