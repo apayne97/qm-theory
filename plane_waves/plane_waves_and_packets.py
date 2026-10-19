@@ -14,6 +14,7 @@ def _():
         group_velocity,
         hole_amplitude,
         intensity,
+        packet,
         spreading_time,
         two_hole_distances,
         wavelengths_in_lump,
@@ -54,6 +55,7 @@ def _():
         moving_wave_figure,
         np,
         oscillator_energy_figure,
+        packet,
         packet_times_figure,
         phase_figure,
         plt,
@@ -890,10 +892,30 @@ def _(mo):
     mo.md(r"""
     ## 6 Wave packets: when a lump moves like a particle
 
-    A single plane wave has the same probability everywhere, so it cannot describe a particle that is
-    somewhere. The probability density is the squared length of the amplitude, the amplitude times its complex
-    conjugate. For the plane wave $\psi = e^{i(kx-\omega t)}$ the conjugate turns the arrow the opposite way,
-    so the two phases cancel:
+    **From intensity to probability density.** In section 3 the real height $H$ of the water gave an
+    intensity, the energy arriving, proportional to the average of $H^2$, which the complex
+    wave writes as $I = |\psi|^2$. The same quantity now gives the probability of finding a particle.
+    The squared length $|\psi(x,t)|^2$ is the **probability density** $\rho(x,t)$, the probability per unit
+    length, and the probability of finding the particle between $a$ and $b$ is its integral over that interval,
+    just as the energy of the water between $a$ and $b$ is the integral of its energy per unit length:
+
+    $$
+    P(a<x<b,\,t) = \int_a^b \rho(x,t)\,dx = \int_a^b |\textcolor{#5ECCF3}{\psi}(x,t)|^2\,dx .
+    $$
+
+    The particle is somewhere, so the probability of finding it somewhere on the whole line must be 1:
+
+    $$
+    \int_{-\infty}^{\infty} |\textcolor{#5ECCF3}{\psi}(x,t)|^2\,dx = 1 .
+    $$
+
+    This **normalization** fixes the overall size of $\psi$, which for water could be anything. It is a real
+    requirement on a wave function: the integral must be finite, and then $\psi$ is divided by the square root
+    of its value so that the integral is 1.
+
+    **A single plane wave fails the requirement.** The squared length is the amplitude times its complex
+    conjugate. For $\psi = e^{i(kx-\omega t)}$ the conjugate turns the arrow the opposite way, so the two
+    phases cancel:
 
     $$
     |\textcolor{#5ECCF3}{\psi}(x,t)|^2 = \textcolor{#5ECCF3}{\psi}^{*}\textcolor{#5ECCF3}{\psi}
@@ -901,16 +923,16 @@ def _(mo):
     = e^{0} = 1 \qquad\text{for every } x \text{ and } t .
     $$
 
-    The density does not depend on $x$, so there is no place where the particle is more likely to be found.
-    The total probability of finding it between $-X$ and $X$ is then
+    The density does not depend on $x$, so the particle is equally likely to be found anywhere: the probability
+    of an interval is $\int_a^b 1\,dx = b-a$, its length, wherever the interval is. Over the whole line
 
     $$
     \int_{-X}^{X} |\textcolor{#5ECCF3}{\psi}|^2\,dx = \int_{-X}^{X} 1\,dx = 2X \;\longrightarrow\; \infty
     \quad (X \to \infty),
     $$
 
-    which is not finite, so it cannot be set equal to 1 as the probability of finding the particle somewhere
-    must be. A packet, whose density is a bell curve of width $\sigma_x$, has
+    which is not 1 and not finite. No multiple of a plane wave can be normalized, so a single plane wave cannot
+    describe a particle that is somewhere. A packet, whose density is a bell curve of width $\sigma_x$, has
     $\int_{-\infty}^{\infty}|\psi|^2\,dx = 1$ by construction. The figure shows both: on the left the
     densities, and on the right the total probability found between $-X$ and $X$ as $X$ grows.
     (The plane wave is drawn with amplitude 1 and the packet with total probability 1, so compare the shapes
@@ -1111,6 +1133,86 @@ def _(
 @app.cell
 def _(mo):
     mo.md(r"""
+    ## 7 The total probability does not change
+
+    Normalization would be useless if it held at one moment and failed at the next. It holds for all time,
+    because of the equation that governs $\psi$. Each plane wave of section 5 has $\omega = \hbar k^2/2m$.
+    Substituting $\psi = e^{i(kx-\omega t)}$ shows that this is the same as the equation
+
+    $$
+    i\hbar\,\frac{\partial \textcolor{#5ECCF3}{\psi}}{\partial t}
+    = -\frac{\hbar^2}{2m}\,\frac{\partial^2 \textcolor{#5ECCF3}{\psi}}{\partial x^2} + V(x)\,\textcolor{#5ECCF3}{\psi},
+    $$
+
+    the **Schrödinger equation**. (For $V=0$ the left side gives $\hbar\omega\,\psi$ and the right side
+    $\hbar^2k^2/2m\;\psi$. The equation is linear, so it holds for any sum of plane waves, which is every
+    packet. The term $V(x)$ is a potential energy and is a real number at each $x$.) Its complex conjugate is
+
+    $$
+    {-}i\hbar\,\frac{\partial \textcolor{#5ECCF3}{\psi}^{*}}{\partial t}
+    = -\frac{\hbar^2}{2m}\,\frac{\partial^2 \textcolor{#5ECCF3}{\psi}^{*}}{\partial x^2} + V(x)\,\textcolor{#5ECCF3}{\psi}^{*}.
+    $$
+
+    **How the density changes in time.** The product rule gives
+    $\partial_t\rho = \psi^{*}\,\partial_t\psi + \psi\,\partial_t\psi^{*}$. Solve the two equations above for
+    $\partial_t\psi$ and $\partial_t\psi^{*}$ and substitute:
+
+    $$
+    \frac{\partial \rho}{\partial t}
+    = \frac{i\hbar}{2m}\left(\textcolor{#5ECCF3}{\psi}^{*}\frac{\partial^2 \textcolor{#5ECCF3}{\psi}}{\partial x^2} -
+    \textcolor{#5ECCF3}{\psi}\frac{\partial^2 \textcolor{#5ECCF3}{\psi}^{*}}{\partial x^2}\right) -
+    \frac{i}{\hbar}V\,|\textcolor{#5ECCF3}{\psi}|^2 + \frac{i}{\hbar}V\,|\textcolor{#5ECCF3}{\psi}|^2 .
+    $$
+
+    The two terms with $V$ cancel, because $V$ is real and so is the same in both equations. What remains is
+    a derivative of a single quantity, since
+    $\psi^{*}\psi'' - \psi\,\psi^{*\prime\prime} = \dfrac{\partial}{\partial x}\big(\psi^{*}\psi' - \psi\,\psi^{*\prime}\big)$:
+
+    $$
+    \frac{\partial \rho}{\partial t} + \frac{\partial j}{\partial x} = 0,
+    \qquad
+    j(x,t) = \frac{\hbar}{2mi}\left(\textcolor{#5ECCF3}{\psi}^{*}\frac{\partial \textcolor{#5ECCF3}{\psi}}{\partial x} -
+    \textcolor{#5ECCF3}{\psi}\frac{\partial \textcolor{#5ECCF3}{\psi}^{*}}{\partial x}\right)
+    = \frac{\hbar}{m}\,\mathrm{Im}\!\left(\textcolor{#5ECCF3}{\psi}^{*}\frac{\partial \textcolor{#5ECCF3}{\psi}}{\partial x}\right).
+    $$
+
+    This is the **continuity equation**, the same as for the mass of a fluid. $j$ is the **probability current**,
+    the probability crossing the point $x$ per unit time, and the equation says that the probability in a small
+    region changes only by flowing across its ends. For the plane wave, $\psi^{*}\psi' = ik$, so
+    $j = \hbar k/m = p/m = v$ times $\rho = 1$: the flat density flows at the classical velocity.
+
+    **The total.** Integrate the continuity equation over all $x$:
+
+    $$
+    \frac{d}{dt}\int_{-\infty}^{\infty} \rho\,dx = -\big[\,j\,\big]_{-\infty}^{\infty} = 0 ,
+    $$
+
+    because a normalizable $\psi$ goes to zero far away, and with it $j$. If the total is 1 at one time it is 1 at
+    every time. The two properties used were that the equation is linear with the conjugate equation obtained by
+    $i\to -i$, and that $V$ is real. A complex $V$ would leave a term $\propto \mathrm{Im}\,V\,|\psi|^2$ that
+    makes probability appear or disappear, which is how absorption is modelled.
+    """)
+    return
+
+
+@app.cell
+def _(mo, np, packet):
+    _rows = []
+    for _t in (0, 3, 9, 30):
+        _x = np.linspace(-80, 80, 20001) + 5.0 * _t  # grid follows the packet, centred on x = vt
+        _rho = np.abs(packet(_x, _t, 5.0, 1.5)) ** 2
+        _rows.append(f"| {_t} | {np.trapezoid(_rho, _x):.6f} | {_rho.max():.3f} |")
+    mo.md(
+        "The packet of section 6 ($k_0=5$, $\\sigma_x=1.5$), integrated numerically on a grid. The peak falls as "
+        "the lump spreads, but the total does not:\n\n"
+        "| time $t$ | $\\int\\rho\\,dx$ | peak of $\\rho$ |\n|---|---|---|\n" + "\n".join(_rows)
+    )
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
     ## Summary
 
     - A wave is $H = A\cos(kx-\omega t)$. The size $A$ is the largest height, $\omega$ is the angular frequency
@@ -1127,6 +1229,11 @@ def _(mo):
       $\hbar$ in both.
     - A superposition of waves with nearby $k$ is a lump that moves at $d\omega/dk = p_0/m$, the classical
       velocity, and spreads in the time $t_s = 2m\sigma_x^2/\hbar$.
+    - The squared length $|\psi|^2$, the intensity of the water waves, is the probability density $\rho$ for a
+      particle. The probability of an interval is $\int_a^b\rho\,dx$ and the total must be 1. A plane wave has
+      $\rho=1$ everywhere and total $2X\to\infty$, so it cannot be normalized.
+    - The Schrödinger equation gives $\partial_t\rho + \partial_x j = 0$, so the total probability stays 1
+      for all time (for a real potential).
     - The lump behaves like a classical particle when $k_0\sigma_x = p_0/2\Delta p \gg 1$: its momentum is
       known to a small fraction of itself, and it travels $2k_0\sigma_x$ of its own widths before it spreads.
     """)
