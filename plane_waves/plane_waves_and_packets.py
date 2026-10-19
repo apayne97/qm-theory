@@ -891,10 +891,28 @@ def _(mo):
     ## 6 Wave packets: when a lump moves like a particle
 
     A single plane wave has the same probability everywhere, so it cannot describe a particle that is
-    somewhere. The figure below shows this. On the left, $|e^{ikx}|^2 = 1$ at every $x$, while a packet has a
-    lump. On the right is the total probability found between $-X$ and $X$. For the packet it levels off at 1:
-    the particle is somewhere in a finite region. For the plane wave it grows without limit as $2X$, so the
-    probability of finding the particle somewhere in space is not even finite and cannot be set to 1.
+    somewhere. The probability density is the squared length of the amplitude, the amplitude times its complex
+    conjugate. For the plane wave $\psi = e^{i(kx-\omega t)}$ the conjugate turns the arrow the opposite way,
+    so the two phases cancel:
+
+    $$
+    |\textcolor{#5ECCF3}{\psi}(x,t)|^2 = \textcolor{#5ECCF3}{\psi}^{*}\textcolor{#5ECCF3}{\psi}
+    = e^{-i(\textcolor{#6B913C}{k}x-\textcolor{#FF8021}{\omega}t)}\, e^{\,i(\textcolor{#6B913C}{k}x-\textcolor{#FF8021}{\omega}t)}
+    = e^{0} = 1 \qquad\text{for every } x \text{ and } t .
+    $$
+
+    The density does not depend on $x$, so there is no place where the particle is more likely to be found.
+    The total probability of finding it between $-X$ and $X$ is then
+
+    $$
+    \int_{-X}^{X} |\textcolor{#5ECCF3}{\psi}|^2\,dx = \int_{-X}^{X} 1\,dx = 2X \;\longrightarrow\; \infty
+    \quad (X \to \infty),
+    $$
+
+    which is not finite, so it cannot be set equal to 1 as the probability of finding the particle somewhere
+    must be. A packet, whose density is a bell curve of width $\sigma_x$, has
+    $\int_{-\infty}^{\infty}|\psi|^2\,dx = 1$ by construction. The figure shows both: on the left the
+    densities, and on the right the total probability found between $-X$ and $X$ as $X$ grows.
     (The plane wave is drawn with amplitude 1 and the packet with total probability 1, so compare the shapes
     and the trend on the right, not the heights on the left.)
     """)
