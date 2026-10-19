@@ -820,7 +820,7 @@ def _(mo):
 
 @app.cell
 def _(mo, osc_A, osc_omega, oscillator_energy_figure, plt):
-    _fig = oscillator_energy_figure(osc_A.value, osc_omega.value)
+    _fig = oscillator_energy_figure(osc_A.value, osc_omega.value, fixed_axes=True)
     _out = mo.vstack([mo.hstack([osc_A, osc_omega], justify="start"), _fig])
     plt.close(_fig)
     _out
@@ -1582,6 +1582,18 @@ def _(mo):
     $\omega(k) = \hbar k^2/2m$. That rule needs a list of waves. This section turns it into one equation for
     $\psi(x,t)$ itself, which holds for every lump and needs no list.
 
+    **What we are trying to do.** A law of motion says how a state changes: given the state now, it fixes the
+    state a moment later. For a ball, Newton's law gives the rate of change of the velocity. We want the same
+    for the wave function: an equation that gives the rate of change of $\psi$ at each position, from the
+    shape of $\psi$ at that moment. The rule $\omega(k)$ already says how each plane wave changes, but only
+    after $\psi$ has been split into plane waves, and that split needs a list. Slopes avoid the split. A plane
+    wave turns in time at the rate $\omega$ and twists in space at the rate $k$, so its slope in time brings out
+    $\omega$ and its slope in position brings out $k$, and each slope gives back the same wave times a number.
+    The slopes can be applied to $\psi$ without knowing which waves it contains. The plan is (1) to show that
+    these two slopes read off the energy and the momentum, (2) to use the relation between energy and momentum
+    to link the two slopes into one equation, and (3) to check that the equation holds for a lump, which is a
+    sum of many waves.
+
     **Step 1: energy and momentum as slopes.** Take one plane wave $\psi = e^{i(kx-\omega t)}$. The symbol
     $\partial\psi/\partial t$ means the rate at which $\psi$ changes with time at a fixed position, and
     $\partial\psi/\partial x$ the rate at which it changes with position at a fixed time. Since
@@ -1606,7 +1618,15 @@ def _(mo):
     $i\hbar\,\partial/\partial t$ to a plane wave gives back the same wave multiplied by its energy, and
     applying $-i\hbar\,\partial/\partial x$ gives back the wave multiplied by its momentum.
 
-    **Step 2: the equation.** Apply the momentum slope twice. Since $(-i\hbar)^2 = -\hbar^2$,
+    *Why this step.* The aim is to read $\omega$ and $k$ off $\psi$ without splitting it into waves. For a plane
+    wave a slope does that, because the slope returns the wave itself multiplied by a number. The slope in time
+    gives $-i\omega$, which is not yet a real quantity, so the factor $i\hbar$ is chosen to turn it into $\hbar\omega$,
+    the energy. In the same way $-i\hbar$ turns the slope in position, $ik$, into $\hbar k$, the momentum.
+
+    **Step 2: the equation.** The energy and momentum of a free particle are related by $E = p^2/2m$, and by
+    Step 1 each is a slope acting on $\psi$, so the relation between the two numbers can become a relation
+    between the two slopes. The momentum appears squared, which means applying its slope twice: the first
+    application multiplies the wave by $p$, and the second multiplies it by $p$ again. Since $(-i\hbar)^2 = -\hbar^2$,
 
     $$
     {-}\,\hbar^2\,\frac{\partial^2 \textcolor{#5ECCF3}{\psi}}{\partial x^2} = p^2\,\textcolor{#5ECCF3}{\psi},
@@ -1626,14 +1646,20 @@ def _(mo):
     appears twice because $k^2$ is $k$ times $k$. A different rule gives a different equation: light, for
     which $\omega = ck$, has one position slope and no second one.
 
-    **Step 3: it holds for every lump.** The equation involves $\psi$ only through slopes, and the slope of a sum
+    **Step 3: it holds for every lump.** Steps 1 and 2 used one plane wave, but an electron is a lump, a sum
+    of many waves, and we want the equation for the lump itself without following the waves one at a time. The
+    equation involves $\psi$ only through slopes, and the slope of a sum
     is the sum of the slopes. So if two functions satisfy it, so does their sum, and so does any sum of plane
     waves with any weights $a(k)$ (one wave at a time, the check of Steps 1 and 2 holds for each). This
     includes the Gaussian packet of section 6, for any $k_0$ and $\sigma_x$. The figure checks this for
     that packet, with $\hbar = m = 1$. The left side is computed from the change of $\psi$ over a short time step,
     and the right side from three neighbouring points in $x$. The two curves lie on top of one another, with
     the real part on the left and the imaginary part on the right, and the largest difference between them is
-    printed.
+    printed. The axes are kept fixed, so changing $k_0$, $\sigma_x$ or the time shows how the two sides change.
+
+    The result is a law of motion for $\psi$. The right side is computed from the shape of $\psi$ now, and the
+    left side is its rate of change in time, so if $\psi$ is known at one moment the equation fixes how it
+    changes at the next, and so at every later time.
     """)
     return
 

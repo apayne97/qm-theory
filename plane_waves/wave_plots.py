@@ -144,6 +144,7 @@ def moving_wave_figure(k, omega, t):
     crest = omega * t / k if k != 0 else 0.0
     crest = crest % (2 * np.pi / k) if k > 0 else 0.0
     ax.plot([crest], [1], "o", color=A_COLOR)
+    ax.set_xlim(0, 10)
     ax.set_ylim(-1.3, 1.3)
     ax.set_xlabel("position $x$")
     ax.set_ylabel(r"$\cos(kx - \omega t)$")
@@ -367,7 +368,7 @@ def schrodinger_check_figure(k0, sigma_x, t, dt=1e-3, n=4001):
     right[1:-1] = -0.5 * (psi[2:] - 2 * psi[1:-1] + psi[:-2]) / dx**2
     inner = slice(1, -1)
     rel = np.max(np.abs(left[inner] - right[inner])) / np.max(np.abs(left[inner]))
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10.5, 3.3), sharex=True)
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10.5, 3.3))
     d = x - v * t
     for ax, part, name in ((ax1, np.real, "real part"), (ax2, np.imag, "imaginary part")):
         ax.axhline(0, color="0.85", lw=0.8)
@@ -375,6 +376,9 @@ def schrodinger_check_figure(k0, sigma_x, t, dt=1e-3, n=4001):
         ax.plot(d[inner], part(right[inner]), color=INK, lw=1.2, ls="--", label=r"right side $-\frac{1}{2}\,\partial^2\psi/\partial x^2$")
         ax.set_xlabel(r"position relative to the classical position, $x - vt$")
         ax.set_title(name, fontsize=10)
+    for ax in (ax1, ax2):  # fixed axes: the largest value over the slider ranges is about 5.93
+        ax.set_xlim(-8, 8)
+        ax.set_ylim(-6.5, 6.5)
     ax1.legend(fontsize=7, loc="upper right")
     fig.suptitle(f"largest difference between the two sides: {rel:.1e} of the largest value", fontsize=9, y=1.0)
     fig.tight_layout()
@@ -543,52 +547,19 @@ def spacetime_figure(k0, sigma_x, t_max):
 
 
 def spreading_figure(k0, sigma_x, t):
-    """Probability of the packet at t = 0 and at time t, for a given initial width."""
+    """Probability of the packet at t = 0 and at time t, both drawn about the classical position (fixed axes)."""
+    x = np.linspace(-20, 20, 4000)
     v = group_velocity(k0)
-    ts = [0.0, t]
-    reach = v * t + 4 * width(t, sigma_x)
-    x = np.linspace(-4 * sigma_x, reach, 4000)
     fig, ax = plt.subplots(figsize=(9, 3.2))
-    for ti, c, a in zip(ts, ["0.6", RE_COLOR], [0.5, 0.8]):
-        d = np.abs(packet(x, ti, k0, sigma_x)) ** 2
+    for ti, c, a in zip([0.0, t], ["0.6", RE_COLOR], [0.5, 0.8]):
+        d = np.abs(packet(x + v * ti, ti, k0, sigma_x)) ** 2
         ax.fill_between(x, 0, d, color=c, alpha=a, label=rf"$|\psi|^2$ at $t={ti:g}$")
-    ax.axvline(v * t, color=ARROW_COLOR, ls="--", lw=1.2, label=r"classical position")
-    ax.set_xlabel("position $x$")
-    ax.set_yticks([])
+    ax.axvline(0, color=ARROW_COLOR, ls="--", lw=1.2, label=r"classical position")
+    ax.set_xlim(-20, 20)
+    ax.set_ylim(0, 1.4)
+    ax.set_xlabel(r"position relative to the classical position, $x - vt$")
+    ax.set_ylabel(r"$|\psi|^2$")
     ax.legend(loc="upper right", fontsize=8)
-    fig.tight_layout()
-    return fig
-
-
-def width_vs_distance_figure(k0, sigma0, d, d_max=20.0):
-    """Uncertainty in position, Delta x, against the distance d = v t from the source (hbar = m = 1), and the packet
-    at distance d. sigma0 is the width sigma_x at the source: Delta x(d) = sigma0 sqrt(1 + (d / d_s)^2) with
-    d_s = v t_s = 2 k0 sigma0^2."""
-    d_s = 2 * k0 * sigma0**2
-    ds = np.linspace(0, d_max, 600)
-    sig = sigma0 * np.sqrt(1 + (ds / d_s) ** 2)
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10.5, 3.5), gridspec_kw={"width_ratios": [1.15, 1]})
-    ax1.plot(ds, sig, color=RE_COLOR, lw=2.4, label=r"uncertainty $\Delta x(d)$")
-    ax1.axhline(sigma0, color="0.6", lw=1.0, ls="--", label=r"at the source, $\sigma_x$")
-    ax1.plot(ds, ds / (2 * k0 * sigma0), color="0.5", lw=1.0, ls=":", label=r"far from the source: $d/2k_0\sigma_x$")
-    ax1.axvline(d_s, color=ARROW_COLOR, lw=1.0, ls="--")
-    ax1.text(d_s, 11.4, r" $d_s=2k_0\sigma_x^2$", fontsize=8, va="top", color=ARROW_COLOR)
-    ax1.plot([d], [sigma0 * np.sqrt(1 + (d / d_s) ** 2)], "o", color=OMEGA_COLOR, ms=9, zorder=3)
-    ax1.set_xlim(0, d_max)
-    ax1.set_ylim(0, 12)
-    ax1.set_xlabel("distance from the source, $d = vt$")
-    ax1.set_ylabel(r"uncertainty in position, $\Delta x$")
-    ax1.legend(fontsize=7, loc="center right")
-    x = np.linspace(-14, 14, 3000)
-    now = np.abs(packet(x + d, d / group_velocity(k0), k0, sigma0)) ** 2
-    start = np.abs(packet(x, 0.0, k0, sigma0)) ** 2
-    ax2.fill_between(x, 0, start, color="0.8", label="at the source")
-    ax2.plot(x, now, color=RE_COLOR, lw=2.2, label=f"at distance {d:g}")
-    ax2.set_xlim(-14, 14)
-    ax2.set_ylim(0, 0.9)
-    ax2.set_xlabel(r"position relative to the classical position, $x - d$")
-    ax2.set_ylabel(r"$|\psi|^2$")
-    ax2.legend(fontsize=8, loc="upper right")
     fig.tight_layout()
     return fig
 
@@ -1019,10 +990,12 @@ def interference_schematic(x_det=2.0, wavelength=1.0, d=4.0, L=10.0, y_range=6.5
 
 
 
-def oscillator_energy_figure(amplitude=1.0, omega=2.0, mass=1.0):
-    """A harmonic oscillator H(t) = A cos(omega t): kinetic and potential energy trade off, the total is constant."""
+def oscillator_energy_figure(amplitude=1.0, omega=2.0, mass=1.0, fixed_axes=False):
+    """A harmonic oscillator H(t) = A cos(omega t): kinetic and potential energy trade off, the total is constant.
+
+    With fixed_axes the time, height and energy axes do not depend on the sliders (A up to 2, omega up to 3)."""
     period = 2 * np.pi / omega
-    t = np.linspace(0, 2 * period, 1200)
+    t = np.linspace(0, 4 * np.pi if fixed_axes else 2 * period, 2400 if fixed_axes else 1200)
     h = amplitude * np.cos(omega * t)
     pot = 0.5 * mass * omega**2 * h**2
     kin = 0.5 * mass * (omega * amplitude * np.sin(omega * t)) ** 2
@@ -1033,7 +1006,7 @@ def oscillator_energy_figure(amplitude=1.0, omega=2.0, mass=1.0):
     ax_h.axhline(0, color="0.75", lw=0.8)
     for sign in (+1, -1):
         ax_h.axhline(sign * amplitude, color="0.7", ls=":", lw=1)
-    ax_h.set_ylim(-1.35 * amplitude, 1.35 * amplitude)
+    ax_h.set_ylim(*((-2.7, 2.7) if fixed_axes else (-1.35 * amplitude, 1.35 * amplitude)))
     ax_h.set_ylabel(r"height $H(t)=A\cos(\omega t)$")
     ax_h.set_title(rf"$A={amplitude:g}$, $\omega={omega:g}$, $m={mass:g}$", fontsize=10)
 
@@ -1041,8 +1014,10 @@ def oscillator_energy_figure(amplitude=1.0, omega=2.0, mass=1.0):
     ax_e.plot(t, kin, color=KIN_COLOR, lw=2.2, label=r"kinetic $\frac{1}{2} m\dot H^2$")
     ax_e.axhline(total, color=INK, lw=2, ls="--", label=rf"total $=\frac{{1}}{{2}} m\omega^2A^2={total:.2f}$")
     ax_e.axhline(total / 2, color="0.6", lw=1, ls=":")
-    ax_e.text(2 * period, total / 2, r"average of each $=\frac{1}{4} m\omega^2A^2$", ha="right", va="bottom", fontsize=9, color="0.3", bbox=dict(fc="white", ec="none", alpha=0.85))
-    ax_e.set_ylim(0, 1.35 * total)
+    ax_e.text(t[-1], total / 2, r"average of each $=\frac{1}{4} m\omega^2A^2$", ha="right", va="bottom", fontsize=9, color="0.3", bbox=dict(fc="white", ec="none", alpha=0.85))
+    ax_e.set_ylim(0, 24.3 if fixed_axes else 1.35 * total)
+    if fixed_axes:
+        ax_e.set_xlim(0, t[-1])
     ax_e.set_xlabel(r"time $t$")
     ax_e.set_ylabel("energy")
     ax_e.legend(loc="upper right", fontsize=9, ncol=3, bbox_to_anchor=(1.0, 1.0))
