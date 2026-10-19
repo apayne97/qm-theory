@@ -355,6 +355,69 @@ def entropy_family_figure(p):
     return fig
 
 
+def schrodinger_check_figure(k0, sigma_x, t, dt=1e-3, n=4001):
+    """Both sides of i dpsi/dt = -(1/2) d2psi/dx2 (hbar = m = 1) for the Gaussian packet, on a window that moves
+    with the packet. Left: real parts. Right: imaginary parts. The relative difference is printed."""
+    v = group_velocity(k0)
+    x = np.linspace(v * t - 8, v * t + 8, n)
+    dx = x[1] - x[0]
+    psi = packet(x, t, k0, sigma_x)
+    left = 1j * (packet(x, t + dt, k0, sigma_x) - packet(x, t - dt, k0, sigma_x)) / (2 * dt)
+    right = np.zeros_like(psi)
+    right[1:-1] = -0.5 * (psi[2:] - 2 * psi[1:-1] + psi[:-2]) / dx**2
+    inner = slice(1, -1)
+    rel = np.max(np.abs(left[inner] - right[inner])) / np.max(np.abs(left[inner]))
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10.5, 3.3), sharex=True)
+    d = x - v * t
+    for ax, part, name in ((ax1, np.real, "real part"), (ax2, np.imag, "imaginary part")):
+        ax.axhline(0, color="0.85", lw=0.8)
+        ax.plot(d[inner], part(left[inner]), color=OMEGA_COLOR, lw=3.5, alpha=0.5, label=r"left side $i\,\partial\psi/\partial t$")
+        ax.plot(d[inner], part(right[inner]), color=INK, lw=1.2, ls="--", label=r"right side $-\frac{1}{2}\,\partial^2\psi/\partial x^2$")
+        ax.set_xlabel(r"position relative to the classical position, $x - vt$")
+        ax.set_title(name, fontsize=10)
+    ax1.legend(fontsize=7, loc="upper right")
+    fig.suptitle(f"largest difference between the two sides: {rel:.1e} of the largest value", fontsize=9, y=1.0)
+    fig.tight_layout()
+    return fig
+
+
+def heat_vs_schrodinger_figure(t, sigma_k=1.0):
+    """A Gaussian lump evolved with the Schroedinger equation (a factor i in the time derivative) and with the same
+    equation without the i (the heat equation), hbar = m = 1. Left: the densities. Right: the total probability."""
+    x = np.linspace(-12, 12, 6001)
+
+    def amplitude(time, rate):
+        # psi(x, t) = sqrt(pi / c) exp(-x^2 / 4c) with c = 1/(4 sigma_k^2) + rate * time / 2
+        c = 1 / (4 * sigma_k**2) + rate * time / 2
+        return np.sqrt(np.pi / c) * np.exp(-(x**2) / (4 * c))
+
+    area0 = np.trapezoid(np.abs(amplitude(0.0, 1j)) ** 2, x)
+    schr = np.abs(amplitude(t, 1j)) ** 2 / area0
+    heat = np.abs(amplitude(t, 1.0)) ** 2 / area0
+    ts = np.linspace(0, 3, 200)
+    n_heat = 1 / np.sqrt(1 + 2 * sigma_k**2 * ts)
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10.5, 3.4))
+    ax1.fill_between(x, 0, schr, color=PROB_COLOR, alpha=0.8, label="with the $i$ (Schr\u00f6dinger)")
+    ax1.plot(x, schr, color="0.35", lw=1.5)
+    ax1.plot(x, heat, color=OMEGA_COLOR, lw=2.2, label="without the $i$")
+    ax1.set_ylim(0, 0.95)
+    ax1.set_xlim(-12, 12)
+    ax1.set_xlabel("position $x$")
+    ax1.set_ylabel(r"$|\psi|^2$")
+    ax1.legend(fontsize=8, loc="upper right")
+    ax2.axhline(1, color="0.5", lw=2.2, label="with the $i$: total stays 1")
+    ax2.plot(ts, n_heat, color=OMEGA_COLOR, lw=2.2, label="without the $i$")
+    ax2.plot([t], [1 / np.sqrt(1 + 2 * sigma_k**2 * t)], "o", color=OMEGA_COLOR, ms=8, zorder=3)
+    ax2.set_ylim(0, 1.15)
+    ax2.set_xlim(0, 3)
+    ax2.set_xlabel("time $t$")
+    ax2.set_ylabel("total probability")
+    ax2.legend(fontsize=8, loc="lower left")
+    fig.tight_layout()
+    return fig
+
+
 def rest_energy_phase_figure(phase, k0=5.0, sigma_x=1.5, t=2.0):
     """A packet with and without the factor exp(-i phase) from the rest energy: Re psi changes, |psi|^2 does not."""
     v = group_velocity(k0)

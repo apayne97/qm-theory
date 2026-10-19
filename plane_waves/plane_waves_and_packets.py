@@ -26,6 +26,7 @@ def _():
         band_shapes_figure,
         entropy_family_figure,
         flat_vs_lump_figure,
+        heat_vs_schrodinger_figure,
         interference_figure,
         interference_schematic,
         lump_buildup_figure,
@@ -36,6 +37,7 @@ def _():
         phase_figure,
         probability_figure,
         rest_energy_phase_figure,
+        schrodinger_check_figure,
         space_cosine_figure,
         space_twist_figure,
         spacetime_figure,
@@ -53,6 +55,7 @@ def _():
         arrow_figure,
         band_shapes_figure,
         entropy_family_figure,
+        heat_vs_schrodinger_figure,
         flat_vs_lump_figure,
         group_velocity,
         hole_amplitude,
@@ -71,6 +74,7 @@ def _():
         plt,
         probability_figure,
         rest_energy_phase_figure,
+        schrodinger_check_figure,
         space_cosine_figure,
         space_features_figure,
         space_twist_figure,
@@ -1524,20 +1528,120 @@ def _(
 @app.cell
 def _(mo):
     mo.md(r"""
-    ## 7 The total probability does not change
+    ## 7 The Schrödinger equation
 
-    Normalization would be useless if it held at one moment and failed at the next. It holds for all time,
-    because of the equation that governs $\psi$. Each plane wave of section 5 has $\omega = \hbar k^2/2m$.
-    Substituting $\psi = e^{i(kx-\omega t)}$ shows that this is the same as the equation
+    Sections 5 and 6 built the wave function from plane waves, each turning at the rate
+    $\omega(k) = \hbar k^2/2m$. That rule needs a list of waves. This section turns it into one equation for
+    $\psi(x,t)$ itself, which holds for every lump and needs no list.
+
+    **Step 1: energy and momentum as slopes.** Take one plane wave $\psi = e^{i(kx-\omega t)}$. The symbol
+    $\partial\psi/\partial t$ means the rate at which $\psi$ changes with time at a fixed position, and
+    $\partial\psi/\partial x$ the rate at which it changes with position at a fixed time. Since
+    $\frac{d}{dt}e^{u} = e^{u}\,\frac{du}{dt}$, with $u = i(kx-\omega t)$ and $du/dt = -i\omega$, and in the same
+    way for $x$,
+
+    $$
+    \frac{\partial \textcolor{#5ECCF3}{\psi}}{\partial t} = -\,i\textcolor{#FF8021}{\omega}\,\textcolor{#5ECCF3}{\psi},
+    \qquad
+    \frac{\partial \textcolor{#5ECCF3}{\psi}}{\partial x} = i\textcolor{#6B913C}{k}\,\textcolor{#5ECCF3}{\psi} .
+    $$
+
+    Multiply the first by $i\hbar$ and the second by $-i\hbar$, using $i\cdot(-i) = 1$ and $(-i)\cdot i = 1$:
+
+    $$
+    i\hbar\,\frac{\partial \textcolor{#5ECCF3}{\psi}}{\partial t} = \hbar\textcolor{#FF8021}{\omega}\,\textcolor{#5ECCF3}{\psi} = E\,\textcolor{#5ECCF3}{\psi},
+    \qquad
+    {-}\,i\hbar\,\frac{\partial \textcolor{#5ECCF3}{\psi}}{\partial x} = \hbar\textcolor{#6B913C}{k}\,\textcolor{#5ECCF3}{\psi} = p\,\textcolor{#5ECCF3}{\psi},
+    $$
+
+    where $E = \hbar\omega$ and $p = \hbar k$ are the energy and momentum of section 5. In words, applying
+    $i\hbar\,\partial/\partial t$ to a plane wave gives back the same wave multiplied by its energy, and
+    applying $-i\hbar\,\partial/\partial x$ gives back the wave multiplied by its momentum.
+
+    **Step 2: the equation.** Apply the momentum slope twice. Since $(-i\hbar)^2 = -\hbar^2$,
+
+    $$
+    {-}\,\hbar^2\,\frac{\partial^2 \textcolor{#5ECCF3}{\psi}}{\partial x^2} = p^2\,\textcolor{#5ECCF3}{\psi},
+    $$
+
+    where $\partial^2\psi/\partial x^2$ is the slope of the slope, the curvature of $\psi$. For a slowly moving
+    particle every plane wave has $E = p^2/2m$ (section 5). So the energy relation of Step 1 becomes
+
+    $$
+    i\hbar\,\frac{\partial \textcolor{#5ECCF3}{\psi}}{\partial t} = E\,\textcolor{#5ECCF3}{\psi} = \frac{p^2}{2m}\,\textcolor{#5ECCF3}{\psi}
+    \quad\Longrightarrow\quad
+    i\hbar\,\frac{\partial \textcolor{#5ECCF3}{\psi}}{\partial t} = \frac{1}{2m}\left(-\hbar^2\,\frac{\partial^2 \textcolor{#5ECCF3}{\psi}}{\partial x^2}\right).
+    $$
+
+    This is the **Schrödinger equation** for a free particle. Its form records the rule
+    $\omega \propto k^2$. The time slope appears once because $\omega$ appears once, and the position slope
+    appears twice because $k^2$ is $k$ times $k$. A different rule gives a different equation: light, for
+    which $\omega = ck$, has one position slope and no second one.
+
+    **Step 3: it holds for every lump.** The equation involves $\psi$ only through slopes, and the slope of a sum
+    is the sum of the slopes. So if two functions satisfy it, so does their sum, and so does any sum of plane
+    waves with any weights $a(k)$ (one wave at a time, the check of Steps 1 and 2 holds for each). This
+    includes the Gaussian packet of section 6, for any $k_0$ and $\sigma_x$. The figure checks this for
+    that packet, with $\hbar = m = 1$. The left side is computed from the change of $\psi$ over a short time step,
+    and the right side from three neighbouring points in $x$. The two curves lie on top of one another, with
+    the real part on the left and the imaginary part on the right, and the largest difference between them is
+    printed.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    sch_k0 = mo.ui.slider(0.0, 4.0, step=0.5, value=3.0, label=r"$k_0$", show_value=True)
+    sch_sigma = mo.ui.slider(0.8, 2.5, step=0.1, value=1.2, label=r"$\sigma_x$", show_value=True)
+    sch_t = mo.ui.slider(0.0, 4.0, step=0.25, value=1.5, label=r"time $t$", show_value=True)
+    return sch_k0, sch_sigma, sch_t
+
+
+@app.cell
+def _(mo, plt, sch_k0, sch_sigma, sch_t, schrodinger_check_figure):
+    _fig = schrodinger_check_figure(sch_k0.value, sch_sigma.value, sch_t.value)
+    _out = mo.vstack([mo.hstack([sch_k0, sch_sigma, sch_t], justify="start"), _fig])
+    plt.close(_fig)
+    _out
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    **Adding a potential.** A particle in a potential energy $V(x)$ has energy $p^2/2m + V(x)$ instead of
+    $p^2/2m$. Reading the energy as $i\hbar\,\partial/\partial t$ and the momentum as $-i\hbar\,\partial/\partial x$,
+    as in Step 1, gives
 
     $$
     i\hbar\,\frac{\partial \textcolor{#5ECCF3}{\psi}}{\partial t}
-    = -\frac{\hbar^2}{2m}\,\frac{\partial^2 \textcolor{#5ECCF3}{\psi}}{\partial x^2} + V(x)\,\textcolor{#5ECCF3}{\psi},
+    = -\frac{\hbar^2}{2m}\,\frac{\partial^2 \textcolor{#5ECCF3}{\psi}}{\partial x^2} + V(x)\,\textcolor{#5ECCF3}{\psi} .
     $$
 
-    the **Schrödinger equation**. (For $V=0$ the left side gives $\hbar\omega\,\psi$ and the right side
-    $\hbar^2k^2/2m\;\psi$. The equation is linear, so it holds for any sum of plane waves, which is every
-    packet. The term $V(x)$ is a potential energy and is a real number at each $x$.) Its complex conjugate is
+    This step is not a derivation from plane waves, because plane waves are not solutions when $V$ varies with
+    $x$. It is the same rule extended to a new case, and it is justified by the agreement of its predictions with
+    experiment. The next section shows that this equation keeps the total probability equal to 1 when $V$ is
+    real.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    ## 8 The total probability does not change
+
+    Normalization would be useless if it held at one moment and failed at the next. It holds for all time,
+    because of the form of the equation of section 7. Take the equation with a potential energy $V(x)$, which is
+    a real number at each $x$:
+
+    $$
+    i\hbar\,\frac{\partial \textcolor{#5ECCF3}{\psi}}{\partial t}
+    = -\frac{\hbar^2}{2m}\,\frac{\partial^2 \textcolor{#5ECCF3}{\psi}}{\partial x^2} + V(x)\,\textcolor{#5ECCF3}{\psi} .
+    $$
+
+    Its complex conjugate is
 
     $$
     {-}i\hbar\,\frac{\partial \textcolor{#5ECCF3}{\psi}^{*}}{\partial t}
@@ -1604,6 +1708,43 @@ def _(mo, np, packet):
 @app.cell
 def _(mo):
     mo.md(r"""
+    **Why the $i$ in the equation matters.** The proof used the complex conjugate of the equation, which is
+    obtained by changing $i$ to $-i$. That works because of the $i$. A plane wave turns in time as
+    $e^{-i\omega t}$ with $\omega$ real, an arrow of length 1, so its probability cannot change. Now remove the $i$:
+
+    $$
+    \frac{\partial \textcolor{#5ECCF3}{\psi}}{\partial t} = \frac{\hbar}{2m}\,\frac{\partial^2 \textcolor{#5ECCF3}{\psi}}{\partial x^2},
+    $$
+
+    which is the equation for the spreading of heat. Applied to a plane wave it gives
+    $\partial\psi/\partial t = -(\hbar k^2/2m)\,\psi$, so each wave is multiplied by
+    $e^{-\hbar k^2t/2m}$. This is a real factor smaller than 1, which shrinks the arrow instead of turning it.
+    Every wave fades, the shorter waves faster, and the total probability falls with time. The figure evolves
+    the same bell-curve lump both ways, with $\hbar = m = 1$ and $\sigma_k = 1$. With the $i$ the lump spreads and the
+    total stays 1. Without it the lump also spreads but loses height, and the total falls as
+    $1/\sqrt{1+2\sigma_k^2\hbar t/m}$. The factor $i$ is what turns the rate $\omega$ into a pure phase.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    heat_t = mo.ui.slider(0.0, 3.0, step=0.1, value=1.5, label=r"time $t$", show_value=True)
+    return (heat_t,)
+
+
+@app.cell
+def _(heat_t, heat_vs_schrodinger_figure, mo, plt):
+    _fig = heat_vs_schrodinger_figure(heat_t.value)
+    _out = mo.vstack([heat_t, _fig])
+    plt.close(_fig)
+    _out
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
     ## Summary
 
     - A wave is $H = A\cos(kx-\omega t)$. The size $A$ is the largest height, $\omega$ is the angular frequency
@@ -1623,8 +1764,11 @@ def _(mo):
     - The squared length $|\psi|^2$, the intensity of the water waves, is the probability density $\rho$ for a
       particle. The probability of an interval is $\int_a^b\rho\,dx$ and the total must be 1. A plane wave has
       $\rho=1$ everywhere and total $2X\to\infty$, so it cannot be normalized.
-    - The Schrödinger equation gives $\partial_t\rho + \partial_x j = 0$, so the total probability stays 1
-      for all time (for a real potential).
+    - Applying $i\hbar\,\partial_t$ and $-i\hbar\,\partial_x$ to a plane wave gives back $E$ and $p$ times the wave, so
+      $E = p^2/2m$ gives the Schrödinger equation $i\hbar\,\partial_t\psi = -\tfrac{\hbar^2}{2m}\,\partial_x^2\psi$. It is
+      linear, so it holds for every lump built from plane waves.
+    - With a real potential the equation gives $\partial_t\rho + \partial_x j = 0$, so the total probability stays
+      1 for all time. The $i$ is what makes this so: without it the waves fade and probability is lost.
     - The lump behaves like a classical particle when $k_0\sigma_x = p_0/2\Delta p \gg 1$: its momentum is
       known to a small fraction of itself, and it travels $2k_0\sigma_x$ of its own widths before it spreads.
     """)
