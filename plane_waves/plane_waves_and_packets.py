@@ -9,6 +9,13 @@ def _():
     import marimo as mo
     import matplotlib.pyplot as plt
     import numpy as np
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+    from eqrefs import equations_md
+
+    md = equations_md(mo, __file__)
 
     from waves import (
         group_velocity,
@@ -53,6 +60,7 @@ def _():
     )
 
     return (
+        md,
         arrow_figure,
         band_shapes_figure,
         entropy_family_figure,
@@ -152,19 +160,18 @@ def _(mo):
           root of the average of $x^2$. The uncertainty $\Delta x$ is $\sigma_x$ (section 6).
         - **Fourier transform**: adding up waves of every wave number $k$ with weights $a(k)$ to make a function
           of position (section 6.1).
-        - **Entropy** $h$: the average of $-\ln\rho$, a measure of how spread out a distribution is (section 6.2).
+        - **Entropy** $S$: the average of $-\ln\rho$, a measure of how spread out a distribution is (section 6.2).
         - **Schrödinger equation**: the equation for how $\psi$ changes in time (section 7).
-        - **Hamiltonian** $\hat H$: the table of numbers (or operator) that gives the rate of change of $\psi$, and
-          whose values are energies (section 7).
-        - **Probability current** $j$: the probability crossing a point per unit time (section 8).
+        - **Continuity equation**: a conservation law saying that the rate of change of a density at a point is minus
+          the derivative in position of what flows past it (section 7).
         """)
     })
     return
 
 
 @app.cell
-def _(mo):
-    mo.md(r"""
+def _(md):
+    md(r"""
     ## 1 A wave in trigonometric form
 
     The simplest wave is a quantity, such as the height of the surface of water, that varies as a cosine. Every
@@ -176,7 +183,7 @@ def _(mo):
     **The phase.** Consider
 
     $$
-    \textcolor{#4E67C8}{H}(\textcolor{#7030A0}{\theta}) = \textcolor{#F14124}{A}\cos\textcolor{#7030A0}{\theta} ,
+    \textcolor{#4E67C8}{H}(\textcolor{#7030A0}{\theta}) = \textcolor{#F14124}{A}\cos\textcolor{#7030A0}{\theta} , \label{eq:cos-phase}
     $$
 
     where $\theta$ is an angle in radians. The angle $\theta$ is called the **phase**: it says how far through its
@@ -210,14 +217,14 @@ def _(mo, np, phase_figure, phase_theta, plt):
 
 
 @app.cell
-def _(mo):
-    mo.md(r"""
+def _(md):
+    md(r"""
     ### 1.1 Oscillation in time
 
     At one fixed position the height oscillates as
 
     $$
-    \textcolor{#4E67C8}{H}(t) = \textcolor{#F14124}{A}\cos(\textcolor{#FF8021}{\omega} t).
+    \textcolor{#4E67C8}{H}(t) = \textcolor{#F14124}{A}\cos(\textcolor{#FF8021}{\omega} t). \label{eq:cos-time}
     $$
 
     - The **size** $A$ is the largest height reached.
@@ -225,7 +232,7 @@ def _(mo):
       number of radians covered per unit of time. It is called the **angular frequency**.
     - The cosine repeats when its argument has grown by $2\pi$. This takes the **period**
       $$
-      \textcolor{#DF2CB2}{T} = \frac{2\pi}{\textcolor{#FF8021}{\omega}},
+      \textcolor{#DF2CB2}{T} = \frac{2\pi}{\textcolor{#FF8021}{\omega}}, \label{eq:period}
       $$
       and the number of oscillations per unit of time is the **frequency** $f = 1/T = \omega/2\pi$.
 
@@ -272,14 +279,14 @@ def _(mo, plt, time_features_figure):
 
 
 @app.cell
-def _(mo):
-    mo.md(r"""
+def _(md):
+    md(r"""
     ### 1.2 Variation in space
 
     At one fixed moment the height varies along the line of positions as
 
     $$
-    \textcolor{#4E67C8}{H}(x) = \textcolor{#F14124}{A}\cos(\textcolor{#6B913C}{k}x).
+    \textcolor{#4E67C8}{H}(x) = \textcolor{#F14124}{A}\cos(\textcolor{#6B913C}{k}x). \label{eq:cos-space}
     $$
 
     Now the phase $\theta=kx$ grows by $k$ in every unit of distance, so **$k$ is the number of radians covered per
@@ -287,7 +294,7 @@ def _(mo):
     cosine repeats after the distance
 
     $$
-    \textcolor{#DF2CB2}{\lambda} = \frac{2\pi}{\textcolor{#6B913C}{k}},
+    \textcolor{#DF2CB2}{\lambda} = \frac{2\pi}{\textcolor{#6B913C}{k}}, \label{eq:wavelength}
     $$
 
     which is the **wavelength**, the counterpart in space of the period $T$. The number of wavelengths per unit
@@ -333,14 +340,14 @@ def _(mo, plt, space_features_figure):
 
 
 @app.cell
-def _(mo):
-    mo.md(r"""
+def _(md):
+    md(r"""
     ### 1.3 A travelling wave
 
     A wave that varies in both time and space has the height
 
     $$
-    \textcolor{#4E67C8}{H}(x,t) = \textcolor{#F14124}{A}\cos(\textcolor{#6B913C}{k}x-\textcolor{#FF8021}{\omega} t).
+    \textcolor{#4E67C8}{H}(x,t) = \textcolor{#F14124}{A}\cos(\textcolor{#6B913C}{k}x-\textcolor{#FF8021}{\omega} t). \label{eq:travelling-wave}
     $$
 
     At a fixed position this is the oscillation of section 1.1, and at a fixed time it is the pattern of section
@@ -348,7 +355,7 @@ def _(mo):
     $kx-\omega t = 0$. Then $x = (\omega/k)\,t$, so the whole pattern moves along the line at the speed
 
     $$
-    v_{\text{phase}} = \frac{\textcolor{#FF8021}{\omega}}{\textcolor{#6B913C}{k}} = \frac{\textcolor{#DF2CB2}{\lambda}}{\textcolor{#DF2CB2}{T}}.
+    v_{\text{phase}} = \frac{\textcolor{#FF8021}{\omega}}{\textcolor{#6B913C}{k}} = \frac{\textcolor{#DF2CB2}{\lambda}}{\textcolor{#DF2CB2}{T}}. \label{eq:phase-speed}
     $$
 
     The form $\cos(kx-\omega t)$ follows from the motion of a source. Suppose a source at $x=0$ moves as
@@ -433,8 +440,8 @@ def _(mo, plt, surf_A, surf_k, surf_omega, wave_surface_figure):
 
 
 @app.cell
-def _(mo):
-    mo.md(r"""
+def _(md):
+    md(r"""
     ## 2 The same waves with complex numbers
 
     For classical waves such as water, writing the wave with complex numbers is a neat mathematical trick. For quantum
@@ -449,21 +456,21 @@ def _(mo):
     The arrow of length 1 pointing at the angle $\theta$ (in radians) is written
 
     $$
-    e^{i\textcolor{#7030A0}{\theta}} = \cos\textcolor{#7030A0}{\theta} + i\sin\textcolor{#7030A0}{\theta} ,
+    e^{i\textcolor{#7030A0}{\theta}} = \cos\textcolor{#7030A0}{\theta} + i\sin\textcolor{#7030A0}{\theta} , \label{eq:euler}
     $$
 
     with horizontal component $\cos\theta$ and vertical component $\sin\theta$. An arrow of length $A$ at the
     same angle is $A$ times this,
 
     $$
-    \textcolor{#5ECCF3}{\psi}(\textcolor{#7030A0}{\theta}) = \textcolor{#F14124}{A}\,e^{i\textcolor{#7030A0}{\theta}} = \textcolor{#F14124}{A}\cos\textcolor{#7030A0}{\theta} + i\textcolor{#F14124}{A}\sin\textcolor{#7030A0}{\theta} .
+    \textcolor{#5ECCF3}{\psi}(\textcolor{#7030A0}{\theta}) = \textcolor{#F14124}{A}\,e^{i\textcolor{#7030A0}{\theta}} = \textcolor{#F14124}{A}\cos\textcolor{#7030A0}{\theta} + i\textcolor{#F14124}{A}\sin\textcolor{#7030A0}{\theta} . \label{eq:arrow-psi}
     $$
 
     This is the arrow in the right panel of the figure in section 1, and the angle $\theta$ is the **phase** of
     section 1. Its horizontal component is the cosine of section 1,
 
     $$
-    \textcolor{#4E67C8}{H}(\textcolor{#7030A0}{\theta}) = \textcolor{#F14124}{A}\cos\textcolor{#7030A0}{\theta} = \operatorname{Re}\,\textcolor{#5ECCF3}{\psi}(\textcolor{#7030A0}{\theta}),
+    \textcolor{#4E67C8}{H}(\textcolor{#7030A0}{\theta}) = \textcolor{#F14124}{A}\cos\textcolor{#7030A0}{\theta} = \operatorname{Re}\,\textcolor{#5ECCF3}{\psi}(\textcolor{#7030A0}{\theta}), \label{eq:height-real-part}
     $$
 
     where $\operatorname{Re}$ means the real part. A notation is fixed here and used from now on: the capital
@@ -476,7 +483,7 @@ def _(mo):
     these are the two short sides of a right triangle whose long side is the arrow. By Pythagoras
 
     $$
-    |\textcolor{#5ECCF3}{\psi}| = \sqrt{a^2 + b^2}, \qquad |\textcolor{#5ECCF3}{\psi}|^2 = a^2 + b^2 .
+    |\textcolor{#5ECCF3}{\psi}| = \sqrt{a^2 + b^2}, \qquad |\textcolor{#5ECCF3}{\psi}|^2 = a^2 + b^2 . \label{eq:abs-def}
     $$
 
     For example $3+4i$ has length $\sqrt{9+16}=5$. The squared length $|\psi|^2$ is the quantity called the
@@ -486,7 +493,7 @@ def _(mo):
     Simply squaring $\psi$ does not give this. Since $i^2=-1$,
 
     $$
-    \textcolor{#5ECCF3}{\psi}^2 = (a+ib)^2 = a^2 - b^2 + 2iab ,
+    \textcolor{#5ECCF3}{\psi}^2 = (a+ib)^2 = a^2 - b^2 + 2iab , \label{eq:psi-squared}
     $$
 
     which is a complex number in general, can be negative, and is not a length. For the arrow pointing straight
@@ -496,11 +503,33 @@ def _(mo):
 
     $$
     \textcolor{#5ECCF3}{\psi}^{*} = a - ib, \qquad
-    \textcolor{#5ECCF3}{\psi}^{*}\textcolor{#5ECCF3}{\psi} = (a-ib)(a+ib) = a^2 + iab - iab - i^2b^2 = a^2 + b^2 = |\textcolor{#5ECCF3}{\psi}|^2 .
+    \textcolor{#5ECCF3}{\psi}^{*}\textcolor{#5ECCF3}{\psi} = (a-ib)(a+ib) = a^2 + iab - iab - i^2b^2 = a^2 + b^2 = |\textcolor{#5ECCF3}{\psi}|^2 . \label{eq:psi-conjugate}
     $$
 
     The two terms with $i$ cancel and $-i^2=+1$, so the result is a real, non-negative number, as a length
     squared and a probability must be. For $\psi = i$ it gives $(-i)(i) = 1$.
+
+    **Rules for the complex conjugate.** Section 7 conjugates a whole equation, so three rules are needed. Take two
+    complex numbers $z = a+ib$ and $w = u+iv$.
+
+    - A real number is unchanged, and $i$ becomes $-i$.
+    - The conjugate of a sum is the sum of the conjugates. The sum is $(a+u) + i(b+v)$, whose conjugate
+      $(a+u) - i(b+v)$ is $z^{*} + w^{*}$.
+    - The conjugate of a product is the product of the conjugates, shown next.
+
+    Multiplying out, $zw = (au - bv) + i(av + bu)$, so
+
+    $$
+    (zw)^{*} = (au - bv) - i(av + bu) = (a - ib)(u - iv) = z^{*}\,w^{*} . \label{eq:conjugate-product}
+    $$
+
+    The middle step is the product $(a-ib)(u-iv) = au - iav - ibu + i^2bv$.
+
+    So conjugating an expression means changing every $i$ to $-i$ and every complex quantity to its conjugate, in
+    place. A derivative with respect to a real variable such as $x$ or $t$ also commutes with conjugation,
+    $\left(\dfrac{dz}{dt}\right)^{*} = \dfrac{dz^{*}}{dt}$, because the derivative is a limit of differences
+    $\big(z(t+\Delta t) - z(t)\big)/\Delta t$, and conjugating a difference divided by a real number gives the
+    difference of the conjugates divided by the same number.
     """)
     return
 
@@ -521,20 +550,20 @@ def _(arrow_figure, mo, plt, theta_slider):
 
 
 @app.cell
-def _(mo):
-    mo.md(r"""
+def _(md):
+    md(r"""
     ### 2.2 The real wave is the horizontal component of a turning arrow
 
     Now replace the phase $\theta$ by the phase of section 1.3, $\theta = kx-\omega t$. The **complex wave** is
 
     $$
-    \textcolor{#5ECCF3}{\psi}(x,t) = \textcolor{#F14124}{A}\,e^{\,i(\textcolor{#6B913C}{k}x-\textcolor{#FF8021}{\omega} t)},
+    \textcolor{#5ECCF3}{\psi}(x,t) = \textcolor{#F14124}{A}\,e^{\,i(\textcolor{#6B913C}{k}x-\textcolor{#FF8021}{\omega} t)}, \label{eq:complex-wave}
     $$
 
     and its real part is the wave of section 1.3,
 
     $$
-    \textcolor{#4E67C8}{H}(x,t) = \operatorname{Re}\,\textcolor{#5ECCF3}{\psi}(x,t) = \textcolor{#F14124}{A}\cos(\textcolor{#6B913C}{k}x-\textcolor{#FF8021}{\omega} t).
+    \textcolor{#4E67C8}{H}(x,t) = \operatorname{Re}\,\textcolor{#5ECCF3}{\psi}(x,t) = \textcolor{#F14124}{A}\cos(\textcolor{#6B913C}{k}x-\textcolor{#FF8021}{\omega} t). \label{eq:real-part-wave}
     $$
 
     These are equal for every $x$ and $t$: $H$ is the real wave, and $\psi$ is the arrow of length $A$ at the angle
@@ -643,8 +672,8 @@ def _(interference_schematic, mo, plt, sch_d, sch_wavelength, sch_x):
 
 
 @app.cell
-def _(mo):
-    mo.md(r"""
+def _(md):
+    md(r"""
     The calculation goes in steps, from the complex waves to the real height.
 
     **Step 1: one complex wave for each hole.** By section 1.3 the real height at the detector from hole 1 is
@@ -652,7 +681,7 @@ def _(mo):
     over the range of positions considered. Its complex wave, in the notation of section 2.2, is
 
     $$
-    \textcolor{#5ECCF3}{\psi}_1(t) = \textcolor{#F14124}{A}_1\,e^{\,i(\textcolor{#6B913C}{k}\textcolor{#FF84FA}{r}_1-\textcolor{#FF8021}{\omega} t)},\qquad \textcolor{#4E67C8}{H}_1(t) = \operatorname{Re}\,\textcolor{#5ECCF3}{\psi}_1(t).
+    \textcolor{#5ECCF3}{\psi}_1(t) = \textcolor{#F14124}{A}_1\,e^{\,i(\textcolor{#6B913C}{k}\textcolor{#FF84FA}{r}_1-\textcolor{#FF8021}{\omega} t)},\qquad \textcolor{#4E67C8}{H}_1(t) = \operatorname{Re}\,\textcolor{#5ECCF3}{\psi}_1(t). \label{eq:two-hole-waves}
     $$
 
     The direction of this arrow is the phase $kr_1-\omega t$. The part $kr_1$ is set by the distance from the hole
@@ -662,13 +691,13 @@ def _(mo):
     **Step 2: add the complex waves.** The sum of the two arrows is
 
     $$
-    \textcolor{#5ECCF3}{\psi}_{12}(t) = \textcolor{#5ECCF3}{\psi}_1(t) + \textcolor{#5ECCF3}{\psi}_2(t).
+    \textcolor{#5ECCF3}{\psi}_{12}(t) = \textcolor{#5ECCF3}{\psi}_1(t) + \textcolor{#5ECCF3}{\psi}_2(t). \label{eq:sum-of-waves}
     $$
 
     **Step 3: the real part is the real height.** The real part of a sum is the sum of the real parts, so
 
     $$
-    \operatorname{Re}\,\textcolor{#5ECCF3}{\psi}_{12}(t) = \operatorname{Re}\,\textcolor{#5ECCF3}{\psi}_1(t) + \operatorname{Re}\,\textcolor{#5ECCF3}{\psi}_2(t) = \textcolor{#4E67C8}{H}_1(t)+\textcolor{#4E67C8}{H}_2(t) = \textcolor{#4E67C8}{H}_{12}(t).
+    \operatorname{Re}\,\textcolor{#5ECCF3}{\psi}_{12}(t) = \operatorname{Re}\,\textcolor{#5ECCF3}{\psi}_1(t) + \operatorname{Re}\,\textcolor{#5ECCF3}{\psi}_2(t) = \textcolor{#4E67C8}{H}_1(t)+\textcolor{#4E67C8}{H}_2(t) = \textcolor{#4E67C8}{H}_{12}(t). \label{eq:real-part-sum}
     $$
 
     This is the height of the water with both holes open, since the heights add. Adding the arrows and then taking the real
@@ -677,7 +706,7 @@ def _(mo):
     **Step 4: separate the part that turns.** Both arrows contain the factor $e^{-i\omega t}$, so
 
     $$
-    \textcolor{#5ECCF3}{\psi}_{12}(t) = \big(\textcolor{#F14124}{A}_1\,e^{\,i\textcolor{#6B913C}{k}\textcolor{#FF84FA}{r}_1}+\textcolor{#F14124}{A}_2\,e^{\,i\textcolor{#6B913C}{k}\textcolor{#FF84FA}{r}_2}\big)\,e^{-i\textcolor{#FF8021}{\omega} t}.
+    \textcolor{#5ECCF3}{\psi}_{12}(t) = \big(\textcolor{#F14124}{A}_1\,e^{\,i\textcolor{#6B913C}{k}\textcolor{#FF84FA}{r}_1}+\textcolor{#F14124}{A}_2\,e^{\,i\textcolor{#6B913C}{k}\textcolor{#FF84FA}{r}_2}\big)\,e^{-i\textcolor{#FF8021}{\omega} t}. \label{eq:two-hole-sum}
     $$
 
     The bracket is the sum of the two arrows at $t=0$ (the top left of the figure below), placed tip to tail. The
@@ -694,14 +723,14 @@ def _(mo):
     $$
     \textcolor{#4E67C8}{H}_{12}(t) = \operatorname{Re}\big[\,|c|\,e^{i(\alpha-\textcolor{#FF8021}{\omega} t)}\big] = |c|\cos(\textcolor{#FF8021}{\omega} t-\alpha),
     \qquad
-    \langle \textcolor{#4E67C8}{H}_{12}^2\rangle = |c|^2\,\langle\cos^2(\textcolor{#FF8021}{\omega} t-\alpha)\rangle = \tfrac12|c|^2 ,
+    \langle \textcolor{#4E67C8}{H}_{12}^2\rangle = |c|^2\,\langle\cos^2(\textcolor{#FF8021}{\omega} t-\alpha)\rangle = \tfrac12|c|^2 , \label{eq:height-sum}
     $$
 
     because the average of $\cos^2$ over a period is $\tfrac12$ whatever the starting phase $\alpha$. Since
     $|e^{-i\omega t}|=1$, the length of the arrow is $|\psi_{12}(t)|=|c|$ at every time, so
 
     $$
-    \langle \textcolor{#4E67C8}{H}_{12}^2\rangle = \tfrac12\,|\textcolor{#5ECCF3}{\psi}_{12}|^2 .
+    \langle \textcolor{#4E67C8}{H}_{12}^2\rangle = \tfrac12\,|\textcolor{#5ECCF3}{\psi}_{12}|^2 . \label{eq:mean-square-height}
     $$
 
     The real height $H$ is the horizontal part of the arrow and swings between $\pm|\psi|$, while the length $|\psi|$
@@ -711,14 +740,14 @@ def _(mo):
     $I_1 = |\psi_1|^2 = A_1^2$, and with both holes open
 
     $$
-    I_{12} = |\textcolor{#5ECCF3}{\psi}_{12}|^2 = \big|\textcolor{#F14124}{A}_1\,e^{\,i\textcolor{#6B913C}{k}\textcolor{#FF84FA}{r}_1}+\textcolor{#F14124}{A}_2\,e^{\,i\textcolor{#6B913C}{k}\textcolor{#FF84FA}{r}_2}\big|^2 = \textcolor{#F14124}{A}_1^2 + \textcolor{#F14124}{A}_2^2 + 2\textcolor{#F14124}{A}_1\textcolor{#F14124}{A}_2\cos\textcolor{#7030A0}{\delta} .
+    I_{12} = |\textcolor{#5ECCF3}{\psi}_{12}|^2 = \big|\textcolor{#F14124}{A}_1\,e^{\,i\textcolor{#6B913C}{k}\textcolor{#FF84FA}{r}_1}+\textcolor{#F14124}{A}_2\,e^{\,i\textcolor{#6B913C}{k}\textcolor{#FF84FA}{r}_2}\big|^2 = \textcolor{#F14124}{A}_1^2 + \textcolor{#F14124}{A}_2^2 + 2\textcolor{#F14124}{A}_1\textcolor{#F14124}{A}_2\cos\textcolor{#7030A0}{\delta} . \label{eq:intensity-two-holes}
     $$
 
     The last step uses $|u+v|^2 = |u|^2+|v|^2+2\operatorname{Re}(u^*v)$ with $u^*v = A_1A_2\,e^{i\delta}$. In
     terms of the single-hole intensities,
 
     $$
-    I_{12} = I_1 + I_2 + 2\sqrt{I_1I_2}\,\cos\textcolor{#7030A0}{\delta} .
+    I_{12} = I_1 + I_2 + 2\sqrt{I_1I_2}\,\cos\textcolor{#7030A0}{\delta} . \label{eq:intensity-intensities}
     $$
 
     The last term is the interference term, and $\delta$ is the angle between the two arrows. When the arrows
@@ -781,8 +810,8 @@ def _(hole_amplitude, intensity, mo, np, slit_d, slit_wavelength, slit_x, two_ho
 
 
 @app.cell
-def _(mo):
-    mo.md(r"""
+def _(md):
+    md(r"""
     ### 3.1 Why the energy goes as the height squared
 
     The intensity of Step 5 rests on one fact: the energy of a wave is proportional to the square of its height. It
@@ -791,7 +820,7 @@ def _(mo):
     solution
 
     $$
-    {\textcolor{#4E67C8}{H}}(t) = {\textcolor{#F14124}{A}}\cos({\textcolor{#FF8021}{\omega}} t), \qquad {\textcolor{#FF8021}{\omega}}^2 = \kappa/m .
+    {\textcolor{#4E67C8}{H}}(t) = {\textcolor{#F14124}{A}}\cos({\textcolor{#FF8021}{\omega}} t), \qquad {\textcolor{#FF8021}{\omega}}^2 = \kappa/m . \label{eq:oscillator-height}
     $$
 
     Its potential and kinetic energies are
@@ -799,13 +828,13 @@ def _(mo):
     $$
     E_{\text{pot}} = \tfrac12\kappa {\textcolor{#4E67C8}{H}}^2 = \tfrac12 m{\textcolor{#FF8021}{\omega}}^2{\textcolor{#F14124}{A}}^2\cos^2({\textcolor{#FF8021}{\omega}} t),
     \qquad
-    E_{\text{kin}} = \tfrac12 m{\textcolor{#4E67C8}{\dot H}}^2 = \tfrac12 m{\textcolor{#FF8021}{\omega}}^2{\textcolor{#F14124}{A}}^2\sin^2({\textcolor{#FF8021}{\omega}} t),
+    E_{\text{kin}} = \tfrac12 m{\textcolor{#4E67C8}{\dot H}}^2 = \tfrac12 m{\textcolor{#FF8021}{\omega}}^2{\textcolor{#F14124}{A}}^2\sin^2({\textcolor{#FF8021}{\omega}} t), \label{eq:oscillator-energies}
     $$
 
     and their sum is
 
     $$
-    \textcolor{#FF8021}{E} = E_{\text{pot}} + E_{\text{kin}} = \tfrac12 m{\textcolor{#FF8021}{\omega}}^2{\textcolor{#F14124}{A}}^2 .
+    \textcolor{#FF8021}{E} = E_{\text{pot}} + E_{\text{kin}} = \tfrac12 m{\textcolor{#FF8021}{\omega}}^2{\textcolor{#F14124}{A}}^2 . \label{eq:oscillator-energy-total}
     $$
 
     The total does not depend on time: the energy passes back and forth between the two forms while the sum stays
@@ -885,15 +914,15 @@ def _(mo):
 
 
 @app.cell
-def _(mo):
-    mo.md(r"""
+def _(md):
+    md(r"""
     ## 5 Energy and momentum are these rates
 
     The physical content is in two relations that connect the rotation rates to the quantities a physicist
     measures. Here $\hbar$ is Planck's constant divided by $2\pi$.
 
     $$
-    \textcolor{#FF8021}{E} = \hbar\,\textcolor{#FF8021}{\omega}, \qquad\qquad p = \hbar\,\textcolor{#6B913C}{k} .
+    \textcolor{#FF8021}{E} = \hbar\,\textcolor{#FF8021}{\omega}, \qquad\qquad p = \hbar\,\textcolor{#6B913C}{k} . \label{eq:de-broglie}
     $$
 
     - **Energy is the rotation rate in time.** A state of definite energy $E$ has an arrow that turns at the
@@ -903,7 +932,7 @@ def _(mo):
     - **Momentum is the rotation rate in space.** A state of definite momentum $p$ has an arrow that twists at
       the rate $k = p/\hbar$ along the line, so its wavelength is
       $$
-      \textcolor{#DF2CB2}{\lambda} = \frac{2\pi}{\textcolor{#6B913C}{k}} = \frac{\textcolor{#5ECCF3}{\psi}}{p}, \qquad \textcolor{#5ECCF3}{\psi} = 2\pi\hbar .
+      \textcolor{#DF2CB2}{\lambda} = \frac{2\pi}{\textcolor{#6B913C}{k}} = \frac{2\pi\hbar}{p} . \label{eq:wavelength-momentum}
       $$
       The larger the momentum, the shorter the wavelength.
 
@@ -927,7 +956,7 @@ def _(mo):
     square root factor is $(1-u)^{-1/2} \approx 1 + u/2$, and $p \approx mv$, so
 
     $$
-    E \approx E_0\left(1 + \frac{v^2}{2c^2}\right) = E_0 + \tfrac12 mv^2 = E_0 + \frac{p^2}{2m} .
+    E \approx E_0\left(1 + \frac{v^2}{2c^2}\right) = E_0 + \tfrac12 mv^2 = E_0 + \frac{p^2}{2m} . \label{eq:energy-expansion}
     $$
 
     The energy is the rest energy $E_0$ plus the kinetic energy $p^2/2m$. Dividing by $\hbar$ gives the rotation
@@ -935,15 +964,15 @@ def _(mo):
 
     $$
     \textcolor{#FF8021}{\omega}(\textcolor{#6B913C}{k}) = \textcolor{#FF8021}{\omega}_{\mathrm{rest}} + \frac{\hbar \textcolor{#6B913C}{k}^2}{2m},
-    \qquad \textcolor{#FF8021}{\omega}_{\mathrm{rest}} = \frac{E_0}{\hbar} = \frac{mc^2}{\hbar} .
+    \qquad \textcolor{#FF8021}{\omega}_{\mathrm{rest}} = \frac{E_0}{\hbar} = \frac{mc^2}{\hbar} . \label{eq:omega-with-rest}
     $$
 
     **Why the rest-energy term is left out.** The rate $\omega_{\mathrm{rest}}$ is the same for every $k$. A wave
     function built from plane waves with amplitudes $a(k)$ (the sum of section 6) is, at time $t$,
 
     $$
-    \textcolor{#5ECCF3}{\psi}(x,t) = \sum_{\textcolor{#6B913C}{k}} a(\textcolor{#6B913C}{k})\,e^{\,i\left(\textcolor{#6B913C}{k}x-\left(\textcolor{#FF8021}{\omega}_{\mathrm{rest}}+\hbar \textcolor{#6B913C}{k}^2/2m\right)t\right)}
-    = e^{-i\textcolor{#FF8021}{\omega}_{\mathrm{rest}}t}\;\sum_{\textcolor{#6B913C}{k}} a(\textcolor{#6B913C}{k})\,e^{\,i\left(\textcolor{#6B913C}{k}x-\hbar \textcolor{#6B913C}{k}^2t/2m\right)} .
+    \textcolor{#5ECCF3}{\psi}(x,t) = \sum_{\textcolor{#6B913C}{k}} \textcolor{#F14124}{a}(\textcolor{#6B913C}{k})\,e^{\,i\left(\textcolor{#6B913C}{k}x-\left(\textcolor{#FF8021}{\omega}_{\mathrm{rest}}+\hbar \textcolor{#6B913C}{k}^2/2m\right)t\right)}
+    = e^{-i\textcolor{#FF8021}{\omega}_{\mathrm{rest}}t}\;\sum_{\textcolor{#6B913C}{k}} \textcolor{#F14124}{a}(\textcolor{#6B913C}{k})\,e^{\,i\left(\textcolor{#6B913C}{k}x-\hbar \textcolor{#6B913C}{k}^2t/2m\right)} . \label{eq:sum-with-rest}
     $$
 
     The factor $e^{-i\omega_{\mathrm{rest}}t}$ does not depend on $k$, so it comes outside the sum and multiplies
@@ -951,19 +980,19 @@ def _(mo):
     the probability density is the same with or without it:
 
     $$
-    |\textcolor{#5ECCF3}{\psi}|^2 = \big|e^{-i\textcolor{#FF8021}{\omega}_{\mathrm{rest}}t}\big|^2\,\Big|\sum_{\textcolor{#6B913C}{k}} a(\textcolor{#6B913C}{k})\,e^{\,i\left(\textcolor{#6B913C}{k}x-\hbar \textcolor{#6B913C}{k}^2t/2m\right)}\Big|^2
-    = \Big|\sum_{\textcolor{#6B913C}{k}} a(\textcolor{#6B913C}{k})\,e^{\,i\left(\textcolor{#6B913C}{k}x-\hbar \textcolor{#6B913C}{k}^2t/2m\right)}\Big|^2 .
+    |\textcolor{#5ECCF3}{\psi}|^2 = \big|e^{-i\textcolor{#FF8021}{\omega}_{\mathrm{rest}}t}\big|^2\,\Big|\sum_{\textcolor{#6B913C}{k}} \textcolor{#F14124}{a}(\textcolor{#6B913C}{k})\,e^{\,i\left(\textcolor{#6B913C}{k}x-\hbar \textcolor{#6B913C}{k}^2t/2m\right)}\Big|^2
+    = \Big|\sum_{\textcolor{#6B913C}{k}} \textcolor{#F14124}{a}(\textcolor{#6B913C}{k})\,e^{\,i\left(\textcolor{#6B913C}{k}x-\hbar \textcolor{#6B913C}{k}^2t/2m\right)}\Big|^2 . \label{eq:density-without-rest}
     $$
 
     Only the differences between the rotation rates of different components change how they add. Two
     components $k_1$ and $k_2$ turn relative to each other at the rate
     $\omega(k_1)-\omega(k_2) = \hbar(k_1^2-k_2^2)/2m$, in which $\omega_{\mathrm{rest}}$ cancels. The speed of
-    the lump, $d\omega/dk = \hbar k/m$, also has no $\omega_{\mathrm{rest}}$, because the slope of a constant is
+    the lump, $d\omega/dk = \hbar k/m$, also has no $\omega_{\mathrm{rest}}$, because the derivative of a constant is
     zero. So adding $E_0$ to the energy is a choice of where to start measuring energy, as with the height of
     the floor in a gravity problem, and it changes no probability. It is dropped, and from here on
 
     $$
-    \textcolor{#FF8021}{\omega}(\textcolor{#6B913C}{k}) = \frac{\hbar \textcolor{#6B913C}{k}^2}{2m}.
+    \textcolor{#FF8021}{\omega}(\textcolor{#6B913C}{k}) = \frac{\hbar \textcolor{#6B913C}{k}^2}{2m}. \label{eq:dispersion}
     $$
 
     The figure shows this for the packet of section 6. Slide the phase $\omega_{\mathrm{rest}}t$ that the rest
@@ -1007,8 +1036,8 @@ def _(mo, plt, rest_energy_phase_figure, rest_phase):
 
 
 @app.cell
-def _(mo):
-    mo.md(r"""
+def _(md):
+    md(r"""
     ## 6 Wave packets: when a lump moves like a particle
 
     **From intensity to probability density.** In section 3 the real height $H$ of the water gave an
@@ -1019,13 +1048,13 @@ def _(mo):
     just as the energy of the water between $a$ and $b$ is the integral of its energy per unit length:
 
     $$
-    P(a<x<b,\,t) = \int_a^b \rho(x,t)\,dx = \int_a^b |\textcolor{#5ECCF3}{\psi}(x,t)|^2\,dx .
+    P(a<x<b,\,t) = \int_a^b \rho(x,t)\,dx = \int_a^b |\textcolor{#5ECCF3}{\psi}(x,t)|^2\,dx . \label{eq:interval-probability}
     $$
 
     The particle is somewhere, so the probability of finding it somewhere on the whole line must be 1:
 
     $$
-    \int_{-\infty}^{\infty} |\textcolor{#5ECCF3}{\psi}(x,t)|^2\,dx = 1 .
+    \int_{-\infty}^{\infty} |\textcolor{#5ECCF3}{\psi}(x,t)|^2\,dx = 1 . \label{eq:normalization}
     $$
 
     This **normalization** fixes the overall size of $\psi$, which for water could be anything. It is a real
@@ -1040,7 +1069,7 @@ def _(mo):
     $$
     P(a<x<b) = \int_a^b A^2\,dx = A^2\,(b-a) ,
     \qquad
-    \int_{-X}^{X} |\textcolor{#5ECCF3}{\psi}|^2\,dx = \int_{-X}^{X} A^2\,dx = 2X\,A^2 .
+    \int_{-X}^{X} |\textcolor{#5ECCF3}{\psi}|^2\,dx = \int_{-X}^{X} A^2\,dx = 2X\,A^2 . \label{eq:plane-wave-area}
     $$
 
     The width $2X$ grows without limit as the region is widened, so over the whole line the area is infinite
@@ -1091,14 +1120,14 @@ def _(mo):
 
 
 @app.cell
-def _(mo):
-    mo.md(r"""
+def _(md):
+    md(r"""
     A localized particle is described by adding plane waves whose wave numbers $k$ are close to one
     value $k_0$. Where the waves are in step their amplitudes add, and elsewhere they cancel, which leaves a
     lump of probability. The amplitude is
 
     $$
-    \textcolor{#5ECCF3}{\psi}(x,t) = \sum_{\textcolor{#6B913C}{k}} a(\textcolor{#6B913C}{k})\, e^{\,i(\textcolor{#6B913C}{k}x-\textcolor{#FF8021}{\omega}(\textcolor{#6B913C}{k})\,t)},
+    \textcolor{#5ECCF3}{\psi}(x,t) = \sum_{\textcolor{#6B913C}{k}} \textcolor{#F14124}{a}(\textcolor{#6B913C}{k})\, e^{\,i(\textcolor{#6B913C}{k}x-\textcolor{#FF8021}{\omega}(\textcolor{#6B913C}{k})\,t)}, \label{eq:packet-sum}
     $$
 
     where $a(k)$ is the amplitude of each wave. The probability of a given $k$ is $|a(k)|^2$.
@@ -1129,8 +1158,8 @@ def _(band_shapes_figure, mo, plt):
 
 
 @app.cell
-def _(mo):
-    mo.md(r"""
+def _(md):
+    md(r"""
     Both give a main lump of about the same width. The flat band also gives ripples on either side, the
     first about 5% as high as the peak, and they die away slowly (as $1/x^2$). They come from the sharp edges
     of the band: waves that stop abruptly at the edge of the band do not cancel one another completely away
@@ -1156,7 +1185,7 @@ def _(mo):
     with root-mean-square width $\sigma_x$, and the two widths are linked by (shown in subsection 6.1)
 
     $$
-    \sigma_x\,\sigma_{\textcolor{#6B913C}{k}} = \tfrac12 , \qquad\text{that is}\qquad \Delta x\,\Delta p = \frac{\hbar}{2},
+    \sigma_x\,\sigma_{\textcolor{#6B913C}{k}} = \tfrac12 , \qquad\text{that is}\qquad \Delta x\,\Delta p = \frac{\hbar}{2}, \label{eq:uncertainty}
     $$
 
     where $\Delta x = \sigma_x$ and $\Delta p = \hbar\sigma_{k}$ are the spreads in position and in momentum.
@@ -1171,8 +1200,8 @@ def _(mo):
 
 
 @app.cell
-def _(mo):
-    mo.md(r"""
+def _(md):
+    md(r"""
     ### 6.1 From a band of waves to a lump: the uncertainty principle
 
     The previous pages chose a bell curve for $a(k)$ and stated that the lump in position is then also a bell
@@ -1185,7 +1214,7 @@ def _(mo):
     $t=0$ the lump is a sum of cosines, each with its weight $a(k)$:
 
     $$
-    \textcolor{#5ECCF3}{\psi}(x) = \int_{-\infty}^{\infty} a(\textcolor{#6B913C}{k})\,\cos(\textcolor{#6B913C}{k}x)\,d\textcolor{#6B913C}{k} .
+    \textcolor{#5ECCF3}{\psi}(x) = \int_{-\infty}^{\infty} \textcolor{#F14124}{a}(\textcolor{#6B913C}{k})\,\cos(\textcolor{#6B913C}{k}x)\,d\textcolor{#6B913C}{k} . \label{eq:lump-cosines}
     $$
 
     Adding up waves of every wave number with weights $a(k)$ is called the **Fourier transform** of $a(k)$. It
@@ -1215,8 +1244,8 @@ def _(lump_buildup_figure, lump_time, lump_waves, mo, plt):
 
 
 @app.cell
-def _(mo):
-    mo.md(r"""
+def _(md):
+    md(r"""
     With no waves on each side there is only $k=0$, which is flat and stays flat as time passes, because
     the rest-energy rate of section 5 is left out. With it included the arrow of this wave would turn at the
     rate $mc^2/\hbar$ and its real part would oscillate, while $|\psi|^2$ would still be constant: a wave of
@@ -1240,7 +1269,7 @@ def _(mo):
     a bell curve with root-mean-square width $\sigma_k$, then
 
     $$
-    a(k) = e^{-k^2/4\sigma_k^2} \quad\longrightarrow\quad \textcolor{#5ECCF3}{\psi}(x) \propto e^{-\sigma_k^2x^2} .
+    a(k) = e^{-k^2/4\sigma_k^2} \quad\longrightarrow\quad \textcolor{#5ECCF3}{\psi}(x) \propto e^{-\sigma_k^2x^2} . \label{eq:gaussian-transform}
     $$
 
     We use this result without proving it. It is a special property. Most shapes change character when
@@ -1258,7 +1287,7 @@ def _(mo):
     coefficients of $x^2$ in the exponents are equal, $1/2\sigma_x^2 = 2\sigma_k^2$, that is
 
     $$
-    \sigma_x = \frac{1}{2\sigma_k}, \qquad\text{so that}\qquad \sigma_x\,\sigma_{\textcolor{#6B913C}{k}} = \frac12 .
+    \sigma_x = \frac{1}{2\sigma_k}, \qquad\text{so that}\qquad \sigma_x\,\sigma_{\textcolor{#6B913C}{k}} = \frac12 . \label{eq:width-relation}
     $$
 
     Since $\Delta x = \sigma_x$ and $\Delta p = \hbar\sigma_k$ (section 5, $p=\hbar k$), this is
@@ -1322,8 +1351,8 @@ def _(min_uncertainty_figure, mo, plt):
 
 
 @app.cell
-def _(mo):
-    mo.md(r"""
+def _(md):
+    md(r"""
     ### 6.2 Entropy: another way to see the uncertainty principle
 
     The root-mean-square width $\sigma$ is one way to say how spread out a distribution is. Another is its
@@ -1331,33 +1360,33 @@ def _(mo):
     probability density $\rho$ the entropy is
 
     $$
-    h = -\int \rho \,\ln \rho \; dx ,
+    S = -\int \rho \,\ln \rho \; dx , \label{eq:entropy-def}
     $$
 
     the average value of $-\ln\rho$. This is small where the density is large (an expected outcome) and large
     where the density is small (a surprising outcome), so a density concentrated in one place has a low entropy
     and a spread-out density has a high one. (For a density of a continuous variable the entropy can be
-    negative, and only comparisons between values matter.) Write $h_x$ for the entropy of the position density
-    $|\psi(x)|^2$ and $h_k$ for that of the density $|a(k)|^2$ of wave number. For a bell curve of width
-    $\sigma$ the integral gives $h = \tfrac12\ln(2\pi e\,\sigma^2)$, which grows as the curve widens.
+    negative, and only comparisons between values matter.) Write $S_x$ for the entropy of the position density
+    $|\psi(x)|^2$ and $S_k$ for that of the density $|a(k)|^2$ of wave number. For a bell curve of width
+    $\sigma$ the integral gives $S = \tfrac12\ln(2\pi e\,\sigma^2)$, which grows as the curve widens.
 
     Two facts about the bell curve connect entropy to the uncertainty principle. Both are stated here
     without proof.
 
     - **At a given width, the bell curve has the largest entropy.** No other shape of width $\sigma$ has more:
-      $h \le \tfrac12\ln(2\pi e\,\sigma^2)$. It is the most spread-out, least committal shape that the width
+      $S \le \tfrac12\ln(2\pi e\,\sigma^2)$. It is the most spread-out, least committal shape that the width
       allows.
-    - **The two entropies cannot both be small.** For every lump, $h_x + h_k \ge \ln(\pi e)$, with equality only
+    - **The two entropies cannot both be small.** For every lump, $S_x + S_k \ge \ln(\pi e)$, with equality only
       for a bell curve (in position and in wave number). This is the **entropic uncertainty relation**. Here
       the bell curve has the *smallest* total entropy.
 
     The direction is therefore different in the two facts. For one variable at a fixed width the bell curve
     maximizes the entropy, and for the pair of variables it minimizes the total. Putting the two together gives
-    the uncertainty relation of 6.1 again:
+    the uncertainty relation \eqref{eq:width-relation} of 6.1 again:
 
     $$
-    \ln(\pi e) \;\le\; h_x + h_k \;\le\; \tfrac12\ln(2\pi e\,\sigma_x^2) + \tfrac12\ln(2\pi e\,\sigma_k^2)
-    = \ln(2\pi e\,\sigma_x\sigma_k) \quad\Longrightarrow\quad \sigma_x\sigma_k \ge \tfrac12 .
+    \ln(\pi e) \;\le\; S_x + S_k \;\le\; \tfrac12\ln(2\pi e\,\sigma_x^2) + \tfrac12\ln(2\pi e\,\sigma_k^2)
+    = \ln(2\pi e\,\sigma_x\sigma_k) \quad\Longrightarrow\quad \sigma_x\sigma_k \ge \tfrac12 . \label{eq:entropy-chain}
     $$
 
     The first inequality is the second fact, and the second inequality is the first fact applied to $x$ and to
@@ -1368,7 +1397,7 @@ def _(mo):
 
     The figure uses the family $a(k) = e^{-|k|^p/p}$ of the previous page, where $p=2$ is the bell curve. The
     left and middle panels show $|a|^2$ and $|\psi|^2$ for the chosen $p$ with their entropies. The right panel
-    shows the total $h_x+h_k$ against $p$ (dark), the floor $\ln(\pi e)$ (dashed) and the upper bound
+    shows the total $S_x+S_k$ against $p$ (dark), the floor $\ln(\pi e)$ (dashed) and the upper bound
     $\ln(2\pi e\,\sigma_x\sigma_k)$ (light). The total touches the floor only at $p=2$ and lies above it for
     every other shape. At $p=2$ the two densities are even the same function, because the bell curve with
     $\sigma_k=1/\sqrt{2}$ is its own transform (6.1).
@@ -1392,15 +1421,15 @@ def _(entropy_family_figure, entropy_p, mo, plt):
 
 
 @app.cell
-def _(mo):
-    mo.md(r"""
+def _(md):
+    md(r"""
     ### 6.3 The lump moves at the classical velocity
 
     Each component has its own rotation rate $\omega(k) = \hbar k^2/2m$. Write this exactly around the central
     wave number $k_0$:
 
     $$
-    \textcolor{#FF8021}{\omega}(\textcolor{#6B913C}{k}) = \textcolor{#FF8021}{\omega}_0 + v\,(\textcolor{#6B913C}{k}-\textcolor{#6B913C}{k}_0) + \frac{\hbar}{2m}(\textcolor{#6B913C}{k}-\textcolor{#6B913C}{k}_0)^2, \qquad v = \frac{d\textcolor{#FF8021}{\omega}}{d\textcolor{#6B913C}{k}}\Big|_{\textcolor{#6B913C}{k}_0} = \frac{\hbar \textcolor{#6B913C}{k}_0}{m} = \frac{p_0}{m}.
+    \textcolor{#FF8021}{\omega}(\textcolor{#6B913C}{k}) = \textcolor{#FF8021}{\omega}_0 + v\,(\textcolor{#6B913C}{k}-\textcolor{#6B913C}{k}_0) + \frac{\hbar}{2m}(\textcolor{#6B913C}{k}-\textcolor{#6B913C}{k}_0)^2, \qquad v = \frac{d\textcolor{#FF8021}{\omega}}{d\textcolor{#6B913C}{k}}\Big|_{\textcolor{#6B913C}{k}_0} = \frac{\hbar \textcolor{#6B913C}{k}_0}{m} = \frac{p_0}{m}. \label{eq:dispersion-expansion}
     $$
 
     The middle term, linear in $k-k_0$, changes the phase of the component by $-v\,(k-k_0)\,t$. Together with
@@ -1426,8 +1455,8 @@ def _(mo, packet_times_figure, plt):
 
 
 @app.cell
-def _(mo):
-    mo.md(r"""
+def _(md):
+    md(r"""
     ### 6.4 The lump spreads
 
     The last term in the expansion, quadratic in $k-k_0$, is the one that does not simply shift the pattern.
@@ -1435,7 +1464,7 @@ def _(mo):
     that the probability stays a bell curve, centred at $x = vt$, whose width grows as
 
     $$
-    \sigma(t) = \sigma_x\sqrt{1 + \left(\frac{t}{t_s}\right)^{2}}, \qquad t_s = \frac{2m\sigma_x^2}{\hbar}.
+    \sigma(t) = \sigma_x\sqrt{1 + \left(\frac{t}{t_s}\right)^{2}}, \qquad t_s = \frac{2m\sigma_x^2}{\hbar}. \label{eq:width-growth}
     $$
 
     At the time $t_s$ the width has grown by a factor $\sqrt{2}$. The time-and-space map shows the same
@@ -1454,15 +1483,15 @@ def _(mo, plt, spacetime_figure):
 
 
 @app.cell
-def _(mo):
-    mo.md(r"""
+def _(md):
+    md(r"""
     **The uncertainty in position against distance from the source.** Suppose the electron leaves a source (an
     electron gun) at $x=0$ at $t=0$, with wave number $k_0$ and with the width $\sigma_x$ that the lump has
     there. At time $t$ it has travelled the distance $d = vt$ along the classical path, so $t = d/v$, and the
-    uncertainty in position, $\Delta x$, is the width $\sigma(t)$ above written in terms of $d$:
+    uncertainty in position, $\Delta x$, is the width $\sigma(t)$ of Eq. \eqref{eq:width-growth} written in terms of $d$:
 
     $$
-    \Delta x(d) = \sigma_x\sqrt{1 + \left(\frac{d}{d_s}\right)^{2}}, \qquad d_s = v\,t_s = 2\textcolor{#6B913C}{k}_0\,\sigma_x^2 .
+    \Delta x(d) = \sigma_x\sqrt{1 + \left(\frac{d}{d_s}\right)^{2}}, \qquad d_s = v\,t_s = 2\textcolor{#6B913C}{k}_0\,\sigma_x^2 . \label{eq:width-distance}
     $$
 
     Close to the source ($d \ll d_s$) the uncertainty stays near its initial value $\sigma_x$. Far from the source
@@ -1500,8 +1529,8 @@ def _(gun_d, gun_k0, gun_sigma, mo, plt, width_vs_distance_figure):
 
 
 @app.cell
-def _(mo):
-    mo.md(r"""
+def _(md):
+    md(r"""
     ### 6.5 When is a particle classical?
 
     Two facts have been found: the lump travels at the classical velocity, and it spreads in the time $t_s$. A
@@ -1511,13 +1540,13 @@ def _(mo):
     $$
     v\,t_s = \frac{\hbar \textcolor{#6B913C}{k}_0}{m}\cdot\frac{2m\sigma_x^2}{\hbar} = 2\textcolor{#6B913C}{k}_0\,\sigma_x^2 ,
     \qquad\text{that is}\qquad
-    \frac{v\,t_s}{\sigma_x} = 2\,\textcolor{#6B913C}{k}_0\,\sigma_x .
+    \frac{v\,t_s}{\sigma_x} = 2\,\textcolor{#6B913C}{k}_0\,\sigma_x . \label{eq:spreading-distance}
     $$
 
     So the single number that decides the matter is
 
     $$
-    \textcolor{#6B913C}{k}_0\,\sigma_x = \frac{p_0\,\sigma_x}{\hbar} = \frac{p_0}{2\,\Delta p},
+    \textcolor{#6B913C}{k}_0\,\sigma_x = \frac{p_0\,\sigma_x}{\hbar} = \frac{p_0}{2\,\Delta p}, \label{eq:classical-number}
     $$
 
     which compares the size of the lump with the wavelength ($\sigma_x/\lambda = k_0\sigma_x/2\pi$). The last
@@ -1586,205 +1615,114 @@ def _(
 
 
 @app.cell
-def _(mo):
-    mo.md(r"""
-    ## 7 The Schrödinger equation
+def _(md):
+    md(r"""
+    ## 7 The Schrödinger equation and the conservation of probability
 
-    Sections 5 and 6 built the wave function from plane waves, each turning at the rate
-    $\omega(k) = \hbar k^2/2m$. That rule needs a list of waves. This section turns it into one equation for
-    $\psi(x,t)$ itself, which holds for every lump and needs no list.
+    A law of motion says how a state changes: given the state now, it fixes the state a moment later. For a
+    ball, Newton's law gives the rate of change of the velocity. For the wave function we want an equation for
+    the rate of change of $\psi$ at each position, $\partial\psi/\partial t$ (the rate at which $\psi$ changes
+    with time at a fixed position), written in terms of $\psi$ itself, so that no list of plane waves is needed.
+    The strategy of this section is to ask what the law must respect, and to see how much that determines.
 
-    **What we are trying to do.** A law of motion says how a state changes: given the state now, it fixes the
-    state a moment later. For a ball, Newton's law gives the rate of change of the velocity. We want the same
-    for the wave function: an equation that gives the rate of change of $\psi$ at each position, from the
-    shape of $\psi$ at that moment. The rule $\omega(k)$ already says how each plane wave changes, but only
-    after $\psi$ has been split into plane waves, and that split needs a list. Slopes avoid the split. A plane
-    wave turns in time at the rate $\omega$ and twists in space at the rate $k$, so its slope in time brings out
-    $\omega$ and its slope in position brings out $k$, and each slope gives back the same wave times a number.
-    The slopes can be applied to $\psi$ without knowing which waves it contains. The plan has four steps:
-
-    - **Step 0, the form.** Ask what shape any law of motion for $\psi$ must have, using only two facts: amplitudes
-      add, and nothing can happen in no time. The result is a first-order equation that contains a table of
-      numbers we do not yet know, and it shows why the factor $i$ appears.
-    - **Step 1, energy and momentum as slopes.** Show that the slope of a plane wave in time returns the wave
-      times its energy $E$, and the slope in position returns the wave times its momentum $p$. Energy and
-      momentum then become things we can do to $\psi$ itself, with no need to split it into waves.
-    - **Step 2, the equation.** Use the relation $E = p^2/2m$ of a free particle to replace the unknown table of
-      Step 0 by a definite rule. This rule is the Schrödinger equation.
-    - **Step 3, every lump.** Check that a rule found from single waves holds for any sum of waves, so for the
-      packets of section 6, and see it numerically for the Gaussian packet.
-
-    **Step 0: what form can the law take?** Two facts we already have are enough to fix the form. Describe the
-    state by a list of amplitudes. Write $C_1, C_2, C_3, \dots$ for the values of $\psi$ at points
-    $x_1, x_2, x_3, \dots$ along the line, as close together as we like. The whole state is this list, and each
-    $C_j$ changes with time.
-
-    The first fact is that amplitudes add (section 3). The state a short time $\Delta t$ later is built from
-    the old state by adding contributions, so each new amplitude is a weighted sum of the old ones:
+    **Step 1: what the law must respect.** The probability density is $\rho = |\psi|^2 = \psi^{*}\psi$, and the
+    total probability $P(t) = \int \rho\,dx$ must stay equal to 1 at all times (Eq. \eqref{eq:normalization}). The
+    natural way for this to hold is a conservation law: the density at a point changes only because
+    probability flows past it,
 
     $$
-    C_i(t+\Delta t) = \sum_j U_{ij}\,C_j(t) .
+    \frac{\partial \rho}{\partial t} = -\frac{\partial}{\partial x}\Big(\text{probability flow}\Big) . \label{eq:conservation-form}
     $$
 
-    The number $U_{ij}$ says how much the old amplitude at point $j$ contributes to the new amplitude at point
-    $i$. The numbers form a table with a row $i$ and a column $j$, called a matrix. They do not depend on the
-    amplitudes themselves, which is what it means for the law to be linear: if two states each evolve this way,
-    so does their sum.
-
-    The second fact is that nothing can happen in no time. As $\Delta t \to 0$ each new amplitude must equal the
-    old one, so $U_{ij} \to \delta_{ij}$, where $\delta_{ij}$ is $1$ if $i=j$ and $0$ otherwise. For a small
-    $\Delta t$ each $U_{ij}$ then differs from $\delta_{ij}$ by an amount proportional to $\Delta t$. Write that
-    amount as $-\frac{i}{\hbar}\hat H_{ij}\Delta t$, which defines a second table of numbers $\hat H_{ij}$ (the factor
-    $-i/\hbar$ is a convention, chosen so that $\hat H$ comes out as an energy):
+    Integrate over all $x$. The integral of a derivative is the difference of the differentiated quantity
+    between the two ends, and the flow vanishes far away, because a normalizable $\psi$ goes to zero there:
 
     $$
-    U_{ij} = \delta_{ij} - \frac{i}{\hbar}\,\hat H_{ij}\,\Delta t .
+    \frac{dP}{dt} = \int_{-\infty}^{\infty} \frac{\partial \rho}{\partial t}\,dx = -\Big[\text{probability flow}\Big]_{-\infty}^{\infty} = 0 . \label{eq:conservation-total}
     $$
 
-    Now put this into the sum. The aim is to get an equation for the rate of change of $C_i$, so we want the
-    change $C_i(t+\Delta t) - C_i(t)$ on one side. Do it one step at a time.
+    So if the total is 1 at one time it is 1 at every time. We now ask which laws for $\psi$ have this
+    property. Two facts already in hand narrow the choice. Amplitudes add (section 3), so the law is linear: if
+    two wave functions each obey it, so does their sum. And the wave function now fixes the wave function
+    later, so the law is first order in time.
 
-    **(a) Substitute.** Replace $U_{ij}$ by its form above:
-
-    $$
-    C_i(t+\Delta t) = \sum_j \left[\delta_{ij} - \frac{i}{\hbar}\,\hat H_{ij}\,\Delta t\right] C_j(t) .
-    $$
-
-    **(b) Split the sum into two sums,** one for each term in the bracket:
+    **Step 2: the general linear law, and what conservation requires.** The simplest laws of this kind give
+    $\partial\psi/\partial t$ as a combination of $\psi$ and its first two derivatives in position, with
+    constant coefficients $\alpha$, $\gamma$, $\delta$ (complex numbers, for now):
 
     $$
-    C_i(t+\Delta t) = \sum_j \delta_{ij}\,C_j(t) \;-\; \frac{i}{\hbar}\,\Delta t \sum_j \hat H_{ij}\,C_j(t) ,
+    \frac{\partial \textcolor{#5ECCF3}{\psi}}{\partial t} = \alpha\,\frac{\partial^2 \textcolor{#5ECCF3}{\psi}}{\partial x^2} + \gamma\,\frac{\partial \textcolor{#5ECCF3}{\psi}}{\partial x} + \delta\,\textcolor{#5ECCF3}{\psi} . \label{eq:general-law}
     $$
 
-    where the constant factor $-\frac{i}{\hbar}\Delta t$ has been taken outside the second sum.
-
-    **(c) Evaluate the first sum.** Since $\delta_{ij}$ is $1$ when $j = i$ and $0$ otherwise, every term of
-    $\sum_j \delta_{ij}C_j$ vanishes except the one with $j = i$. For example, with three points and $i = 2$,
-    $\delta_{21}C_1 + \delta_{22}C_2 + \delta_{23}C_3 = 0 + C_2 + 0$. So the first sum is just $C_i(t)$:
-
-    $$
-    C_i(t+\Delta t) = C_i(t) \;-\; \frac{i}{\hbar}\,\Delta t \sum_j \hat H_{ij}\,C_j(t) .
-    $$
-
-    **(d) Move $C_i(t)$ to the left side** by subtracting it from both sides, so that the left side is the change
-    in $C_i$ over the time $\Delta t$:
+    (Higher derivatives could be added. We stop at the second, and experiment decides whether more are
+    needed. For a free electron they are not.) Try a single plane wave with its weight,
+    $\psi_k = a(k)\,e^{ikx}\,e^{\lambda t}$, where $\lambda$ is a number to be found. Its derivatives are
+    $\partial\psi_k/\partial t = \lambda\,\psi_k$, $\partial\psi_k/\partial x = ik\,\psi_k$ and
+    $\partial^2\psi_k/\partial x^2 = -k^2\,\psi_k$, so the law is satisfied when
 
     $$
-    C_i(t+\Delta t) - C_i(t) = -\,\frac{i}{\hbar}\,\Delta t \sum_j \hat H_{ij}\,C_j(t) .
+    \lambda(\textcolor{#6B913C}{k}) = -\,\alpha\textcolor{#6B913C}{k}^2 + i\gamma\textcolor{#6B913C}{k} + \delta . \label{eq:lambda}
     $$
 
-    **(e) Divide both sides by $\Delta t$,** which turns the left side into a change per unit time:
+    This wave has $|\psi_k|^2 = |a|^2\,e^{2\,\mathrm{Re}\,\lambda\,t}$, because $|e^{u+iw}| = e^{u}$ for real $u$ and
+    $w$. It is constant in time only if the real part of $\lambda$ is zero. Otherwise a lump built from waves
+    with $k$ near $k_0$ would have its total probability grow or shrink at the rate $2\,\mathrm{Re}\,\lambda(k_0)$.
+    So conservation requires $\mathrm{Re}\,\lambda(k) = 0$ for every $k$. Write $\alpha = \alpha_r + i\alpha_i$ and
+    likewise for $\gamma$ and $\delta$ (subscripts $r$ and $i$ for the real and imaginary parts). Then
+    $\mathrm{Re}\,\lambda = -\alpha_r k^2 - \gamma_i k + \delta_r$, which is zero for every $k$ only if the coefficients
+    of $k^2$, $k$ and $1$ all vanish:
 
     $$
-    \frac{C_i(t+\Delta t) - C_i(t)}{\Delta t} = -\,\frac{i}{\hbar} \sum_j \hat H_{ij}\,C_j(t) .
+    \alpha_r = 0, \qquad \gamma_i = 0, \qquad \delta_r = 0 . \label{eq:conservation-conditions}
     $$
 
-    **(f) Let $\Delta t \to 0$.** The left side is then the definition of the rate of change, the slope
-    $dC_i/dt$, and the right side does not depend on $\Delta t$:
+    In words, $\alpha$ must be purely imaginary, $\gamma$ real and $\delta$ purely imaginary. Then $\lambda$ is
+    purely imaginary, $\lambda = -i\omega$ with $\omega$ real, and every wave is a turning arrow
+    $e^{i(kx-\omega t)}$ of unchanged length.
+
+    **Step 3: what a free electron does not have.** The term in $\gamma$ alone, $\partial\psi/\partial t = \gamma\,\partial\psi/\partial x$,
+    is satisfied by any pattern $f(x+\gamma t)$, which moves at the velocity $-\gamma$ without changing
+    shape. A free electron in empty space has no preferred direction. Reflecting $x \to -x$ changes the sign of
+    $\partial/\partial x$ but not of $\partial/\partial t$ or of $\partial^2/\partial x^2$, so a law with no
+    preferred direction cannot contain the $\gamma$ term: $\gamma = 0$. The constant $\delta = i\varepsilon$ would
+    multiply every wave by the same phase $e^{i\varepsilon t}$. This is the rest-energy phase of section 5, which
+    changes no probability and was dropped there, so $\delta = 0$ as well. Write $\alpha = i\beta$ with $\beta$
+    real. What is left is
 
     $$
-    \frac{dC_i}{dt} = -\,\frac{i}{\hbar} \sum_j \hat H_{ij}\,C_j .
+    \frac{\partial \textcolor{#5ECCF3}{\psi}}{\partial t} = i\beta\,\frac{\partial^2 \textcolor{#5ECCF3}{\psi}}{\partial x^2}, \qquad \beta \text{ real} . \label{eq:free-law}
     $$
 
-    **(g) Multiply both sides by $i\hbar$.** On the right, $i\hbar\cdot\left(-\frac{i}{\hbar}\right) = -i^2 = 1$, so
+    Conservation has fixed the form of the law: the second derivative must come with a factor $i$. It has not
+    fixed the number $\beta$.
+
+    **Step 4: the number $\beta$.** For a plane wave, Eq. \eqref{eq:free-law} gives
+    $\partial\psi_k/\partial t = -i\beta k^2\,\psi_k$, so the wave is $e^{i(kx-\omega t)}$ with
 
     $$
-    i\hbar\,\frac{dC_i}{dt} = \sum_j \hat H_{ij}\,C_j .
+    \textcolor{#FF8021}{\omega}(\textcolor{#6B913C}{k}) = \beta\textcolor{#6B913C}{k}^2 . \label{eq:dispersion-beta}
     $$
 
-    This is already a law of motion of the kind we wanted: the rate of change of each amplitude is a weighted
-    sum of the amplitudes now. It is first order in time, it is linear, and all the physics of the situation
-    is in the table $\hat H_{ij}$, which is called the **Hamiltonian** ($\hat H$ with a hat, since $H$ is the wave
-    height). For points packed closely, the sum over $j$ becomes an integral over position. For a single state
-    the table has one entry and the equation is $i\hbar\,dC/dt = \hat H\,C$, whose solution
-    $C \propto e^{-i\hat Ht/\hbar}$ is the turning arrow of section 5 with $\hat H = \hbar\omega = E$. This is why
-    the Hamiltonian is also called the energy matrix.
-
-    The factor $i$ is explained by conservation of probability. The total $\sum_i |C_i|^2$ must stay equal to
-    1. Its rate of change uses the equation above and its complex conjugate, and after renaming
-    $i \leftrightarrow j$ in one term it is
+    A lump of waves with $k$ near $k_0$ moves at the group velocity $d\omega/dk = 2\beta k_0$ (section 6.3). It must
+    move at the classical velocity $p_0/m = \hbar k_0/m$ of a particle with momentum $p_0 = \hbar k_0$
+    (section 5). So $2\beta = \hbar/m$, that is $\beta = \hbar/2m$, which reproduces $\omega = \hbar k^2/2m$ of
+    section 5. Put $\beta = \hbar/2m$ into Eq. \eqref{eq:free-law} and multiply both sides by $i\hbar$, using
+    $i\hbar\cdot\frac{i\hbar}{2m} = -\frac{\hbar^2}{2m}$:
 
     $$
-    \frac{d}{dt}\sum_i |C_i|^2 = \frac{i}{\hbar}\sum_{ij}\left(\hat H_{ji}^{*} - \hat H_{ij}\right) C_i^{*}\,C_j .
+    i\hbar\,\frac{\partial \textcolor{#5ECCF3}{\psi}}{\partial t} = -\frac{\hbar^2}{2m}\,\frac{\partial^2 \textcolor{#5ECCF3}{\psi}}{\partial x^2} . \label{eq:schrodinger-free}
     $$
 
-    This is zero for every state only if $\hat H_{ji}^{*} = \hat H_{ij}$ (the table equals its own flipped complex
-    conjugate). That is the form of the condition in section 8 that the potential be real, and it is why the
-    $i$ is there: with real weights and no $i$ the total would grow or shrink, as in the heat equation of
-    section 8.
-
-    Step 0 says what kind of equation to expect, and it does not say what $\hat H_{ij}$ is for a free electron.
-    Steps 1 and 2 supply that. In empty space no position is special, so $\hat H_{ij}$ can depend only on the
-    distance between $i$ and $j$. A plane wave is then special: shifting it only multiplies it by a phase (the
-    footnote of section 5), so applying $\hat H$ to a plane wave gives back the same wave times a number, its
-    energy. Steps 1 and 2 find that number from $E = p^2/2m$.
-
-    **Step 1: energy and momentum as slopes.** Take one plane wave $\psi = e^{i(kx-\omega t)}$. The symbol
-    $\partial\psi/\partial t$ means the rate at which $\psi$ changes with time at a fixed position, and
-    $\partial\psi/\partial x$ the rate at which it changes with position at a fixed time. Since
-    $\frac{d}{dt}e^{u} = e^{u}\,\frac{du}{dt}$, with $u = i(kx-\omega t)$ and $du/dt = -i\omega$, and in the same
-    way for $x$,
-
-    $$
-    \frac{\partial \textcolor{#5ECCF3}{\psi}}{\partial t} = -\,i\textcolor{#FF8021}{\omega}\,\textcolor{#5ECCF3}{\psi},
-    \qquad
-    \frac{\partial \textcolor{#5ECCF3}{\psi}}{\partial x} = i\textcolor{#6B913C}{k}\,\textcolor{#5ECCF3}{\psi} .
-    $$
-
-    Multiply the first by $i\hbar$ and the second by $-i\hbar$, using $i\cdot(-i) = 1$ and $(-i)\cdot i = 1$:
-
-    $$
-    i\hbar\,\frac{\partial \textcolor{#5ECCF3}{\psi}}{\partial t} = \hbar\textcolor{#FF8021}{\omega}\,\textcolor{#5ECCF3}{\psi} = E\,\textcolor{#5ECCF3}{\psi},
-    \qquad
-    {-}\,i\hbar\,\frac{\partial \textcolor{#5ECCF3}{\psi}}{\partial x} = \hbar\textcolor{#6B913C}{k}\,\textcolor{#5ECCF3}{\psi} = p\,\textcolor{#5ECCF3}{\psi},
-    $$
-
-    where $E = \hbar\omega$ and $p = \hbar k$ are the energy and momentum of section 5. In words, applying
-    $i\hbar\,\partial/\partial t$ to a plane wave gives back the same wave multiplied by its energy, and
-    applying $-i\hbar\,\partial/\partial x$ gives back the wave multiplied by its momentum.
-
-    *Why this step.* The aim is to read $\omega$ and $k$ off $\psi$ without splitting it into waves. For a plane
-    wave a slope does that, because the slope returns the wave itself multiplied by a number. The slope in time
-    gives $-i\omega$, which is not yet a real quantity, so the factor $i\hbar$ is chosen to turn it into $\hbar\omega$,
-    the energy. In the same way $-i\hbar$ turns the slope in position, $ik$, into $\hbar k$, the momentum.
-
-    **Step 2: the equation.** The energy and momentum of a free particle are related by $E = p^2/2m$, and by
-    Step 1 each is a slope acting on $\psi$, so the relation between the two numbers can become a relation
-    between the two slopes. The momentum appears squared, which means applying its slope twice: the first
-    application multiplies the wave by $p$, and the second multiplies it by $p$ again. Since $(-i\hbar)^2 = -\hbar^2$,
-
-    $$
-    {-}\,\hbar^2\,\frac{\partial^2 \textcolor{#5ECCF3}{\psi}}{\partial x^2} = p^2\,\textcolor{#5ECCF3}{\psi},
-    $$
-
-    where $\partial^2\psi/\partial x^2$ is the slope of the slope, the curvature of $\psi$. For a slowly moving
-    particle every plane wave has $E = p^2/2m$ (section 5). So the energy relation of Step 1 becomes
-
-    $$
-    i\hbar\,\frac{\partial \textcolor{#5ECCF3}{\psi}}{\partial t} = E\,\textcolor{#5ECCF3}{\psi} = \frac{p^2}{2m}\,\textcolor{#5ECCF3}{\psi}
-    \quad\Longrightarrow\quad
-    i\hbar\,\frac{\partial \textcolor{#5ECCF3}{\psi}}{\partial t} = \frac{1}{2m}\left(-\hbar^2\,\frac{\partial^2 \textcolor{#5ECCF3}{\psi}}{\partial x^2}\right).
-    $$
-
-    This is the **Schrödinger equation** for a free particle. Its form records the rule
-    $\omega \propto k^2$. The time slope appears once because $\omega$ appears once, and the position slope
-    appears twice because $k^2$ is $k$ times $k$. A different rule gives a different equation: light, for
-    which $\omega = ck$, has one position slope and no second one.
-
-    **Step 3: it holds for every lump.** Steps 1 and 2 used one plane wave, but an electron is a lump, a sum
-    of many waves, and we want the equation for the lump itself without following the waves one at a time. The
-    equation involves $\psi$ only through slopes, and the slope of a sum
-    is the sum of the slopes. So if two functions satisfy it, so does their sum, and so does any sum of plane
-    waves with any weights $a(k)$ (one wave at a time, the check of Steps 1 and 2 holds for each). This
-    includes the Gaussian packet of section 6, for any $k_0$ and $\sigma_x$. The figure checks this for
-    that packet, with $\hbar = m = 1$. The left side is computed from the change of $\psi$ over a short time step,
-    and the right side from three neighbouring points in $x$. The two curves lie on top of one another, with
-    the real part on the left and the imaginary part on the right, and the largest difference between them is
-    printed. The axes are kept fixed, so changing $k_0$, $\sigma_x$ or the time shows how the two sides change.
-
-    The result is a law of motion for $\psi$. The right side is computed from the shape of $\psi$ now, and the
-    left side is its rate of change in time, so if $\psi$ is known at one moment the equation fixes how it
-    changes at the next, and so at every later time.
+    This is the **Schrödinger equation** for a free particle. Nothing in these steps depended on the weights
+    $a(k)$, so every lump built from plane waves obeys it, including the Gaussian packets of section 6, for any
+    $k_0$ and $\sigma_x$. The equation needs no list of waves: its right side is computed from the shape of
+    $\psi$ now, and its left side is the rate of change of $\psi$ in time, so if $\psi$ is known at one moment
+    the equation fixes how it changes at the next, and so at every later time. The figure checks it for the
+    Gaussian packet, with $\hbar = m = 1$. The left side is computed from the change of $\psi$ over a short time
+    step, and the right side from three neighbouring points in $x$. The two curves lie on top of one another,
+    with the real part on the left and the imaginary part on the right, and the largest difference between them
+    is printed. The axes are kept fixed, so changing $k_0$, $\sigma_x$ or the time shows how the two sides
+    change.
     """)
     return
 
@@ -1807,84 +1745,97 @@ def _(mo, plt, sch_k0, sch_sigma, sch_t, schrodinger_check_figure):
 
 
 @app.cell
-def _(mo):
-    mo.md(r"""
-    **Adding a potential.** A particle in a potential energy $V(x)$ has energy $p^2/2m + V(x)$ instead of
-    $p^2/2m$. Reading the energy as $i\hbar\,\partial/\partial t$ and the momentum as $-i\hbar\,\partial/\partial x$,
-    as in Step 1, gives
+def _(md):
+    md(r"""
+    **Step 5: energy and momentum as derivatives, and a potential.** For one plane wave $\psi_k$, Step 4 gives
+    the derivatives
+
+    $$
+    \frac{\partial \textcolor{#5ECCF3}{\psi}_{\textcolor{#6B913C}{k}}}{\partial t} = -\,i\textcolor{#FF8021}{\omega}\,\textcolor{#5ECCF3}{\psi}_{\textcolor{#6B913C}{k}},
+    \qquad
+    \frac{\partial \textcolor{#5ECCF3}{\psi}_{\textcolor{#6B913C}{k}}}{\partial x} = i\textcolor{#6B913C}{k}\,\textcolor{#5ECCF3}{\psi}_{\textcolor{#6B913C}{k}} . \label{eq:plane-wave-derivatives}
+    $$
+
+    Multiply the first by $i\hbar$ and the second by $-i\hbar$, using $i\cdot(-i) = 1$ and $(-i)\cdot i = 1$:
+
+    $$
+    i\hbar\,\frac{\partial \textcolor{#5ECCF3}{\psi}_{\textcolor{#6B913C}{k}}}{\partial t} = \hbar\textcolor{#FF8021}{\omega}\,\textcolor{#5ECCF3}{\psi}_{\textcolor{#6B913C}{k}} = E\,\textcolor{#5ECCF3}{\psi}_{\textcolor{#6B913C}{k}},
+    \qquad
+    {-}\,i\hbar\,\frac{\partial \textcolor{#5ECCF3}{\psi}_{\textcolor{#6B913C}{k}}}{\partial x} = \hbar\textcolor{#6B913C}{k}\,\textcolor{#5ECCF3}{\psi}_{\textcolor{#6B913C}{k}} = p\,\textcolor{#5ECCF3}{\psi}_{\textcolor{#6B913C}{k}}, \label{eq:energy-momentum-derivatives}
+    $$
+
+    where $E = \hbar\omega$ and $p = \hbar k$ are the energy and momentum of section 5. In words, applying
+    $i\hbar\,\partial/\partial t$ to a plane wave gives back the same wave multiplied by its energy, and applying
+    $-i\hbar\,\partial/\partial x$ gives back the wave multiplied by its momentum. In this language the
+    Schrödinger equation is the statement $E = p^2/2m$, with the derivative for momentum applied twice:
+
+    $$
+    i\hbar\,\frac{\partial \textcolor{#5ECCF3}{\psi}}{\partial t} = \frac{1}{2m}\left({-}i\hbar\,\frac{\partial}{\partial x}\right)\left({-}i\hbar\,\frac{\partial}{\partial x}\right)\textcolor{#5ECCF3}{\psi} . \label{eq:energy-as-derivatives}
+    $$
+
+    The two derivatives in the brackets multiply by $(-i\hbar)^2 = -\hbar^2$, which gives Eq. \eqref{eq:schrodinger-free} again.
+
+    A particle in a potential energy $V(x)$ has energy $p^2/2m + V(x)$ instead of $p^2/2m$. Reading the energy
+    and the momentum as derivatives, as above, gives
 
     $$
     i\hbar\,\frac{\partial \textcolor{#5ECCF3}{\psi}}{\partial t}
-    = -\frac{\hbar^2}{2m}\,\frac{\partial^2 \textcolor{#5ECCF3}{\psi}}{\partial x^2} + V(x)\,\textcolor{#5ECCF3}{\psi} .
+    = -\frac{\hbar^2}{2m}\,\frac{\partial^2 \textcolor{#5ECCF3}{\psi}}{\partial x^2} + V(x)\,\textcolor{#5ECCF3}{\psi} . \label{eq:schrodinger-potential}
     $$
 
+    In the language of Step 2 the new term is a coefficient $\delta = -iV(x)/\hbar$ that depends on position. It is
+    purely imaginary when $V$ is real, which is the condition $\delta_r = 0$ of Eq. \eqref{eq:conservation-conditions}.
     This step is not a derivation from plane waves, because plane waves are not solutions when $V$ varies with
-    $x$. It is the same rule extended to a new case, and it is justified by the agreement of its predictions with
-    experiment. The next section shows that this equation keeps the total probability equal to 1 when $V$ is
-    real.
-    """)
-    return
+    $x$. It is the same rule extended to a new case, and it is justified by the agreement of its predictions
+    with experiment. Because $V$ depends on $x$, the argument of Step 2 no longer applies, so conservation is
+    checked directly in position space.
 
-
-@app.cell
-def _(mo):
-    mo.md(r"""
-    ## 8 The total probability does not change
-
-    Normalization would be useless if it held at one moment and failed at the next. It holds for all time,
-    because of the form of the equation of section 7. Take the equation with a potential energy $V(x)$, which is
-    a real number at each $x$:
+    **Step 6: conservation in position space.** We use the rules for the complex conjugate of section 2.1. First,
+    write the equation for $\partial\psi/\partial t$ and its complex conjugate. Divide Eq. \eqref{eq:schrodinger-potential}
+    by $i\hbar$, using $1/i = -i$. Conjugating changes every $i$ to $-i$ and $\psi$ to $\psi^{*}$, and leaves $V$
+    unchanged because it is real:
 
     $$
-    i\hbar\,\frac{\partial \textcolor{#5ECCF3}{\psi}}{\partial t}
-    = -\frac{\hbar^2}{2m}\,\frac{\partial^2 \textcolor{#5ECCF3}{\psi}}{\partial x^2} + V(x)\,\textcolor{#5ECCF3}{\psi} .
+    \frac{\partial \textcolor{#5ECCF3}{\psi}}{\partial t} = \frac{i\hbar}{2m}\,\frac{\partial^2 \textcolor{#5ECCF3}{\psi}}{\partial x^2} - \frac{i}{\hbar}\,V\,\textcolor{#5ECCF3}{\psi},
+    \qquad
+    \frac{\partial \textcolor{#5ECCF3}{\psi}^{*}}{\partial t} = -\frac{i\hbar}{2m}\,\frac{\partial^2 \textcolor{#5ECCF3}{\psi}^{*}}{\partial x^2} + \frac{i}{\hbar}\,V\,\textcolor{#5ECCF3}{\psi}^{*} . \label{eq:psi-and-conjugate}
     $$
 
-    Its complex conjugate is
-
-    $$
-    {-}i\hbar\,\frac{\partial \textcolor{#5ECCF3}{\psi}^{*}}{\partial t}
-    = -\frac{\hbar^2}{2m}\,\frac{\partial^2 \textcolor{#5ECCF3}{\psi}^{*}}{\partial x^2} + V(x)\,\textcolor{#5ECCF3}{\psi}^{*}.
-    $$
-
-    **How the density changes in time.** The product rule gives
-    $\partial_t\rho = \psi^{*}\,\partial_t\psi + \psi\,\partial_t\psi^{*}$. Solve the two equations above for
-    $\partial_t\psi$ and $\partial_t\psi^{*}$ and substitute:
+    Next, the density. By the product rule, $\partial\rho/\partial t = \psi^{*}\,\partial\psi/\partial t + \psi\,\partial\psi^{*}/\partial t$.
+    Substitute the two equations above:
 
     $$
     \frac{\partial \rho}{\partial t}
     = \frac{i\hbar}{2m}\left(\textcolor{#5ECCF3}{\psi}^{*}\frac{\partial^2 \textcolor{#5ECCF3}{\psi}}{\partial x^2} -
     \textcolor{#5ECCF3}{\psi}\frac{\partial^2 \textcolor{#5ECCF3}{\psi}^{*}}{\partial x^2}\right) -
-    \frac{i}{\hbar}V\,|\textcolor{#5ECCF3}{\psi}|^2 + \frac{i}{\hbar}V\,|\textcolor{#5ECCF3}{\psi}|^2 .
+    \frac{i}{\hbar}V\,|\textcolor{#5ECCF3}{\psi}|^2 + \frac{i}{\hbar}V\,|\textcolor{#5ECCF3}{\psi}|^2 . \label{eq:density-rate}
     $$
 
-    The two terms with $V$ cancel, because $V$ is real and so is the same in both equations. What remains is
-    a derivative of a single quantity, since
-    $\psi^{*}\psi'' - \psi\,\psi^{*\prime\prime} = \dfrac{\partial}{\partial x}\big(\psi^{*}\psi' - \psi\,\psi^{*\prime}\big)$:
+    The two terms with $V$ cancel, because $V$ is real. What remains is the derivative in position of a single
+    expression, since
+    $\psi^{*}\psi'' - \psi\,\psi^{*\prime\prime} = \dfrac{\partial}{\partial x}\big(\psi^{*}\psi' - \psi\,\psi^{*\prime}\big)$
+    (the terms $\psi^{*\prime}\psi'$ that appear in the derivative cancel). So
 
     $$
-    \frac{\partial \rho}{\partial t} + \frac{\partial j}{\partial x} = 0,
-    \qquad
-    j(x,t) = \frac{\hbar}{2mi}\left(\textcolor{#5ECCF3}{\psi}^{*}\frac{\partial \textcolor{#5ECCF3}{\psi}}{\partial x} -
-    \textcolor{#5ECCF3}{\psi}\frac{\partial \textcolor{#5ECCF3}{\psi}^{*}}{\partial x}\right)
-    = \frac{\hbar}{m}\,\mathrm{Im}\!\left(\textcolor{#5ECCF3}{\psi}^{*}\frac{\partial \textcolor{#5ECCF3}{\psi}}{\partial x}\right).
+    \frac{\partial \rho}{\partial t} = -\frac{\partial}{\partial x}\left[\frac{\hbar}{2mi}\left(\textcolor{#5ECCF3}{\psi}^{*}\frac{\partial \textcolor{#5ECCF3}{\psi}}{\partial x} -
+    \textcolor{#5ECCF3}{\psi}\frac{\partial \textcolor{#5ECCF3}{\psi}^{*}}{\partial x}\right)\right]. \label{eq:continuity}
     $$
 
-    This is the **continuity equation**, the same as for the mass of a fluid. $j$ is the **probability current**,
-    the probability crossing the point $x$ per unit time, and the equation says that the probability in a small
-    region changes only by flowing across its ends. For the plane wave, $\psi^{*}\psi' = ik$, so
-    $j = \hbar k/m = p/m = v$ times $\rho = 1$: the flat density flows at the classical velocity.
-
-    **The total.** Integrate the continuity equation over all $x$:
+    This is the conservation form of Eq. \eqref{eq:conservation-form}, a **continuity equation**, with a definite
+    probability flow: the expression in the square brackets is the rate at which probability flows past the
+    point $x$, towards larger $x$. For a plane wave $\psi = e^{ikx}$ we have $\psi^{*}\psi' = ik$ and
+    $\psi\,\psi^{*\prime} = -ik$, so the bracket is $\frac{\hbar}{2mi}\cdot 2ik = \hbar k/m = p/m = v$, with
+    $\rho = 1$: the flat density flows at the classical velocity. By Eq. \eqref{eq:conservation-total} the total
+    probability is constant:
 
     $$
-    \frac{d}{dt}\int_{-\infty}^{\infty} \rho\,dx = -\big[\,j\,\big]_{-\infty}^{\infty} = 0 ,
+    \frac{dP}{dt} = \int_{-\infty}^{\infty} \frac{\partial \rho}{\partial t}\,dx
+    = -\left[\frac{\hbar}{2mi}\left(\textcolor{#5ECCF3}{\psi}^{*}\frac{\partial \textcolor{#5ECCF3}{\psi}}{\partial x} - \textcolor{#5ECCF3}{\psi}\frac{\partial \textcolor{#5ECCF3}{\psi}^{*}}{\partial x}\right)\right]_{-\infty}^{\infty} = 0 . \label{eq:total-probability}
     $$
 
-    because a normalizable $\psi$ goes to zero far away, and with it $j$. If the total is 1 at one time it is 1 at
-    every time. The two properties used were that the equation is linear with the conjugate equation obtained by
-    $i\to -i$, and that $V$ is real. A complex $V$ would leave a term $\propto \mathrm{Im}\,V\,|\psi|^2$ that
-    makes probability appear or disappear, which is how absorption is modelled.
+    The two properties used were that the equation is linear, with the conjugate equation obtained by
+    $i \to -i$, and that $V$ is real. A complex $V$ would leave a term $\propto \mathrm{Im}\,V\,|\psi|^2$ that makes
+    probability appear or disappear, which is how absorption is modelled.
     """)
     return
 
@@ -1905,14 +1856,13 @@ def _(mo, np, packet):
 
 
 @app.cell
-def _(mo):
-    mo.md(r"""
-    **Why the $i$ in the equation matters.** The proof used the complex conjugate of the equation, which is
-    obtained by changing $i$ to $-i$. That works because of the $i$. A plane wave turns in time as
-    $e^{-i\omega t}$ with $\omega$ real, an arrow of length 1, so its probability cannot change. Now remove the $i$:
+def _(md):
+    md(r"""
+    **Why the $i$ in the equation matters.** Step 2 required $\alpha$ to be purely imaginary. Suppose it is real
+    instead, which means removing the $i$ from Eq. \eqref{eq:schrodinger-free}:
 
     $$
-    \frac{\partial \textcolor{#5ECCF3}{\psi}}{\partial t} = \frac{\hbar}{2m}\,\frac{\partial^2 \textcolor{#5ECCF3}{\psi}}{\partial x^2},
+    \frac{\partial \textcolor{#5ECCF3}{\psi}}{\partial t} = \frac{\hbar}{2m}\,\frac{\partial^2 \textcolor{#5ECCF3}{\psi}}{\partial x^2}, \label{eq:heat-equation}
     $$
 
     which is the equation for the spreading of heat. Applied to a plane wave it gives
@@ -1963,11 +1913,12 @@ def _(mo):
     - The squared length $|\psi|^2$, the intensity of the water waves, is the probability density $\rho$ for a
       particle. The probability of an interval is $\int_a^b\rho\,dx$ and the total must be 1. A plane wave has
       $\rho=1$ everywhere and total $2X\to\infty$, so it cannot be normalized.
-    - Applying $i\hbar\,\partial_t$ and $-i\hbar\,\partial_x$ to a plane wave gives back $E$ and $p$ times the wave, so
-      $E = p^2/2m$ gives the Schrödinger equation $i\hbar\,\partial_t\psi = -\tfrac{\hbar^2}{2m}\,\partial_x^2\psi$. It is
-      linear, so it holds for every lump built from plane waves.
-    - With a real potential the equation gives $\partial_t\rho + \partial_x j = 0$, so the total probability stays
-      1 for all time. The $i$ is what makes this so: without it the waves fade and probability is lost.
+    - Probability must be conserved, so the rate of change of the density is minus a derivative in position of a
+      flow. For a linear law $\partial_t\psi = \alpha\,\partial_x^2\psi + \gamma\,\partial_x\psi + \delta\psi$ this requires
+      $\alpha$ and $\delta$ to be purely imaginary and $\gamma$ real. A free electron has no preferred direction,
+      which removes $\gamma$, and the classical velocity fixes the remaining constant, giving the Schrödinger
+      equation $i\hbar\,\partial_t\psi = -\tfrac{\hbar^2}{2m}\,\partial_x^2\psi$. With a real potential $V$ it still
+      conserves the total probability. Without the $i$ the waves fade and probability is lost.
     - The lump behaves like a classical particle when $k_0\sigma_x = p_0/2\Delta p \gg 1$: its momentum is
       known to a small fraction of itself, and it travels $2k_0\sigma_x$ of its own widths before it spreads.
     """)
@@ -1982,13 +1933,11 @@ def _(mo):
     $\sigma_x\sigma_{k}=\tfrac12$, and the symmetry argument for energy and momentum follow Chapters 1, 7, 16 and
     17 of R. P. Feynman, R. B. Leighton and M. Sands, *The Feynman Lectures on Physics*, Vol. III: Quantum
     Mechanics (Caltech online edition, edited by M. A. Gottlieb and R. Pfeiffer, 2013),
-    <https://www.feynmanlectures.caltech.edu/III_toc.html>. Step 0 of section 7, the form of the law of motion
-    $i\hbar\,dC_i/dt = \sum_j \hat H_{ij}C_j$, follows Section 8–4 of Chapter 8 (Eqs. 8.31 to 8.39), and the condition
-    $\hat H_{ij}^{*} = \hat H_{ji}$ is its Eq. 8.40. The short calculation in Step 0 that shows why conservation of
-    probability requires that condition is written out here. The trigonometric introduction in section 1 is
+    <https://www.feynmanlectures.caltech.edu/III_toc.html>. The trigonometric introduction in section 1 is
     standard. The analysis of the spreading of the packet and of the condition $k_0\sigma_x\gg1$ for classical
     behaviour in section 6 is not taken from those chapters, and neither are the entropy relations of 6.2 (the
-    entropic uncertainty relation is due to Hirschman and to Białynicki-Birula and Mycielski).
+    entropic uncertainty relation is due to Hirschman and to Białynicki-Birula and Mycielski) or the argument of
+    section 7 that finds the Schrödinger equation from the conservation of probability.
     """)
     return
 

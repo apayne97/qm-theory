@@ -286,7 +286,7 @@ def _family_data():
     x = np.linspace(-60, 60, 4001)
     dx = x[1] - x[0]
     kernel = np.exp(1j * np.outer(x, k))
-    out = {"p": exps, "k": k, "x": x, "rho_k": [], "rho_x": [], "sigma_k": [], "sigma_x": [], "h_k": [], "h_x": []}
+    out = {"p": exps, "k": k, "x": x, "rho_k": [], "rho_x": [], "sigma_k": [], "sigma_x": [], "S_k": [], "S_x": []}
     for p in exps:
         a = np.exp(-(np.abs(k) ** p) / p)
         rho_k = a**2 / ((a**2).sum() * dk)
@@ -296,9 +296,9 @@ def _family_data():
         out["rho_x"].append(rho_x)
         out["sigma_k"].append(np.sqrt((k**2 * rho_k).sum() * dk))
         out["sigma_x"].append(np.sqrt((x**2 * rho_x).sum() * dx))
-        out["h_k"].append(_entropy(rho_k, dk))
-        out["h_x"].append(_entropy(rho_x, dx))
-    for key in ("sigma_k", "sigma_x", "h_k", "h_x"):
+        out["S_k"].append(_entropy(rho_k, dk))
+        out["S_x"].append(_entropy(rho_x, dx))
+    for key in ("sigma_k", "sigma_x", "S_k", "S_x"):
         out[key] = np.array(out[key])
     return out
 
@@ -338,26 +338,26 @@ def entropy_family_figure(p):
     ax.set_xlim(-4, 4)
     ax.set_ylim(0, 0.75)
     ax.set_xlabel("wave number $k$")
-    ax.set_title(rf"$|a(k)|^2$,  entropy $h_k={data['h_k'][i]:.3f}$", fontsize=10)
+    ax.set_title(rf"$|a(k)|^2$,  entropy $S_k={data['S_k'][i]:.3f}$", fontsize=10)
     ax = axes[1]
     ax.fill_between(x, 0, data["rho_x"][i], color=PROB_COLOR, alpha=0.8)
     ax.plot(x, data["rho_x"][i], color="0.35", lw=2)
     ax.set_xlim(-4, 4)
     ax.set_ylim(0, 0.75)
     ax.set_xlabel("position $x$")
-    ax.set_title(rf"$|\psi(x)|^2$,  entropy $h_x={data['h_x'][i]:.3f}$", fontsize=10)
+    ax.set_title(rf"$|\psi(x)|^2$,  entropy $S_x={data['S_x'][i]:.3f}$", fontsize=10)
     ax = axes[2]
     floor = np.log(np.pi * np.e)
-    total = data["h_x"] + data["h_k"]
+    total = data["S_x"] + data["S_k"]
     bound = np.log(2 * np.pi * np.e * data["sigma_x"] * data["sigma_k"])
     ax.axhline(floor, color="0.5", ls="--", lw=1.2)
     ax.text(5.95, floor - 0.012, r"floor $\ln(\pi e)$", ha="right", va="top", fontsize=8, color="0.4")
     ax.plot(data["p"], bound, color="0.75", lw=1.5, label=r"$\ln(2\pi e\,\sigma_x\sigma_k)$")
-    ax.plot(data["p"], total, color="0.35", lw=2, label=r"$h_x+h_k$")
+    ax.plot(data["p"], total, color="0.35", lw=2, label=r"$S_x+S_k$")
     ax.plot([data["p"][i]], [total[i]], "o", color=OMEGA_COLOR, ms=9, zorder=3)
     ax.set_ylim(2.12, 2.5)
     ax.set_xlabel(r"shape exponent $p$")
-    ax.set_title(rf"$p={data['p'][i]:g}$:  $h_x+h_k={total[i]:.3f}$", fontsize=10)
+    ax.set_title(rf"$p={data['p'][i]:g}$:  $S_x+S_k={total[i]:.3f}$", fontsize=10)
     ax.legend(fontsize=8, loc="upper left")
     fig.tight_layout()
     return fig

@@ -124,7 +124,7 @@ python -m pytest -q
 
 ## References
 
-Feynman, R. P., Leighton, R. B., and Sands, M. *The Feynman Lectures on Physics, Vol. III: Quantum Mechanics.* Addison-Wesley, 1965 (New Millennium Edition, Basic Books, 2010-2011). Online edition: Caltech, edited by M. A. Gottlieb and R. Pfeiffer, 2013, <https://www.feynmanlectures.caltech.edu/III_toc.html>. Chapters used: 1 (quantum behavior, the water-wave interference example), 6 (spin one-half), 7 (amplitudes in time), 8 (the Hamiltonian matrix, Section 8-4, Eqs. 8.31-8.40), 16 (amplitudes in position), 17 (symmetry and conservation laws). Cite specific results by chapter, section and equation number (the numbering is the same in the printed and online editions).
+Feynman, R. P., Leighton, R. B., and Sands, M. *The Feynman Lectures on Physics, Vol. III: Quantum Mechanics.* Addison-Wesley, 1965 (New Millennium Edition, Basic Books, 2010-2011). Online edition: Caltech, edited by M. A. Gottlieb and R. Pfeiffer, 2013, <https://www.feynmanlectures.caltech.edu/III_toc.html>. Chapters used: 1 (quantum behavior, the water-wave interference example), 6 (spin one-half), 7 (amplitudes in time), 16 (amplitudes in position), 17 (symmetry and conservation laws). Cite specific results by chapter, section and equation number (the numbering is the same in the printed and online editions).
 
 ```bibtex
 @book{feynman1965lectures3,
