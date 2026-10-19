@@ -168,61 +168,38 @@ def probability_figure(k, omega, t):
     return fig
 
 
-def _gauss_transform(sigma_k, k_half=10.0, n=4001):
-    """g(k) = exp(-k^2 / 4 sigma_k^2) and psi(x) = integral of g(k) exp(ikx) dk, summed on a grid."""
-    k = np.linspace(-k_half * sigma_k, k_half * sigma_k, n)
-    dk = k[1] - k[0]
-    g = np.exp(-(k**2) / (4 * sigma_k**2))
-    x = np.linspace(-4 / sigma_k, 4 / sigma_k, 801)
-    psi = (g[None, :] * np.exp(1j * np.outer(x, k))).sum(axis=1) * dk
-    return k, g, x, psi
+def lump_buildup_figure(m, sigma_k=1.0, dk=0.5):
+    """Build the lump at t = 0 from cosines with weights a(k), the wave numbers spaced dk apart.
 
+    The waves k = -m dk ... m dk are included. Left: the weights. Right: each wave (thin), their sum (thick), and
+    the limit of very many closely spaced waves, a bell curve (dashed)."""
+    x = np.linspace(-8, 8, 1600)
+    k_all = dk * np.arange(-12, 13)
+    weight = lambda k: np.exp(-(k**2) / (4 * sigma_k**2)) * dk
+    ks = dk * np.arange(-m, m + 1)
+    total = (weight(ks)[:, None] * np.cos(ks[:, None] * x[None, :])).sum(axis=0)
+    exact = 2 * sigma_k * np.sqrt(np.pi) * np.exp(-(sigma_k**2) * x**2)
 
-def gauss_equation_figure(sigma_k):
-    """The bell curve g(k), its slope g'(k), and the formula -k g / (2 sigma_k^2) that the slope equals."""
-    k = np.linspace(-5, 5, 1001)
-    g = np.exp(-(k**2) / (4 * sigma_k**2))
-    slope = np.gradient(g, k)
-    formula = -k * g / (2 * sigma_k**2)
-    fig, ax = plt.subplots(figsize=(8, 3.4))
-    ax.axhline(0, color="0.85", lw=0.8)
-    ax.plot(k, g, color=K_COLOR, lw=2.2, label=r"$g(k)$")
-    ax.plot(k, slope, color=OMEGA_COLOR, lw=3.5, alpha=0.5, label=r"slope $g'(k)$, measured from the curve")
-    ax.plot(k, formula, color=INK, lw=1.3, ls="--", label=r"$-\dfrac{k}{2\sigma_k^2}\,g(k)$, from the formula")
-    ax.set_ylim(-1.0, 1.15)
-    ax.set_xlabel("wave number $k$")
-    ax.legend(loc="lower right", fontsize=8)
-    fig.tight_layout()
-    return fig
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10.5, 3.6), gridspec_kw={"width_ratios": [1, 1.7]})
+    ax1.vlines(k_all, 0, weight(k_all), color="0.85", lw=3)
+    ax1.vlines(ks, 0, weight(ks), color=K_COLOR, lw=3)
+    ax1.set_xlim(-6.6, 6.6)
+    ax1.set_ylim(0, 0.55)
+    ax1.set_xlabel("wave number $k$")
+    ax1.set_ylabel(r"weight $a(k)$")
+    ax1.set_title(f"{2 * m + 1} wave{'s' if m else ''} included", fontsize=10)
 
-
-def transform_check_figure(sigma_k):
-    """Left: g(k). Middle: its transform psi(x), summed numerically, against the formula. Right: both sides of
-    the transformed equation, -x psi(x) and psi'(x) / (2 sigma_k^2)."""
-    k, g, x, psi = _gauss_transform(sigma_k)
-    formula = 2 * sigma_k * np.sqrt(np.pi) * np.exp(-(sigma_k**2) * x**2)
-    lhs = -x * psi.real
-    rhs = np.gradient(psi.real, x) / (2 * sigma_k**2)
-    fig, axes = plt.subplots(1, 3, figsize=(11, 3.2))
-    ax = axes[0]
-    kk = np.linspace(-5, 5, 400)
-    ax.plot(kk, np.exp(-(kk**2) / (4 * sigma_k**2)), color=K_COLOR, lw=2.2)
-    ax.set_xlabel("wave number $k$")
-    ax.set_title(r"$g(k)$", fontsize=10)
-    ax.set_ylim(0, 1.1)
-    ax = axes[1]
-    ax.plot(x, psi.real, color=RE_COLOR, lw=3.5, alpha=0.5, label=r"$\psi(x)$, summed over $k$")
-    ax.plot(x, formula, color=INK, lw=1.3, ls="--", label=r"$2\sigma_k\sqrt{\pi}\,e^{-\sigma_k^2x^2}$")
-    ax.set_xlabel("position $x$")
-    ax.set_title(r"the transform of $g$", fontsize=10)
-    ax.legend(fontsize=7, loc="upper right")
-    ax = axes[2]
-    ax.axhline(0, color="0.85", lw=0.8)
-    ax.plot(x, lhs, color=OMEGA_COLOR, lw=3.5, alpha=0.5, label=r"left side: $-x\,\psi(x)$")
-    ax.plot(x, rhs, color=INK, lw=1.3, ls="--", label=r"right side: $\psi'(x)/2\sigma_k^2$")
-    ax.set_xlabel("position $x$")
-    ax.set_title("the transformed equation", fontsize=10)
-    ax.legend(fontsize=7, loc="upper right")
+    for j in range(0, m + 1):  # the pair k and -k adds up to 2 w cos(kx)
+        k = j * dk
+        factor = 1 if j == 0 else 2
+        ax2.plot(x, factor * weight(k) * np.cos(k * x), color="0.6", lw=0.8, alpha=0.7)
+    ax2.plot(x, exact, color=INK, lw=1.3, ls="--", label="many closely spaced waves")
+    ax2.plot(x, total, color=RE_COLOR, lw=2.6, label="sum of the waves included")
+    ax2.set_xlim(-8, 8)
+    ax2.set_ylim(-1.2, 4.2)
+    ax2.set_xlabel("position $x$")
+    ax2.set_ylabel(r"$\psi(x)$")
+    ax2.legend(loc="upper right", fontsize=8)
     fig.tight_layout()
     return fig
 
