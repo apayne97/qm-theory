@@ -145,6 +145,18 @@ def _(mo):
         - **Complex number**: a number $a+ib$, drawn as an arrow in a plane, with a length and an angle (its phase).
         - **Intensity** $I$: the squared length of the complex wave, $|\psi|^2$, proportional to the energy of the wave.
         - **Wave packet**: a sum of waves with nearby $k$, which forms a lump.
+        - **Probability density** $\rho = |\psi|^2$: the probability per unit length of finding the particle at $x$.
+          The probability of an interval is the integral of $\rho$ over it (section 6).
+        - **Normalization**: the requirement that the total probability, the integral of $\rho$ over all $x$, is 1 (section 6).
+        - **Root-mean-square width** $\sigma$: the typical distance from the centre of a distribution, the square
+          root of the average of $x^2$. The uncertainty $\Delta x$ is $\sigma_x$ (section 6).
+        - **Fourier transform**: adding up waves of every wave number $k$ with weights $a(k)$ to make a function
+          of position (section 6.1).
+        - **Entropy** $h$: the average of $-\ln\rho$, a measure of how spread out a distribution is (section 6.2).
+        - **Schrödinger equation**: the equation for how $\psi$ changes in time (section 7).
+        - **Hamiltonian** $\hat H$: the table of numbers (or operator) that gives the rate of change of $\psi$, and
+          whose values are energies (section 7).
+        - **Probability current** $j$: the probability crossing a point per unit time (section 8).
         """)
     })
     return
@@ -1589,11 +1601,18 @@ def _(mo):
     after $\psi$ has been split into plane waves, and that split needs a list. Slopes avoid the split. A plane
     wave turns in time at the rate $\omega$ and twists in space at the rate $k$, so its slope in time brings out
     $\omega$ and its slope in position brings out $k$, and each slope gives back the same wave times a number.
-    The slopes can be applied to $\psi$ without knowing which waves it contains. The plan is (1) to show that
-    these two slopes read off the energy and the momentum, (2) to use the relation between energy and momentum
-    to link the two slopes into one equation, and (3) to check that the equation holds for a lump, which is a
-    sum of many waves. Before these steps, Step 0 asks a more basic question: what form can a law of motion
-    for $\psi$ have at all?
+    The slopes can be applied to $\psi$ without knowing which waves it contains. The plan has four steps:
+
+    - **Step 0, the form.** Ask what shape any law of motion for $\psi$ must have, using only two facts: amplitudes
+      add, and nothing can happen in no time. The result is a first-order equation that contains a table of
+      numbers we do not yet know, and it shows why the factor $i$ appears.
+    - **Step 1, energy and momentum as slopes.** Show that the slope of a plane wave in time returns the wave
+      times its energy $E$, and the slope in position returns the wave times its momentum $p$. Energy and
+      momentum then become things we can do to $\psi$ itself, with no need to split it into waves.
+    - **Step 2, the equation.** Use the relation $E = p^2/2m$ of a free particle to replace the unknown table of
+      Step 0 by a definite rule. This rule is the Schrödinger equation.
+    - **Step 3, every lump.** Check that a rule found from single waves holds for any sum of waves, so for the
+      packets of section 6, and see it numerically for the Gaussian packet.
 
     **Step 0: what form can the law take?** Two facts we already have are enough to fix the form. Describe the
     state by a list of amplitudes. Write $C_1, C_2, C_3, \dots$ for the values of $\psi$ at points
@@ -1615,44 +1634,89 @@ def _(mo):
     The second fact is that nothing can happen in no time. As $\Delta t \to 0$ each new amplitude must equal the
     old one, so $U_{ij} \to \delta_{ij}$, where $\delta_{ij}$ is $1$ if $i=j$ and $0$ otherwise. For a small
     $\Delta t$ each $U_{ij}$ then differs from $\delta_{ij}$ by an amount proportional to $\Delta t$. Write that
-    amount as $-\frac{i}{\hbar}H_{ij}\Delta t$, which defines a second table of numbers $H_{ij}$ (the factor
-    $-i/\hbar$ is a convention, chosen so that $H$ comes out as an energy):
+    amount as $-\frac{i}{\hbar}\hat H_{ij}\Delta t$, which defines a second table of numbers $\hat H_{ij}$ (the factor
+    $-i/\hbar$ is a convention, chosen so that $\hat H$ comes out as an energy):
 
     $$
-    U_{ij} = \delta_{ij} - \frac{i}{\hbar}\,H_{ij}\,\Delta t .
+    U_{ij} = \delta_{ij} - \frac{i}{\hbar}\,\hat H_{ij}\,\Delta t .
     $$
 
-    Put this in the sum. The $\delta_{ij}$ part gives back $C_i(t)$, because $\sum_j \delta_{ij}C_j = C_i$. Move
-    $C_i(t)$ to the left side, divide by $\Delta t$ and let $\Delta t \to 0$:
+    Now put this into the sum. The aim is to get an equation for the rate of change of $C_i$, so we want the
+    change $C_i(t+\Delta t) - C_i(t)$ on one side. Do it one step at a time.
+
+    **(a) Substitute.** Replace $U_{ij}$ by its form above:
 
     $$
-    i\hbar\,\frac{dC_i}{dt} = \sum_j H_{ij}\,C_j .
+    C_i(t+\Delta t) = \sum_j \left[\delta_{ij} - \frac{i}{\hbar}\,\hat H_{ij}\,\Delta t\right] C_j(t) .
+    $$
+
+    **(b) Split the sum into two sums,** one for each term in the bracket:
+
+    $$
+    C_i(t+\Delta t) = \sum_j \delta_{ij}\,C_j(t) \;-\; \frac{i}{\hbar}\,\Delta t \sum_j \hat H_{ij}\,C_j(t) ,
+    $$
+
+    where the constant factor $-\frac{i}{\hbar}\Delta t$ has been taken outside the second sum.
+
+    **(c) Evaluate the first sum.** Since $\delta_{ij}$ is $1$ when $j = i$ and $0$ otherwise, every term of
+    $\sum_j \delta_{ij}C_j$ vanishes except the one with $j = i$. For example, with three points and $i = 2$,
+    $\delta_{21}C_1 + \delta_{22}C_2 + \delta_{23}C_3 = 0 + C_2 + 0$. So the first sum is just $C_i(t)$:
+
+    $$
+    C_i(t+\Delta t) = C_i(t) \;-\; \frac{i}{\hbar}\,\Delta t \sum_j \hat H_{ij}\,C_j(t) .
+    $$
+
+    **(d) Move $C_i(t)$ to the left side** by subtracting it from both sides, so that the left side is the change
+    in $C_i$ over the time $\Delta t$:
+
+    $$
+    C_i(t+\Delta t) - C_i(t) = -\,\frac{i}{\hbar}\,\Delta t \sum_j \hat H_{ij}\,C_j(t) .
+    $$
+
+    **(e) Divide both sides by $\Delta t$,** which turns the left side into a change per unit time:
+
+    $$
+    \frac{C_i(t+\Delta t) - C_i(t)}{\Delta t} = -\,\frac{i}{\hbar} \sum_j \hat H_{ij}\,C_j(t) .
+    $$
+
+    **(f) Let $\Delta t \to 0$.** The left side is then the definition of the rate of change, the slope
+    $dC_i/dt$, and the right side does not depend on $\Delta t$:
+
+    $$
+    \frac{dC_i}{dt} = -\,\frac{i}{\hbar} \sum_j \hat H_{ij}\,C_j .
+    $$
+
+    **(g) Multiply both sides by $i\hbar$.** On the right, $i\hbar\cdot\left(-\frac{i}{\hbar}\right) = -i^2 = 1$, so
+
+    $$
+    i\hbar\,\frac{dC_i}{dt} = \sum_j \hat H_{ij}\,C_j .
     $$
 
     This is already a law of motion of the kind we wanted: the rate of change of each amplitude is a weighted
     sum of the amplitudes now. It is first order in time, it is linear, and all the physics of the situation
-    is in the table $H_{ij}$. For points packed closely, the sum over $j$ becomes an integral over position.
-    For a single state the table has one entry and the equation is $i\hbar\,dC/dt = H\,C$, whose solution
-    $C \propto e^{-iHt/\hbar}$ is the turning arrow of section 5 with $H = \hbar\omega = E$. This is why $H$ is
-    called the energy matrix.
+    is in the table $\hat H_{ij}$, which is called the **Hamiltonian** ($\hat H$ with a hat, since $H$ is the wave
+    height). For points packed closely, the sum over $j$ becomes an integral over position. For a single state
+    the table has one entry and the equation is $i\hbar\,dC/dt = \hat H\,C$, whose solution
+    $C \propto e^{-i\hat Ht/\hbar}$ is the turning arrow of section 5 with $\hat H = \hbar\omega = E$. This is why
+    the Hamiltonian is also called the energy matrix.
 
     The factor $i$ is explained by conservation of probability. The total $\sum_i |C_i|^2$ must stay equal to
     1. Its rate of change uses the equation above and its complex conjugate, and after renaming
     $i \leftrightarrow j$ in one term it is
 
     $$
-    \frac{d}{dt}\sum_i |C_i|^2 = \frac{i}{\hbar}\sum_{ij}\left(H_{ji}^{*} - H_{ij}\right) C_i^{*}\,C_j .
+    \frac{d}{dt}\sum_i |C_i|^2 = \frac{i}{\hbar}\sum_{ij}\left(\hat H_{ji}^{*} - \hat H_{ij}\right) C_i^{*}\,C_j .
     $$
 
-    This is zero for every state only if $H_{ji}^{*} = H_{ij}$ (the table equals its own flipped complex
+    This is zero for every state only if $\hat H_{ji}^{*} = \hat H_{ij}$ (the table equals its own flipped complex
     conjugate). That is the form of the condition in section 8 that the potential be real, and it is why the
     $i$ is there: with real weights and no $i$ the total would grow or shrink, as in the heat equation of
     section 8.
 
-    Step 0 says what kind of equation to expect, and it does not say what $H_{ij}$ is for a free electron.
-    Steps 1 and 2 supply that. In empty space no position is special, so $H_{ij}$ can depend only on the
+    Step 0 says what kind of equation to expect, and it does not say what $\hat H_{ij}$ is for a free electron.
+    Steps 1 and 2 supply that. In empty space no position is special, so $\hat H_{ij}$ can depend only on the
     distance between $i$ and $j$. A plane wave is then special: shifting it only multiplies it by a phase (the
-    footnote of section 5), so applying $H$ to a plane wave gives back the same wave times a number, its
+    footnote of section 5), so applying $\hat H$ to a plane wave gives back the same wave times a number, its
     energy. Steps 1 and 2 find that number from $E = p^2/2m$.
 
     **Step 1: energy and momentum as slopes.** Take one plane wave $\psi = e^{i(kx-\omega t)}$. The symbol
@@ -1919,8 +1983,8 @@ def _(mo):
     17 of R. P. Feynman, R. B. Leighton and M. Sands, *The Feynman Lectures on Physics*, Vol. III: Quantum
     Mechanics (Caltech online edition, edited by M. A. Gottlieb and R. Pfeiffer, 2013),
     <https://www.feynmanlectures.caltech.edu/III_toc.html>. Step 0 of section 7, the form of the law of motion
-    $i\hbar\,dC_i/dt = \sum_j H_{ij}C_j$, follows Section 8–4 of Chapter 8 (Eqs. 8.31 to 8.39), and the condition
-    $H_{ij}^{*} = H_{ji}$ is its Eq. 8.40. The short calculation in Step 0 that shows why conservation of
+    $i\hbar\,dC_i/dt = \sum_j \hat H_{ij}C_j$, follows Section 8–4 of Chapter 8 (Eqs. 8.31 to 8.39), and the condition
+    $\hat H_{ij}^{*} = \hat H_{ji}$ is its Eq. 8.40. The short calculation in Step 0 that shows why conservation of
     probability requires that condition is written out here. The trigonometric introduction in section 1 is
     standard. The analysis of the spreading of the packet and of the condition $k_0\sigma_x\gg1$ for classical
     behaviour in section 6 is not taken from those chapters, and neither are the entropy relations of 6.2 (the

@@ -155,12 +155,19 @@ def moving_wave_figure(k, omega, t):
     return fig
 
 
+def _density(ax, x, rho, label, ref=False):
+    """Draw a probability density |psi|^2 in the palette colour: a filled curve, dashed and paler if it is the
+    reference (earlier or comparison) curve."""
+    ax.fill_between(x, 0, rho, color=PROB_COLOR, alpha=0.55 if ref else 1.0, label=label)
+    ax.plot(x, rho, color="0.35", lw=1.5, ls="--" if ref else "-")
+
+
 def probability_figure(k, omega, t):
     """Probability for the complex wave (uniform) versus the square of a real cosine (has nodes)."""
     x = np.linspace(0, 10, 1000)
     fig, ax = plt.subplots(figsize=(9, 3.2))
-    ax.plot(x, np.abs(plane_wave(x, t, k, omega)) ** 2, color=RE_COLOR, lw=2.5, label=r"complex wave $|e^{i(kx-\omega t)}|^2$")
-    ax.plot(x, np.cos(k * x - omega * t) ** 2, color=IM_COLOR, lw=2, label=r"real wave $\cos^2(kx-\omega t)$")
+    _density(ax, x, np.abs(plane_wave(x, t, k, omega)) ** 2, r"complex wave $|e^{i(kx-\omega t)}|^2$")
+    ax.plot(x, np.cos(k * x - omega * t) ** 2, color="0.35", lw=2, ls="--", label=r"real wave $\cos^2(kx-\omega t)$")
     ax.set_ylim(-0.05, 1.3)
     ax.set_xlabel("position $x$")
     ax.set_ylabel("relative probability")
@@ -430,7 +437,7 @@ def rest_energy_phase_figure(phase, k0=5.0, sigma_x=1.5, t=2.0):
     turned = np.exp(-1j * phase) * psi
     scale = np.abs(packet(0.0, 0.0, k0, sigma_x))
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(9, 4.2), sharex=True)
-    ax1.fill_between(x, 0, np.abs(psi) ** 2 / scale**2, color="0.8", label=r"$|\psi|^2$ without the rest-energy phase")
+    ax1.fill_between(x, 0, np.abs(psi) ** 2 / scale**2, color=PROB_COLOR, label=r"$|\psi|^2$ without the rest-energy phase")
     ax1.plot(x, np.abs(turned) ** 2 / scale**2, color=OMEGA_COLOR, lw=1.8, ls="--", label=r"$|\psi|^2$ with it")
     ax1.set_ylim(0, 1.25)
     ax1.set_ylabel("probability density")
@@ -454,16 +461,20 @@ def band_shapes_figure(sigma_k=1.0, half_range=10.0):
         "top-hat": np.where(np.abs(k) <= w / 2, 1.0, 0.0),
         "Gaussian": np.exp(-(k**2) / (4 * sigma_k**2)),
     }
-    colors = {"top-hat": "0.5", "Gaussian": RE_COLOR}
+    colors = {"top-hat": "0.6", "Gaussian": "0.35"}
     x = np.linspace(-half_range, half_range, 2001)
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 3.4))
     for name, a in amps.items():
         a = a / np.sqrt(np.sum(a**2) * dk)  # total probability over k equal to 1
         ax1.plot(k, a**2, color=colors[name], lw=2.2, label=name)
+        if name == "Gaussian":
+            ax1.fill_between(k, 0, a**2, color=PROB_COLOR)
         psi = (a[None, :] * np.exp(1j * np.outer(x, k))).sum(axis=1) * dk
         rho = np.abs(psi) ** 2
         ax2.plot(x, rho / rho.max(), color=colors[name], lw=2.2, label=name)
+        if name == "Gaussian":
+            ax2.fill_between(x, 1e-5, rho / rho.max(), color=PROB_COLOR)
     ax1.set_xlabel("wave number $k$")
     ax1.set_ylabel(r"probability of $k$, $|a(k)|^2$")
     ax1.legend(fontsize=8)
@@ -486,16 +497,15 @@ def flat_vs_lump_figure(k0, sigma_x, half_range=12.0):
     inside_lump = np.array([np.trapezoid(lump[np.abs(x) <= r], x[np.abs(x) <= r]) for r in X])
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 3.4))
-    ax1.plot(x, plane, color=RE_COLOR, lw=2.5, label=r"plane wave $|e^{ikx}|^2$")
-    ax1.fill_between(x, 0, lump, color="0.75", alpha=0.8)
-    ax1.plot(x, lump, color="0.4", lw=1.5, label=r"packet $|\psi|^2$")
+    _density(ax1, x, plane, r"plane wave $|e^{ikx}|^2$", ref=True)
+    _density(ax1, x, lump, r"packet $|\psi|^2$")
     ax1.set_ylim(0, 1.3)
     ax1.set_xlabel("position $x$")
     ax1.set_ylabel("probability density")
     ax1.legend(loc="upper right", fontsize=8)
 
-    ax2.plot(X, inside_plane, color=RE_COLOR, lw=2.5, label="plane wave")
-    ax2.plot(X, inside_lump, color="0.4", lw=2, label="packet")
+    ax2.plot(X, inside_plane, color="0.35", lw=2.2, ls="--", label="plane wave")
+    ax2.plot(X, inside_lump, color="0.35", lw=2.2, label="packet")
     ax2.axhline(1, color="0.7", ls="--", lw=1)
     ax2.set_yscale("log")
     ax2.set_ylim(1e-3, 40)
@@ -551,15 +561,48 @@ def spreading_figure(k0, sigma_x, t):
     x = np.linspace(-20, 20, 4000)
     v = group_velocity(k0)
     fig, ax = plt.subplots(figsize=(9, 3.2))
-    for ti, c, a in zip([0.0, t], ["0.6", RE_COLOR], [0.5, 0.8]):
+    for ti, is_ref in zip([0.0, t], [True, False]):
         d = np.abs(packet(x + v * ti, ti, k0, sigma_x)) ** 2
-        ax.fill_between(x, 0, d, color=c, alpha=a, label=rf"$|\psi|^2$ at $t={ti:g}$")
+        _density(ax, x, d, rf"$|\psi|^2$ at $t={ti:g}$", ref=is_ref)
     ax.axvline(0, color=ARROW_COLOR, ls="--", lw=1.2, label=r"classical position")
     ax.set_xlim(-20, 20)
     ax.set_ylim(0, 1.4)
     ax.set_xlabel(r"position relative to the classical position, $x - vt$")
     ax.set_ylabel(r"$|\psi|^2$")
     ax.legend(loc="upper right", fontsize=8)
+    fig.tight_layout()
+    return fig
+
+
+def width_vs_distance_figure(k0, sigma0, d, d_max=20.0):
+    """Uncertainty in position, Delta x, against the distance d = v t from the source (hbar = m = 1), and the packet
+    at distance d. sigma0 is the width sigma_x at the source: Delta x(d) = sigma0 sqrt(1 + (d / d_s)^2) with
+    d_s = v t_s = 2 k0 sigma0^2."""
+    d_s = 2 * k0 * sigma0**2
+    ds = np.linspace(0, d_max, 600)
+    sig = sigma0 * np.sqrt(1 + (ds / d_s) ** 2)
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10.5, 3.5), gridspec_kw={"width_ratios": [1.15, 1]})
+    ax1.plot(ds, sig, color=RE_COLOR, lw=2.4, label=r"uncertainty $\Delta x(d)$")
+    ax1.axhline(sigma0, color="0.6", lw=1.0, ls="--", label=r"at the source, $\sigma_x$")
+    ax1.plot(ds, ds / (2 * k0 * sigma0), color="0.5", lw=1.0, ls=":", label=r"far from the source: $d/2k_0\sigma_x$")
+    ax1.axvline(d_s, color=ARROW_COLOR, lw=1.0, ls="--")
+    ax1.text(d_s, 11.4, r" $d_s=2k_0\sigma_x^2$", fontsize=8, va="top", color=ARROW_COLOR)
+    ax1.plot([d], [sigma0 * np.sqrt(1 + (d / d_s) ** 2)], "o", color=OMEGA_COLOR, ms=9, zorder=3)
+    ax1.set_xlim(0, d_max)
+    ax1.set_ylim(0, 12)
+    ax1.set_xlabel("distance from the source, $d = vt$")
+    ax1.set_ylabel(r"uncertainty in position, $\Delta x$")
+    ax1.legend(fontsize=7, loc="center right")
+    x = np.linspace(-14, 14, 3000)
+    now = np.abs(packet(x + d, d / group_velocity(k0), k0, sigma0)) ** 2
+    start = np.abs(packet(x, 0.0, k0, sigma0)) ** 2
+    _density(ax2, x, start, "at the source", ref=True)
+    _density(ax2, x, now, f"at distance {d:g}")
+    ax2.set_xlim(-14, 14)
+    ax2.set_ylim(0, 0.9)
+    ax2.set_xlabel(r"position relative to the classical position, $x - d$")
+    ax2.set_ylabel(r"$|\psi|^2$")
+    ax2.legend(fontsize=8, loc="upper right")
     fig.tight_layout()
     return fig
 
