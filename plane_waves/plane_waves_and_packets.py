@@ -913,25 +913,28 @@ def _(mo):
     requirement on a wave function: the integral must be finite, and then $\psi$ is divided by the square root
     of its value so that the integral is 1.
 
-    **A single plane wave fails the requirement.** The squared length is the amplitude times its complex
-    conjugate. For $\psi = e^{i(kx-\omega t)}$ the conjugate turns the arrow the opposite way, so the two
-    phases cancel:
+    **A single plane wave fails the requirement.** The plane wave $\psi = e^{i(kx-\omega t)}$ is an arrow of
+    length 1 turning in the complex plane (section 2.1): its real and imaginary parts are $\cos\theta$ and
+    $\sin\theta$ with $\theta = kx-\omega t$, and $\cos^2\theta + \sin^2\theta = 1$. So its squared length is
 
     $$
-    |\textcolor{#5ECCF3}{\psi}(x,t)|^2 = \textcolor{#5ECCF3}{\psi}^{*}\textcolor{#5ECCF3}{\psi}
-    = e^{-i(\textcolor{#6B913C}{k}x-\textcolor{#FF8021}{\omega}t)}\, e^{\,i(\textcolor{#6B913C}{k}x-\textcolor{#FF8021}{\omega}t)}
-    = e^{0} = 1 \qquad\text{for every } x \text{ and } t .
+    |\textcolor{#5ECCF3}{\psi}(x,t)|^2 = \cos^2\theta + \sin^2\theta = 1 \qquad\text{for every } x \text{ and } t .
     $$
 
-    The density does not depend on $x$, so the particle is equally likely to be found anywhere: the probability
-    of an interval is $\int_a^b 1\,dx = b-a$, its length, wherever the interval is. Over the whole line
+    The density is the same constant everywhere, so the particle is equally likely to be found anywhere. Now
+    ask for the probability of an interval, which is the area under this constant line. The area of a rectangle
+    of height 1 is its width times its height, so
 
     $$
-    \int_{-X}^{X} |\textcolor{#5ECCF3}{\psi}|^2\,dx = \int_{-X}^{X} 1\,dx = 2X \;\longrightarrow\; \infty
-    \quad (X \to \infty),
+    P(a<x<b) = \int_a^b 1\,dx = b-a ,
+    \qquad
+    \int_{-X}^{X} |\textcolor{#5ECCF3}{\psi}|^2\,dx = \int_{-X}^{X} 1\,dx = 2X .
     $$
 
-    which is not 1 and not finite. No multiple of a plane wave can be normalized, so a single plane wave cannot
+    The width $2X$ grows without limit as the region is widened, so over the whole line the area is infinite,
+    not 1. Multiplying $\psi$ by a constant $c$ multiplies the density by $|c|^2$ and the area by the same
+    factor, $|c|^2\,2X$. That is still infinite for every $c\neq 0$, and is 0 for $c=0$, which is no wave at all.
+    No multiple of a plane wave can be normalized, so a single plane wave cannot
     describe a particle that is somewhere. A packet, whose density is a bell curve of width $\sigma_x$, has
     $\int_{-\infty}^{\infty}|\psi|^2\,dx = 1$ by construction. The figure shows both: on the left the
     densities, and on the right the total probability found between $-X$ and $X$ as $X$ grows.
