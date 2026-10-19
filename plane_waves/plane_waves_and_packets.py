@@ -439,6 +439,38 @@ def _(mo):
     where $\operatorname{Re}$ means the real part. A notation is fixed here and used from now on: the capital
     $H$ is the **real height** of the wave, and $\psi$ is the **complex wave**, the arrow, whose real
     part is $H$. The later notebooks use the same letter $\psi$ for the wave function.
+
+    **The length of an arrow, and why $|\psi|^2$ is not $\psi^2$.** The **absolute value** $|\psi|$ of a complex
+    number is the length of its arrow, the distance from the origin to its tip. The arrow $\psi = a + ib$ has
+    horizontal component $a$ and vertical component $b$, where $b$ is the real number multiplying $i$, and
+    these are the two short sides of a right triangle whose long side is the arrow. By Pythagoras
+
+    $$
+    |\textcolor{#5ECCF3}{\psi}| = \sqrt{a^2 + b^2}, \qquad |\textcolor{#5ECCF3}{\psi}|^2 = a^2 + b^2 .
+    $$
+
+    For example $3+4i$ has length $\sqrt{9+16}=5$. The squared length $|\psi|^2$ is the quantity called the
+    intensity above. For $\psi = A\,e^{i\theta}$ it is $A^2\cos^2\theta + A^2\sin^2\theta = A^2$, so the
+    length is $A$, as it should be.
+
+    Simply squaring $\psi$ does not give this. Since $i^2=-1$,
+
+    $$
+    \textcolor{#5ECCF3}{\psi}^2 = (a+ib)^2 = a^2 - b^2 + 2iab ,
+    $$
+
+    which is a complex number in general, can be negative, and is not a length. For the arrow pointing straight
+    up, $\psi = i$, it gives $\psi^2=-1$, although the arrow has length 1. The squared length is instead
+    $\psi$ times its **complex conjugate** $\psi^{*}$, which is $\psi$ with the sign of $i$ reversed (the arrow
+    reflected in the horizontal axis):
+
+    $$
+    \textcolor{#5ECCF3}{\psi}^{*} = a - ib, \qquad
+    \textcolor{#5ECCF3}{\psi}^{*}\textcolor{#5ECCF3}{\psi} = (a-ib)(a+ib) = a^2 + iab - iab - i^2b^2 = a^2 + b^2 = |\textcolor{#5ECCF3}{\psi}|^2 .
+    $$
+
+    The two terms with $i$ cancel and $-i^2=+1$, so the result is a real, non-negative number, as a length
+    squared and a probability must be. For $\psi = i$ it gives $(-i)(i) = 1$.
     """)
     return
 
@@ -914,11 +946,13 @@ def _(mo):
     of its value so that the integral is 1.
 
     **A single plane wave fails the requirement.** The plane wave $\psi = e^{i(kx-\omega t)}$ is an arrow of
-    length 1 turning in the complex plane (section 2.1): its real and imaginary parts are $\cos\theta$ and
-    $\sin\theta$ with $\theta = kx-\omega t$, and $\cos^2\theta + \sin^2\theta = 1$. So its squared length is
+    length 1 turning in the complex plane (section 2.1): $\psi = \cos\theta + i\sin\theta$ with
+    $\theta = kx-\omega t$. Its squared length is the number times its complex conjugate, as in section 2.1:
 
     $$
-    |\textcolor{#5ECCF3}{\psi}(x,t)|^2 = \cos^2\theta + \sin^2\theta = 1 \qquad\text{for every } x \text{ and } t .
+    |\textcolor{#5ECCF3}{\psi}(x,t)|^2 = \textcolor{#5ECCF3}{\psi}^{*}\textcolor{#5ECCF3}{\psi}
+    = (\cos\theta - i\sin\theta)(\cos\theta + i\sin\theta) = \cos^2\theta + \sin^2\theta = 1
+    \qquad\text{for every } x \text{ and } t .
     $$
 
     The density is the same constant everywhere, so the particle is equally likely to be found anywhere. Now
@@ -950,6 +984,31 @@ def _(flat_vs_lump_figure, mo, plt):
     _out = mo.vstack([_fig])
     plt.close(_fig)
     _out
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    **What the size $A$ means for a particle.** For water, the size $A$ was the largest height of the surface.
+    A wave function $\psi = A\,e^{i(kx-\omega t)}$ has no height to measure, and $A$ only sets the scale of the
+    density, $|\psi|^2 = |A|^2$. Predictions use the density through ratios, such as the probability of one
+    interval compared with another, and through the total being 1, so multiplying the whole of $\psi$ by a
+    constant changes no prediction once the total is set back to 1. Where $A$ is fixed, normalization fixes it:
+
+    - **A packet** has $A$ built in. The bell curve of section 6 has the prefactor $(2\pi\sigma_x^2)^{-1/4}$,
+      chosen so that $\int|\psi|^2dx = 1$.
+    - **A plane wave** cannot be normalized, as shown above, so no value of $A$ is the right one, and
+      $A=1$ is a convention. Two common choices keep the wave and make its density mean something. Confine
+      the particle to a stretch of length $L$ and take $A = 1/\sqrt{L}$, so that
+      $\int_{-L/2}^{L/2}|A|^2dx = |A|^2L = 1$, which is the flat density of a particle equally likely to be
+      anywhere in the stretch. Or read $|A|^2$ as the number of particles per unit length in a steady beam.
+
+    Sizes do matter when waves are added. In the two-hole interference of section 3, the ratio $A_1/A_2$ sets
+    how deep the dark fringes are, through $A_1^2+A_2^2+2A_1A_2\cos\delta$, and both are fixed by the overall
+    normalization. A common complex factor $e^{i\alpha}$ in front of $\psi$ changes no density at all, but a phase
+    difference between two added waves shifts the fringes.
+    """)
     return
 
 
