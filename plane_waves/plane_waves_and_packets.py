@@ -29,6 +29,7 @@ def _():
         width,
     )
     from wave_plots import (
+        packet_flow_figure,
         conservation_figure,
         arrow_figure,
         band_shapes_figure,
@@ -61,6 +62,7 @@ def _():
     )
 
     return (
+        packet_flow_figure,
         conservation_figure,
         arrow_figure,
         band_shapes_figure,
@@ -1479,7 +1481,8 @@ def _(md):
     $$
 
     At the time $t_s$ the width has grown by a factor $\sqrt{2}$. The time-and-space map shows the same
-    packet as a whole: it moves along the classical path (dashed) and gets wider and fainter.
+    packet as a whole: it moves along the classical path (dashed) and gets wider and fainter. Step 7 of section 7 shows how the
+    probability flows inside this packet.
     """)
     return
 
@@ -1902,6 +1905,61 @@ def _(mo, np, packet):
 @app.cell
 def _(md):
     md(r"""
+    **Step 7: the flow in a wave packet.** The Gaussian packet of section 6 is a lump that moves and widens, so
+    it shows what the probability flow looks like in a real case. Dividing the flow by the density gives the
+    local velocity of the probability, $v = j/\rho$, so that $j = v\rho$ as in the figure of Step 1. For the
+    packet of section 6, the flow $j = \frac{\hbar}{m}\,\mathrm{Im}\big(\psi^{*}\,\partial\psi/\partial x\big)$ (the
+    expression of Eq. \eqref{eq:continuity}) gives the local velocity
+
+    $$
+    v(x,t) = v_0 + \big(x - v_0 t\big)\,\frac{t}{t^2 + t_s^2}, \qquad v_0 = \frac{\hbar k_0}{m}, \qquad t_s = \frac{2m\sigma_x^2}{\hbar} . \label{eq:packet-velocity}
+    $$
+
+    (This was checked numerically against the exact packet.) Two things follow.
+
+    - **The average movement.** At the centre of the lump, $x = v_0 t$, the velocity is $v_0$, and the total flow
+      is $\int j\,dx = v_0$. On average the probability moves at the classical velocity, so the centre follows
+      $x = v_0 t$ (section 6.3).
+    - **The widening.** Away from the centre the velocity differs. Points ahead of the centre move faster than
+      $v_0$ and points behind it move slower, so the front of the lump pulls ahead of the back. The velocity
+      changes by $t/(t^2+t_s^2)$ for each unit of distance from the centre, and this is exactly the relative rate
+      at which the width of Eq. \eqref{eq:width-growth} grows, as the next equation shows.
+
+    $$
+    \frac{1}{\sigma}\,\frac{d\sigma}{dt} = \frac{t}{t^2 + t_s^2} = \frac{\partial v}{\partial x} . \label{eq:widening-rate}
+    $$
+
+    At $t = 0$ this rate is zero, so the lump starts without widening. It is largest at $t = t_s$ and falls
+    afterwards, because later the front and the back are separated at a nearly steady rate. The figure shows the
+    packet with $\hbar = m = 1$. The top panel is the density with its width $\sigma(t)$, the middle panel is the
+    flow $j$, and the bottom panel is the local velocity $v = j/\rho$, computed from the packet (solid) and from
+    the formula (dashed), which lie on top of one another where the density is not negligible. The axes are
+    fixed, so changing $k_0$ moves the centre and the velocity, and increasing $t$ steepens and then flattens the
+    velocity line while the density widens.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    pf_k0 = mo.ui.slider(0.0, 1.5, step=0.25, value=1.0, label=r"$k_0$", show_value=True)
+    pf_sigma = mo.ui.slider(1.0, 1.5, step=0.1, value=1.0, label=r"initial width $\sigma_x$", show_value=True)
+    pf_t = mo.ui.slider(0.0, 8.0, step=0.5, value=3.0, label=r"time $t$", show_value=True)
+    return pf_k0, pf_sigma, pf_t
+
+
+@app.cell
+def _(mo, packet_flow_figure, pf_k0, pf_sigma, pf_t, plt):
+    _fig = packet_flow_figure(pf_k0.value, pf_sigma.value, pf_t.value)
+    _out = mo.vstack([mo.hstack([pf_k0, pf_sigma, pf_t], justify="start"), _fig])
+    plt.close(_fig)
+    _out
+    return
+
+
+@app.cell
+def _(md):
+    md(r"""
     **Why the $i$ in the equation matters.** Step 2 required $\alpha$ to be purely imaginary. Suppose it is real
     instead, which means removing the $i$ from Eq. \eqref{eq:schrodinger-free}:
 
@@ -1963,6 +2021,9 @@ def _(mo):
       which removes $\gamma$, and the classical velocity fixes the remaining constant, giving the Schrödinger
       equation $i\hbar\,\partial_t\psi = -\tfrac{\hbar^2}{2m}\,\partial_x^2\psi$. With a real potential $V$ it still
       conserves the total probability. Without the $i$ the waves fade and probability is lost.
+    - In the free Gaussian packet the probability flow is $j = v\rho$ with a local velocity that equals $v_0$ at
+      the centre and grows linearly across the lump: the centre moves at the classical velocity, and the
+      velocity gradient $t/(t^2+t_s^2)$ is the rate at which the lump widens.
     - The lump behaves like a classical particle when $k_0\sigma_x = p_0/2\Delta p \gg 1$: its momentum is
       known to a small fraction of itself, and it travels $2k_0\sigma_x$ of its own widths before it spreads.
     """)

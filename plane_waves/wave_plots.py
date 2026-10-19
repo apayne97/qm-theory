@@ -472,6 +472,50 @@ def conservation_figure(sigma, v, t):
     return fig
 
 
+def packet_flow_figure(k0, sigma0, t):
+    """The Gaussian packet of section 6 (hbar = m = 1): density rho, probability flow j and local velocity v = j / rho.
+
+    j = Im(psi* dpsi/dx). The exact result is v(x, t) = k0 + (x - k0 t) t / (t^2 + t_s^2), t_s = 2 sigma0^2:
+    the centre moves at k0 and the velocity grows across the lump, which is why it widens. The axes are fixed."""
+    ts = 2 * sigma0**2
+    x = np.linspace(-12, 28, 4001)
+    dx = x[1] - x[0]
+    psi = packet(x, t, k0, sigma0)
+    rho = np.abs(psi) ** 2
+    j = np.imag(np.conj(psi) * np.gradient(psi, dx))
+    visible = rho > 0.02 * rho.max()
+    v_exact = k0 + (x - k0 * t) * t / (t**2 + ts**2)
+    sigma_t = width(t, sigma0)
+    mean_flow = np.trapezoid(j, x)
+
+    fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(9, 6.6), sharex=True)
+    _density(ax1, x, rho, rf"$\rho = |\psi|^2$ at $t={t:g}$")
+    ax1.axvline(k0 * t, color=ARROW_COLOR, ls="--", lw=1.2, label="centre, $x = v_0 t$")
+    ax1.set_ylim(0, 0.45)
+    ax1.set_ylabel(r"density $\rho$")
+    ax1.set_title(rf"width $\sigma(t) = {sigma_t:.2f}$", fontsize=10)
+    ax1.legend(loc="upper right", fontsize=8)
+
+    ax2.axhline(0, color="0.85", lw=0.8)
+    ax2.plot(x, j, color=OMEGA_COLOR, lw=2.2)
+    ax2.fill_between(x, 0, j, color=OMEGA_COLOR, alpha=0.2)
+    ax2.set_ylim(-0.3, 1.0)
+    ax2.set_ylabel(r"flow $j$")
+    ax2.set_title(rf"average movement: $\int j\,dx = {mean_flow:.3f}$, the classical velocity $v_0 = {k0:g}$", fontsize=10)
+
+    ax3.axhline(k0, color="0.6", lw=1.0, ls=":", label=r"$v_0$")
+    ax3.plot(x[visible], (j[visible] / rho[visible]), color="0.35", lw=2.2, label=r"$v = j/\rho$ from the packet")
+    ax3.plot(x[visible], v_exact[visible], color=INK, lw=1.2, ls="--", label=r"$v_0 + (x - v_0t)\,t/(t^2+t_s^2)$")
+    ax3.axvline(k0 * t, color=ARROW_COLOR, ls="--", lw=1.0)
+    ax3.set_ylim(-1.6, 3.2)
+    ax3.set_xlim(-12, 28)
+    ax3.set_xlabel("position $x$")
+    ax3.set_ylabel(r"local velocity $v$")
+    ax3.legend(loc="upper left", fontsize=8)
+    fig.tight_layout()
+    return fig
+
+
 def rest_energy_phase_figure(phase, k0=5.0, sigma_x=1.5, t=2.0):
     """A packet with and without the factor exp(-i phase) from the rest energy: Re psi changes, |psi|^2 does not."""
     v = group_velocity(k0)
