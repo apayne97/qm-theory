@@ -1592,7 +1592,68 @@ def _(mo):
     The slopes can be applied to $\psi$ without knowing which waves it contains. The plan is (1) to show that
     these two slopes read off the energy and the momentum, (2) to use the relation between energy and momentum
     to link the two slopes into one equation, and (3) to check that the equation holds for a lump, which is a
-    sum of many waves.
+    sum of many waves. Before these steps, Step 0 asks a more basic question: what form can a law of motion
+    for $\psi$ have at all?
+
+    **Step 0: what form can the law take?** Two facts we already have are enough to fix the form. Describe the
+    state by a list of amplitudes. Write $C_1, C_2, C_3, \dots$ for the values of $\psi$ at points
+    $x_1, x_2, x_3, \dots$ along the line, as close together as we like. The whole state is this list, and each
+    $C_j$ changes with time.
+
+    The first fact is that amplitudes add (section 3). The state a short time $\Delta t$ later is built from
+    the old state by adding contributions, so each new amplitude is a weighted sum of the old ones:
+
+    $$
+    C_i(t+\Delta t) = \sum_j U_{ij}\,C_j(t) .
+    $$
+
+    The number $U_{ij}$ says how much the old amplitude at point $j$ contributes to the new amplitude at point
+    $i$. The numbers form a table with a row $i$ and a column $j$, called a matrix. They do not depend on the
+    amplitudes themselves, which is what it means for the law to be linear: if two states each evolve this way,
+    so does their sum.
+
+    The second fact is that nothing can happen in no time. As $\Delta t \to 0$ each new amplitude must equal the
+    old one, so $U_{ij} \to \delta_{ij}$, where $\delta_{ij}$ is $1$ if $i=j$ and $0$ otherwise. For a small
+    $\Delta t$ each $U_{ij}$ then differs from $\delta_{ij}$ by an amount proportional to $\Delta t$. Write that
+    amount as $-\frac{i}{\hbar}H_{ij}\Delta t$, which defines a second table of numbers $H_{ij}$ (the factor
+    $-i/\hbar$ is a convention, chosen so that $H$ comes out as an energy):
+
+    $$
+    U_{ij} = \delta_{ij} - \frac{i}{\hbar}\,H_{ij}\,\Delta t .
+    $$
+
+    Put this in the sum. The $\delta_{ij}$ part gives back $C_i(t)$, because $\sum_j \delta_{ij}C_j = C_i$. Move
+    $C_i(t)$ to the left side, divide by $\Delta t$ and let $\Delta t \to 0$:
+
+    $$
+    i\hbar\,\frac{dC_i}{dt} = \sum_j H_{ij}\,C_j .
+    $$
+
+    This is already a law of motion of the kind we wanted: the rate of change of each amplitude is a weighted
+    sum of the amplitudes now. It is first order in time, it is linear, and all the physics of the situation
+    is in the table $H_{ij}$. For points packed closely, the sum over $j$ becomes an integral over position.
+    For a single state the table has one entry and the equation is $i\hbar\,dC/dt = H\,C$, whose solution
+    $C \propto e^{-iHt/\hbar}$ is the turning arrow of section 5 with $H = \hbar\omega = E$. This is why $H$ is
+    called the energy matrix.
+
+    The factor $i$ is explained by conservation of probability. The total $\sum_i |C_i|^2$ must stay equal to
+    1. Its rate of change uses the equation above and its complex conjugate, and after renaming
+    $i \leftrightarrow j$ in one term it is
+
+    $$
+    \frac{d}{dt}\sum_i |C_i|^2 = \frac{i}{\hbar}\sum_{ij}\left(H_{ji}^{*} - H_{ij}\right) C_i^{*}\,C_j .
+    $$
+
+    This is zero for every state only if $H_{ji}^{*} = H_{ij}$ (the table equals its own flipped complex
+    conjugate). That is the form of the condition in section 8 that the potential be real, and it is why the
+    $i$ is there: with real weights and no $i$ the total would grow or shrink, as in the heat equation of
+    section 8.
+
+    Step 0 says what kind of equation to expect, and it does not say what $H_{ij}$ is for a free electron.
+    Steps 1 and 2 supply that. In empty space no position is special, so $H_{ij}$ can depend only on the
+    distance between $i$ and $j$. A plane wave is then special: shifting it only multiplies it by a phase (the
+    footnote of section 5), so applying $H$ to a plane wave gives back the same wave times a number, its
+    energy. Steps 1 and 2 find that number from $E = p^2/2m$.
 
     **Step 1: energy and momentum as slopes.** Take one plane wave $\psi = e^{i(kx-\omega t)}$. The symbol
     $\partial\psi/\partial t$ means the rate at which $\psi$ changes with time at a fixed position, and
@@ -1857,9 +1918,13 @@ def _(mo):
     $\sigma_x\sigma_{k}=\tfrac12$, and the symmetry argument for energy and momentum follow Chapters 1, 7, 16 and
     17 of R. P. Feynman, R. B. Leighton and M. Sands, *The Feynman Lectures on Physics*, Vol. III: Quantum
     Mechanics (Caltech online edition, edited by M. A. Gottlieb and R. Pfeiffer, 2013),
-    <https://www.feynmanlectures.caltech.edu/III_toc.html>. The trigonometric introduction in section 1 is
-    standard, and the analysis of the spreading of the packet and of the condition $k_0\sigma_x\gg1$ for
-    classical behaviour in section 6 is not taken from those chapters.
+    <https://www.feynmanlectures.caltech.edu/III_toc.html>. Step 0 of section 7, the form of the law of motion
+    $i\hbar\,dC_i/dt = \sum_j H_{ij}C_j$, follows Section 8–4 of Chapter 8 (Eqs. 8.31 to 8.39), and the condition
+    $H_{ij}^{*} = H_{ji}$ is its Eq. 8.40. The short calculation in Step 0 that shows why conservation of
+    probability requires that condition is written out here. The trigonometric introduction in section 1 is
+    standard. The analysis of the spreading of the packet and of the condition $k_0\sigma_x\gg1$ for classical
+    behaviour in section 6 is not taken from those chapters, and neither are the entropy relations of 6.2 (the
+    entropic uncertainty relation is due to Hirschman and to Białynicki-Birula and Mycielski).
     """)
     return
 
