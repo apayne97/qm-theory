@@ -310,6 +310,29 @@ def min_uncertainty_figure():
     return fig
 
 
+def rest_energy_phase_figure(phase, k0=5.0, sigma_x=1.5, t=2.0):
+    """A packet with and without the factor exp(-i phase) from the rest energy: Re psi changes, |psi|^2 does not."""
+    v = group_velocity(k0)
+    x = np.linspace(v * t - 6, v * t + 6, 2000)
+    psi = packet(x, t, k0, sigma_x)
+    turned = np.exp(-1j * phase) * psi
+    scale = np.abs(packet(0.0, 0.0, k0, sigma_x))
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(9, 4.2), sharex=True)
+    ax1.fill_between(x, 0, np.abs(psi) ** 2 / scale**2, color="0.8", label=r"$|\psi|^2$ without the rest-energy phase")
+    ax1.plot(x, np.abs(turned) ** 2 / scale**2, color=OMEGA_COLOR, lw=1.8, ls="--", label=r"$|\psi|^2$ with it")
+    ax1.set_ylim(0, 1.25)
+    ax1.set_ylabel("probability density")
+    ax1.legend(loc="upper right", fontsize=8)
+    ax2.plot(x, psi.real / scale, color=RE_COLOR, lw=1.0, alpha=0.7, label=r"Re $\psi$ without")
+    ax2.plot(x, turned.real / scale, color=OMEGA_COLOR, lw=1.0, label=r"Re $\psi$ with")
+    ax2.set_ylim(-1.2, 1.2)
+    ax2.set_ylabel("real part")
+    ax2.set_xlabel("position $x$")
+    ax2.legend(loc="upper right", fontsize=8, ncol=2)
+    fig.tight_layout()
+    return fig
+
+
 def band_shapes_figure(sigma_k=1.0, half_range=10.0):
     """|a(k)|^2 for a top-hat and a Gaussian of equal rms width, and the |psi(x)|^2 each produces at t = 0."""
     k = np.linspace(-6 * sigma_k, 6 * sigma_k, 4001)

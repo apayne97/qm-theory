@@ -34,6 +34,7 @@ def _():
         packet_times_figure,
         phase_figure,
         probability_figure,
+        rest_energy_phase_figure,
         space_cosine_figure,
         space_twist_figure,
         spacetime_figure,
@@ -68,6 +69,7 @@ def _():
         phase_figure,
         plt,
         probability_figure,
+        rest_energy_phase_figure,
         space_cosine_figure,
         space_features_figure,
         space_twist_figure,
@@ -902,12 +904,54 @@ def _(mo):
     particle moving sees the same rotation re-expressed in terms of the new time and position, and part of it
     becomes a twist in space whose rate is the particle's momentum divided by $\hbar$.[^lorentz]
 
-    For a slowly moving particle of mass $m$ the energy is $E = p^2/2m$, so the two rotation rates are
-    related by
+    For a slowly moving particle of mass $m$ ($v \ll c$) the energy follows from the relativistic expression
+    in the footnote, $E = E_0/\sqrt{1-v^2/c^2}$ with rest energy $E_0 = mc^2$. For small $u = v^2/c^2$ the
+    square root factor is $(1-u)^{-1/2} \approx 1 + u/2$, and $p \approx mv$, so
+
+    $$
+    E \approx E_0\left(1 + \frac{v^2}{2c^2}\right) = E_0 + \tfrac12 mv^2 = E_0 + \frac{p^2}{2m} .
+    $$
+
+    The energy is the rest energy $E_0$ plus the kinetic energy $p^2/2m$. Dividing by $\hbar$ gives the rotation
+    rate of the amplitude in time, which is the rest-energy rate plus a rate that depends on $k$:
+
+    $$
+    \textcolor{#FF8021}{\omega}(\textcolor{#6B913C}{k}) = \textcolor{#FF8021}{\omega}_{\mathrm{rest}} + \frac{\hbar \textcolor{#6B913C}{k}^2}{2m},
+    \qquad \textcolor{#FF8021}{\omega}_{\mathrm{rest}} = \frac{E_0}{\hbar} = \frac{mc^2}{\hbar} .
+    $$
+
+    **Why the rest-energy term is left out.** The rate $\omega_{\mathrm{rest}}$ is the same for every $k$. A wave
+    function built from plane waves with amplitudes $a(k)$ (the sum of section 6) is, at time $t$,
+
+    $$
+    \textcolor{#5ECCF3}{\psi}(x,t) = \sum_{\textcolor{#6B913C}{k}} a(\textcolor{#6B913C}{k})\,e^{\,i\left(\textcolor{#6B913C}{k}x-\left(\textcolor{#FF8021}{\omega}_{\mathrm{rest}}+\hbar \textcolor{#6B913C}{k}^2/2m\right)t\right)}
+    = e^{-i\textcolor{#FF8021}{\omega}_{\mathrm{rest}}t}\;\sum_{\textcolor{#6B913C}{k}} a(\textcolor{#6B913C}{k})\,e^{\,i\left(\textcolor{#6B913C}{k}x-\hbar \textcolor{#6B913C}{k}^2t/2m\right)} .
+    $$
+
+    The factor $e^{-i\omega_{\mathrm{rest}}t}$ does not depend on $k$, so it comes outside the sum and multiplies
+    the whole wave function. It is an arrow of length 1, so it turns $\psi$ without changing its length, and
+    the probability density is the same with or without it:
+
+    $$
+    |\textcolor{#5ECCF3}{\psi}|^2 = \big|e^{-i\textcolor{#FF8021}{\omega}_{\mathrm{rest}}t}\big|^2\,\Big|\sum_{\textcolor{#6B913C}{k}} a(\textcolor{#6B913C}{k})\,e^{\,i\left(\textcolor{#6B913C}{k}x-\hbar \textcolor{#6B913C}{k}^2t/2m\right)}\Big|^2
+    = \Big|\sum_{\textcolor{#6B913C}{k}} a(\textcolor{#6B913C}{k})\,e^{\,i\left(\textcolor{#6B913C}{k}x-\hbar \textcolor{#6B913C}{k}^2t/2m\right)}\Big|^2 .
+    $$
+
+    Only the differences between the rotation rates of different components change how they add. Two
+    components $k_1$ and $k_2$ turn relative to each other at the rate
+    $\omega(k_1)-\omega(k_2) = \hbar(k_1^2-k_2^2)/2m$, in which $\omega_{\mathrm{rest}}$ cancels. The speed of
+    the lump, $d\omega/dk = \hbar k/m$, also has no $\omega_{\mathrm{rest}}$, because the slope of a constant is
+    zero. So adding $E_0$ to the energy is a choice of where to start measuring energy, as with the height of
+    the floor in a gravity problem, and it changes no probability. It is dropped, and from here on
 
     $$
     \textcolor{#FF8021}{\omega}(\textcolor{#6B913C}{k}) = \frac{\hbar \textcolor{#6B913C}{k}^2}{2m}.
     $$
+
+    The figure shows this for the packet of section 6. Slide the phase $\omega_{\mathrm{rest}}t$ that the rest
+    energy has turned the wave function through. The real part of $\psi$ changes, because the whole arrow is
+    turned, while the probability density does not move. (The term could not be dropped if the rest energy
+    itself changed, as in a decay, because then the difference of $E_0$ before and after is a physical energy.)
 
     [^symmetry]: The companion notebook `../spinors/spinor_rotation.py` shows that a state which a rotation
         only multiplies by a phase $e^{-im\theta}$ keeps its value of $m$, the component of angular momentum,
@@ -926,6 +970,21 @@ def _(mo):
         time at the rate $E'/\hbar$ and twists in space at the rate $p'/\hbar$, which are $\omega = E'/\hbar$
         and $k = p'/\hbar$.
     """)
+    return
+
+
+@app.cell
+def _(mo):
+    rest_phase = mo.ui.slider(0.0, 6.28, step=0.1, value=1.5, label=r"phase $\omega_{\mathrm{rest}}\,t$ (radians)", show_value=True)
+    return (rest_phase,)
+
+
+@app.cell
+def _(mo, plt, rest_energy_phase_figure, rest_phase):
+    _fig = rest_energy_phase_figure(rest_phase.value)
+    _out = mo.vstack([rest_phase, _fig])
+    plt.close(_fig)
+    _out
     return
 
 
