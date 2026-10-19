@@ -23,6 +23,7 @@ def _():
     )
     from wave_plots import (
         arrow_figure,
+        band_shapes_figure,
         flat_vs_lump_figure,
         interference_figure,
         interference_schematic,
@@ -45,6 +46,7 @@ def _():
 
     return (
         arrow_figure,
+        band_shapes_figure,
         flat_vs_lump_figure,
         group_velocity,
         hole_amplitude,
@@ -1014,9 +1016,54 @@ def _(mo):
     \textcolor{#5ECCF3}{\psi}(x,t) = \sum_{\textcolor{#6B913C}{k}} a(\textcolor{#6B913C}{k})\, e^{\,i(\textcolor{#6B913C}{k}x-\textcolor{#FF8021}{\omega}(\textcolor{#6B913C}{k})\,t)},
     $$
 
-    where $a(k)$ is the amplitude of each wave. The probability of a given $k$ is $|a(k)|^2$. Take $a(k)$ to be
-    a bell curve centred on $k_0$ with root-mean-square width $\sigma_{k}$ (the typical distance from the
-    centre), and take every component to have the same phase at $t = 0$, so that they are all in step at
+    where $a(k)$ is the amplitude of each wave. The probability of a given $k$ is $|a(k)|^2$.
+
+    **Choosing $a(k)$.** The sum can be made with any choice of $a(k)$, so the choice needs a reason. Two
+    things are wanted. The first is a lump with one peak and nothing else, since a stray second bump would be
+    another place where the particle might be found. The second is a sum that can be done exactly, so that
+    the rest of this section can be worked out in full. The simplest choice is to include every wave in a band
+    of $k$ equally and none outside it, a flat top. The figure compares it with a bell curve, the
+    **Gaussian** $a(k)\propto e^{-(k-k_0)^2/4\sigma_k^2}$, chosen to have the same root-mean-square width
+    $\sigma_k$ (the typical distance from $k_0$). The left panel is the probability of each $k$ and the right
+    panel is the probability density of position that the sum gives at $t=0$, drawn on a logarithmic scale
+    so that small values show.
+    """)
+    return
+
+
+@app.cell
+def _(band_shapes_figure, mo, plt):
+    _fig = band_shapes_figure()
+    _out = mo.vstack([_fig])
+    plt.close(_fig)
+    _out
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    Both give a main lump of about the same width. The flat band also gives ripples on either side, the
+    first about 5% as high as the peak, and they die away slowly (as $1/x^2$). They come from the sharp edges
+    of the band: waves that stop abruptly at the edge of the band do not cancel one another completely away
+    from the peak. The ripples are so spread out that the root-mean-square width in position of the flat band is
+    not even finite, so it has no useful spread to compare with $\sigma_k$. The Gaussian has no edges, and its
+    lump has no ripples at all. Three reasons make it the standard choice:
+
+    - **One clean lump.** A smooth bell curve in $k$ gives complete cancellation away from the peak, as the
+      figure shows.
+    - **The same shape in both variables.** Adding Gaussian-weighted plane waves gives a bell curve in $x$ again.
+      One shape then carries through the whole calculation, and the sum can be done exactly, which gives the
+      closed-form results for the motion and spreading of the lump in the next two subsections. For most other
+      choices of $a(k)$ there is no such formula.
+    - **The tightest possible lump.** Of all shapes, the bell curve makes the product of the two widths,
+      $\sigma_x\sigma_k$, as small as it can be, so it is the most localized lump that a given spread of
+      wave numbers can make.
+
+    It is a convenient choice and not a law of nature. Other smooth, narrow shapes behave in the same way in
+    outline, a lump that moves and spreads, and differ in details such as the ripples. So take $a(k)$ to be
+    a bell curve centred on $k_0$ with root-mean-square width $\sigma_{k}$, and take every component to have
+    the same phase at $t = 0$, so that they are all in step at
     $x = 0$. Then at $t = 0$ the probability of finding the particle is also a bell curve, centred on $x = 0$
     with root-mean-square width $\sigma_x$, and the two widths are linked by
 
@@ -1025,8 +1072,8 @@ def _(mo):
     $$
 
     where $\Delta x = \sigma_x$ and $\Delta p = \hbar\sigma_{k}$ are the spreads in position and in momentum.
-    This is the uncertainty principle, and the bell curve is the shape that makes the product as small as it
-    can be. It is a property of the state itself, not an error of measurement. A narrow lump in position
+    This is the uncertainty principle, and $\tfrac12$ is the smallest value the product can take.
+    It is a property of the state itself, not an error of measurement. A narrow lump in position
     requires a broad range of $k$, and the reverse.
 
     In the limit of very closely spaced values of $k$ the sum becomes an integral and can be evaluated

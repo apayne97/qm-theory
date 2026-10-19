@@ -167,6 +167,37 @@ def probability_figure(k, omega, t):
     return fig
 
 
+def band_shapes_figure(sigma_k=1.0, half_range=10.0):
+    """|a(k)|^2 for a top-hat and a Gaussian of equal rms width, and the |psi(x)|^2 each produces at t = 0."""
+    k = np.linspace(-6 * sigma_k, 6 * sigma_k, 4001)
+    dk = k[1] - k[0]
+    w = np.sqrt(12) * sigma_k  # a uniform band of width w has rms width w / sqrt(12)
+    amps = {
+        "top-hat": np.where(np.abs(k) <= w / 2, 1.0, 0.0),
+        "Gaussian": np.exp(-(k**2) / (4 * sigma_k**2)),
+    }
+    colors = {"top-hat": "0.5", "Gaussian": RE_COLOR}
+    x = np.linspace(-half_range, half_range, 2001)
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 3.4))
+    for name, a in amps.items():
+        a = a / np.sqrt(np.sum(a**2) * dk)  # total probability over k equal to 1
+        ax1.plot(k, a**2, color=colors[name], lw=2.2, label=name)
+        psi = (a[None, :] * np.exp(1j * np.outer(x, k))).sum(axis=1) * dk
+        rho = np.abs(psi) ** 2
+        ax2.plot(x, rho / rho.max(), color=colors[name], lw=2.2, label=name)
+    ax1.set_xlabel("wave number $k$")
+    ax1.set_ylabel(r"probability of $k$, $|a(k)|^2$")
+    ax1.legend(fontsize=8)
+    ax2.set_yscale("log")
+    ax2.set_ylim(1e-5, 2)
+    ax2.set_xlabel("position $x$")
+    ax2.set_ylabel(r"probability density $|\psi|^2$ (peak = 1)")
+    ax2.legend(fontsize=8, loc="upper right")
+    fig.tight_layout()
+    return fig
+
+
 def flat_vs_lump_figure(k0, sigma_x, half_range=12.0):
     """|psi|^2 of a plane wave (flat) and a packet (lump), and the probability inside |x| < X as X grows."""
     x = np.linspace(-half_range, half_range, 4000)
