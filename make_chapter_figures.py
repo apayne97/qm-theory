@@ -20,7 +20,7 @@ import belt_plots  # noqa: E402
 import quantization_plots  # noqa: E402
 import wave_plots  # noqa: E402
 
-DEFAULT_OUT = Path.home() / "science/knowledge-base-qm/biophysics/quantum-mechanics/figures"
+DEFAULT_OUT = HERE / "chapter" / "figures"
 
 FIGURES = {
     "wave-phase.png": lambda: wave_plots.phase_figure(),

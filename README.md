@@ -100,11 +100,26 @@ A wireframe picture of a field with one localised excitation, for slides (a part
 | `test_field_image.py` | pytest checks (bump at the origin, circular symmetry, dies away, small background, J0 values, several rings) |
 | `make_field_images.py` | Writes `images/electron_field_{red,blue}[_labelled].{svg,png}` |
 
+## chapter/
+
+The knowledge-base chapter (`quantum-mechanics.tex`, its figures and PDF) is edited **here**; the lab's knowledge-base repo is only a destination. `lecture.cls` and `commons.sty` are vendored copies so the chapter builds standalone (the lab repo's versions are authoritative).
+
+```bash
+cd chapter
+latexmk -pdf -outdir=.build quantum-mechanics.tex && cp .build/quantum-mechanics.pdf .
+python ../make_chapter_figures.py        # regenerate figures/ after changing qmstyle.py or a plot
+python sync_chapter.py ~/science/knowledge-base-qm   # copy tex, PDF, figures; then commit and push there
+python -m pytest -q
+```
+
+`sync_chapter.py` never commits or pushes. It refuses to run if the destination changed since the last sync (recorded in `.last_sync.json`) or has uncommitted changes, unless `--force`.
+
 ## Shared files
 
 | File | What it is |
 |---|---|
 | `qmstyle.py` | The one colour palette, with the meaning of each colour and a generator for the LaTeX colour definitions |
+| `make_chapter_figures.py` | Regenerates the 17 figures of `chapter/figures/` from the plotting modules |
 | `qmstyle_test.py` | pytest checks of the palette and of how notebooks use it |
 
 ## References

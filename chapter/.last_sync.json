@@ -1,0 +1,21 @@
+{
+ "figures/ball-2pi.png": "7ac6a65df8527d5dea1ef97451eef4bc778fbcc4a01b84daf7f5be4a29e22d98",
+ "figures/ball-4pi.png": "7d831ab9feb738ee3b1e54c646072720d632002664f41bc2582c9cc2e2b5ba13",
+ "figures/belt-2pi.png": "81e407a57f1d44ab4feaa7097694f81056fe8bc6570058328b0235c9f6b5aa90",
+ "figures/belt-4pi.png": "41c3c4d6c0396fa631a81a22c79cb320874672eea7fbfb19d0db211fc9aa5aa4",
+ "figures/box-wall.png": "b509ee075abc4220c6adeb431bcc00233a7181854407d3487ae7850ef5d91ca8",
+ "figures/hydrogen-levels.png": "f4e4a179343df5e55f637abf0749e967d13f9ae1c7540a5b1ba1b91a8a57e13e",
+ "figures/oscillator-energy.png": "f2bd4e73faf76a91c0421544cb7f100429cd966a10204b8cbec7abd4610aa2e3",
+ "figures/packet-times.png": "9420d46b75aa8a2766cce92d81d9ce9c31fa278fb78b7c6e13ca690bb6cf0fec",
+ "figures/ring-box-oscillator.png": "728e9f6de34c25d5db714d97beb6938c8462cb707dbd75152b2cd49fa2fbbadd",
+ "figures/ring-seam.png": "adda9a6acc1b1d496924f4ebf0e910c89a8c2d8f295f71c09ecdda464d2cebd7",
+ "figures/two-hole-interference.png": "71d2d3669d973e0df281360fcb4ad513a05af5a58ca05c38b5578998a04ba1b0",
+ "figures/two-hole-schematic.png": "ada825c16bf6d5452a244647cc555fdd6590fbd819dfbe750fd29347d8970f59",
+ "figures/wave-phase.png": "2331cb5a8fb3d8ad149eed1bf527f7d361ebc343ea40c81d90e0c74d162e76df",
+ "figures/wave-space-features.png": "e41284dbf462eb7985a04a28ab3f2a2d495605345be938532b00027366ea5aeb",
+ "figures/wave-surface.png": "6243cb1dfa0732a6a82561aab56ee72c296d32babe6c5a7e3cc6013ac558d8bf",
+ "figures/wave-time-features.png": "fe3d66fbc367549b6ee79cda62f34a3122eab92444b6a3619e299d2228079e55",
+ "figures/wave-travelling-features.png": "cb3251b12d574506f8af0b342e05da3d029fff1c7232ecd499de4208eff20c34",
+ "quantum-mechanics.pdf": "1b1e2c4e920af63b0c7fc833011137bc292fac9385c396282617248736a43ac3",
+ "quantum-mechanics.tex": "942036124e6ecf4daf95a335cafea8360d632c3ded195df24442f2a8fdc8be95"
+}
