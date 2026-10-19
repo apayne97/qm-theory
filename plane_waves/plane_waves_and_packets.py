@@ -1167,8 +1167,10 @@ def _(mo):
 
     Adding up waves of every wave number with weights $a(k)$ is called the **Fourier transform** of $a(k)$. It
     turns a function of $k$ into a function of $x$. The figure builds the lump from a bell curve $a(k)$ with
-    $\sigma_k=1$, using waves whose wave numbers are $0.5$ apart. The slider sets how many are included. The
-    left panel shows the weights, and the right panel shows each wave (grey) and their sum (blue).
+    $\sigma_k=1$, using waves whose wave numbers are $0.5$ apart. The first slider sets how many are included.
+    The left panel shows the weights, and the upper right panel shows each wave (grey) and their sum (blue).
+    The second slider sets the time, described below. The lower right panel is the probability density of the
+    sum.
     """)
     return
 
@@ -1176,13 +1178,14 @@ def _(mo):
 @app.cell
 def _(mo):
     lump_waves = mo.ui.slider(0, 12, step=1, value=3, label="waves on each side of $k=0$", show_value=True)
-    return (lump_waves,)
+    lump_time = mo.ui.slider(0.0, 4.0, step=0.1, value=0.0, label="time $t$", show_value=True)
+    return lump_time, lump_waves
 
 
 @app.cell
-def _(lump_buildup_figure, lump_waves, mo, plt):
-    _fig = lump_buildup_figure(lump_waves.value)
-    _out = mo.vstack([lump_waves, _fig])
+def _(lump_buildup_figure, lump_time, lump_waves, mo, plt):
+    _fig = lump_buildup_figure(lump_waves.value, lump_time.value)
+    _out = mo.vstack([mo.hstack([lump_waves, lump_time], justify="start"), _fig])
     plt.close(_fig)
     _out
     return
@@ -1197,6 +1200,14 @@ def _(mo):
     order $1/\Delta k$, so the larger the spread of wave numbers, the sooner the cancelling sets in and the
     narrower the lump. The dashed curve is the limit of very many closely spaced waves (the repeated copies of
     the lump, at $\pm 2\pi/0.5 \approx \pm 12.6$, come from the spacing and move away as the spacing shrinks).
+
+    **Time.** At $t>0$ each wave turns at its own rate, $\omega(k) = \hbar k^2/2m$ from section 5 (with
+    $\hbar = m = 1$ here), so the real part of each wave is $\cos(kx)\cos(\omega t)$ and the waves fall out of
+    step with one another also at $x=0$. Slide the time forward with all 25 waves included. The peak falls and
+    the lump widens, because the waves with larger $k$ turn faster and the cancelling that confined the lump
+    is no longer complete. The dashed curve is still the limit of very many closely spaced waves, and the
+    sum follows it. This is the spreading of subsection 6.3. With few waves included the sum no longer
+    follows it for long, because the small number of $k$ values makes the pattern repeat.
 
     **The bell curve keeps its shape.** The dashed curve is again a bell curve. This is a well-known property of
     the Fourier transform: the transform of a bell curve is a bell curve, with the width inverted. If $a(k)$ is

@@ -168,19 +168,27 @@ def probability_figure(k, omega, t):
     return fig
 
 
-def lump_buildup_figure(m, sigma_k=1.0, dk=0.5):
-    """Build the lump at t = 0 from cosines with weights a(k), the wave numbers spaced dk apart.
+def lump_buildup_figure(m, t=0.0, sigma_k=1.0, dk=0.5):
+    """Build the lump from waves with weights a(k), the wave numbers spaced dk apart, at time t (hbar = m = 1).
 
-    The waves k = -m dk ... m dk are included. Left: the weights. Right: each wave (thin), their sum (thick), and
-    the limit of very many closely spaced waves, a bell curve (dashed)."""
+    The waves k = -m dk ... m dk are included, and each turns at its own rate omega(k) = k^2 / 2. Left: the
+    weights. Top right: Re psi, each wave pair (thin), their sum (thick), and the limit of very many closely
+    spaced waves (dashed). Bottom right: the probability density of the sum and of that limit."""
     x = np.linspace(-8, 8, 1600)
     k_all = dk * np.arange(-12, 13)
     weight = lambda k: np.exp(-(k**2) / (4 * sigma_k**2)) * dk
     ks = dk * np.arange(-m, m + 1)
-    total = (weight(ks)[:, None] * np.cos(ks[:, None] * x[None, :])).sum(axis=0)
-    exact = 2 * sigma_k * np.sqrt(np.pi) * np.exp(-(sigma_k**2) * x**2)
+    psi = (weight(ks)[:, None] * np.exp(1j * (ks[:, None] * x[None, :] - 0.5 * ks[:, None] ** 2 * t))).sum(axis=0)
+    sigma_x = 1 / (2 * sigma_k)
+    scale = 2 * sigma_k * np.sqrt(np.pi) / packet(0.0, 0.0, 0.0, sigma_x).real
+    exact = scale * packet(x, t, 0.0, sigma_x)
 
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10.5, 3.6), gridspec_kw={"width_ratios": [1, 1.7]})
+    fig = plt.figure(figsize=(10.5, 4.6))
+    gs = fig.add_gridspec(2, 2, width_ratios=[1, 1.7], height_ratios=[1.25, 1])
+    ax1 = fig.add_subplot(gs[:, 0])
+    ax2 = fig.add_subplot(gs[0, 1])
+    ax3 = fig.add_subplot(gs[1, 1], sharex=ax2)
+
     ax1.vlines(k_all, 0, weight(k_all), color="0.85", lw=3)
     ax1.vlines(ks, 0, weight(ks), color=K_COLOR, lw=3)
     ax1.set_xlim(-6.6, 6.6)
@@ -189,17 +197,24 @@ def lump_buildup_figure(m, sigma_k=1.0, dk=0.5):
     ax1.set_ylabel(r"weight $a(k)$")
     ax1.set_title(f"{2 * m + 1} wave{'s' if m else ''} included", fontsize=10)
 
-    for j in range(0, m + 1):  # the pair k and -k adds up to 2 w cos(kx)
+    for j in range(0, m + 1):  # the pair k and -k adds up to 2 w cos(kx) e^{-i omega t}; show its real part
         k = j * dk
         factor = 1 if j == 0 else 2
-        ax2.plot(x, factor * weight(k) * np.cos(k * x), color="0.6", lw=0.8, alpha=0.7)
-    ax2.plot(x, exact, color=INK, lw=1.3, ls="--", label="many closely spaced waves")
-    ax2.plot(x, total, color=RE_COLOR, lw=2.6, label="sum of the waves included")
+        ax2.plot(x, factor * weight(k) * np.cos(k * x) * np.cos(0.5 * k**2 * t), color="0.6", lw=0.8, alpha=0.7)
+    ax2.plot(x, exact.real, color=INK, lw=1.3, ls="--", label="many closely spaced waves")
+    ax2.plot(x, psi.real, color=RE_COLOR, lw=2.4, label="sum of the waves included")
     ax2.set_xlim(-8, 8)
     ax2.set_ylim(-1.2, 4.2)
-    ax2.set_xlabel("position $x$")
-    ax2.set_ylabel(r"$\psi(x)$")
+    ax2.set_ylabel(r"real part of $\psi$")
+    ax2.tick_params(labelbottom=False)
     ax2.legend(loc="upper right", fontsize=8)
+
+    ax3.fill_between(x, 0, np.abs(psi) ** 2, color=PROB_COLOR, alpha=0.9)
+    ax3.plot(x, np.abs(psi) ** 2, color="0.35", lw=1.5)
+    ax3.plot(x, np.abs(exact) ** 2, color=INK, lw=1.3, ls="--")
+    ax3.set_ylim(0, 14)
+    ax3.set_xlabel("position $x$")
+    ax3.set_ylabel(r"$|\psi|^2$")
     fig.tight_layout()
     return fig
 
