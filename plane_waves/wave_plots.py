@@ -260,30 +260,45 @@ def width_tradeoff_figure(sigma_k):
     return fig
 
 
+def _entropy(rho, step):
+    """Differential entropy, the integral of -rho ln(rho), of a density sampled on an evenly spaced grid."""
+    positive = rho > 1e-300
+    return -(rho[positive] * np.log(rho[positive])).sum() * step
+
+
 @lru_cache(maxsize=1)
-def _uncertainty_products():
-    """sigma_x sigma_k for a(k) = exp(-|k|^p / p) over a range of exponents p (p = 2 is the Gaussian)."""
+def _family_data():
+    """The family a(k) = exp(-|k|^p / p), p = 1.5 ... 6 (p = 2 is the Gaussian).
+
+    For each p: the densities |a|^2 in k and |psi|^2 in x (each with total probability 1), their
+    root-mean-square widths and their entropies."""
     exps = np.linspace(1.5, 6.0, 19)
     k = np.linspace(-14, 14, 2001)
     dk = k[1] - k[0]
     x = np.linspace(-60, 60, 4001)
     dx = x[1] - x[0]
     kernel = np.exp(1j * np.outer(x, k))
-    prods = []
+    out = {"p": exps, "k": k, "x": x, "rho_k": [], "rho_x": [], "sigma_k": [], "sigma_x": [], "h_k": [], "h_x": []}
     for p in exps:
         a = np.exp(-(np.abs(k) ** p) / p)
         rho_k = a**2 / ((a**2).sum() * dk)
-        sk = np.sqrt((k**2 * rho_k).sum() * dk)
         rho_x = np.abs(kernel @ a * dk) ** 2
         rho_x /= rho_x.sum() * dx
-        sx = np.sqrt((x**2 * rho_x).sum() * dx)
-        prods.append(sx * sk)
-    return exps, np.array(prods)
+        out["rho_k"].append(rho_k)
+        out["rho_x"].append(rho_x)
+        out["sigma_k"].append(np.sqrt((k**2 * rho_k).sum() * dk))
+        out["sigma_x"].append(np.sqrt((x**2 * rho_x).sum() * dx))
+        out["h_k"].append(_entropy(rho_k, dk))
+        out["h_x"].append(_entropy(rho_x, dx))
+    for key in ("sigma_k", "sigma_x", "h_k", "h_x"):
+        out[key] = np.array(out[key])
+    return out
 
 
 def min_uncertainty_figure():
     """sigma_x sigma_k for a family of shapes a(k): the Gaussian (p = 2) gives the smallest product, 1/2."""
-    exps, prods = _uncertainty_products()
+    data = _family_data()
+    exps, prods = data["p"], data["sigma_x"] * data["sigma_k"]
     k = np.linspace(-3, 3, 400)
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 3.3))
     for p, c in ((1.5, "0.6"), (2.0, K_COLOR), (6.0, "0.3")):
@@ -298,6 +313,44 @@ def min_uncertainty_figure():
     ax2.set_ylabel(r"$\sigma_x\,\sigma_k$")
     ax2.set_ylim(0.45, 0.75)
     ax2.legend(fontsize=8, loc="upper left")
+    fig.tight_layout()
+    return fig
+
+
+def entropy_family_figure(p):
+    """For the shape a(k) = exp(-|k|^p / p): the densities in k and x with their entropies, and the sum of the
+    entropies against the floor ln(pi e), with the bound ln(2 pi e sigma_x sigma_k) above it."""
+    data = _family_data()
+    i = int(np.argmin(np.abs(data["p"] - p)))
+    k, x = data["k"], data["x"]
+    fig, axes = plt.subplots(1, 3, figsize=(11, 3.3))
+    ax = axes[0]
+    ax.fill_between(k, 0, data["rho_k"][i], color=K_COLOR, alpha=0.35)
+    ax.plot(k, data["rho_k"][i], color=K_COLOR, lw=2)
+    ax.set_xlim(-4, 4)
+    ax.set_ylim(0, 0.75)
+    ax.set_xlabel("wave number $k$")
+    ax.set_title(rf"$|a(k)|^2$,  entropy $h_k={data['h_k'][i]:.3f}$", fontsize=10)
+    ax = axes[1]
+    ax.fill_between(x, 0, data["rho_x"][i], color=PROB_COLOR, alpha=0.8)
+    ax.plot(x, data["rho_x"][i], color="0.35", lw=2)
+    ax.set_xlim(-4, 4)
+    ax.set_ylim(0, 0.75)
+    ax.set_xlabel("position $x$")
+    ax.set_title(rf"$|\psi(x)|^2$,  entropy $h_x={data['h_x'][i]:.3f}$", fontsize=10)
+    ax = axes[2]
+    floor = np.log(np.pi * np.e)
+    total = data["h_x"] + data["h_k"]
+    bound = np.log(2 * np.pi * np.e * data["sigma_x"] * data["sigma_k"])
+    ax.axhline(floor, color="0.5", ls="--", lw=1.2)
+    ax.text(5.95, floor - 0.012, r"floor $\ln(\pi e)$", ha="right", va="top", fontsize=8, color="0.4")
+    ax.plot(data["p"], bound, color="0.75", lw=1.5, label=r"$\ln(2\pi e\,\sigma_x\sigma_k)$")
+    ax.plot(data["p"], total, color="0.35", lw=2, label=r"$h_x+h_k$")
+    ax.plot([data["p"][i]], [total[i]], "o", color=OMEGA_COLOR, ms=9, zorder=3)
+    ax.set_ylim(2.12, 2.5)
+    ax.set_xlabel(r"shape exponent $p$")
+    ax.set_title(rf"$p={data['p'][i]:g}$:  $h_x+h_k={total[i]:.3f}$", fontsize=10)
+    ax.legend(fontsize=8, loc="upper left")
     fig.tight_layout()
     return fig
 

@@ -24,6 +24,7 @@ def _():
     from wave_plots import (
         arrow_figure,
         band_shapes_figure,
+        entropy_family_figure,
         flat_vs_lump_figure,
         interference_figure,
         interference_schematic,
@@ -51,6 +52,7 @@ def _():
     return (
         arrow_figure,
         band_shapes_figure,
+        entropy_family_figure,
         flat_vs_lump_figure,
         group_velocity,
         hole_amplitude,
@@ -1119,7 +1121,7 @@ def _(mo):
       figure shows.
     - **The same shape in both variables.** Adding Gaussian-weighted plane waves gives a bell curve in $x$ again.
       One shape then carries through the whole calculation, and the sum can be done exactly, which gives the
-      closed-form results for the motion and spreading of the lump in subsections 6.2 and 6.3. For most other
+      closed-form results for the motion and spreading of the lump in subsections 6.3 and 6.4. For most other
       choices of $a(k)$ there is no such formula.
     - **The tightest possible lump.** Of all shapes, the bell curve makes the product of the two widths,
       $\sigma_x\sigma_k$, as small as it can be, so it is the most localized lump that a given spread of
@@ -1130,7 +1132,7 @@ def _(mo):
     a bell curve centred on $k_0$ with root-mean-square width $\sigma_{k}$, and take every component to have
     the same phase at $t = 0$, so that they are all in step at
     $x = 0$. Then at $t = 0$ the probability of finding the particle is also a bell curve, centred on $x = 0$
-    with root-mean-square width $\sigma_x$, and the two widths are linked by (proved in subsection 6.1)
+    with root-mean-square width $\sigma_x$, and the two widths are linked by (shown in subsection 6.1)
 
     $$
     \sigma_x\,\sigma_{\textcolor{#6B913C}{k}} = \tfrac12 , \qquad\text{that is}\qquad \Delta x\,\Delta p = \frac{\hbar}{2},
@@ -1209,7 +1211,7 @@ def _(mo):
     step with one another also at $x=0$. Slide the time forward with all 25 waves included. The peak falls and
     the lump widens, because the waves with larger $k$ turn faster and the cancelling that confined the lump
     is no longer complete. The dashed curve is still the limit of very many closely spaced waves, and the
-    sum follows it. This is the spreading of subsection 6.3. With few waves included the sum no longer
+    sum follows it. This is the spreading of subsection 6.4. With few waves included the sum no longer
     follows it for long, because the small number of $k$ values makes the pattern repeat.
 
     **The bell curve keeps its shape.** The dashed curve is again a bell curve. This is a well-known property of
@@ -1289,7 +1291,77 @@ def _(min_uncertainty_figure, mo, plt):
 @app.cell
 def _(mo):
     mo.md(r"""
-    ### 6.2 The lump moves at the classical velocity
+    ### 6.2 Entropy: another way to see the uncertainty principle
+
+    The root-mean-square width $\sigma$ is one way to say how spread out a distribution is. Another is its
+    **entropy**, which measures how much is left unknown about where the particle will be found. For a
+    probability density $\rho$ the entropy is
+
+    $$
+    h = -\int \rho \,\ln \rho \; dx ,
+    $$
+
+    the average value of $-\ln\rho$. This is small where the density is large (an expected outcome) and large
+    where the density is small (a surprising outcome), so a density concentrated in one place has a low entropy
+    and a spread-out density has a high one. (For a density of a continuous variable the entropy can be
+    negative, and only comparisons between values matter.) Write $h_x$ for the entropy of the position density
+    $|\psi(x)|^2$ and $h_k$ for that of the density $|a(k)|^2$ of wave number. For a bell curve of width
+    $\sigma$ the integral gives $h = \tfrac12\ln(2\pi e\,\sigma^2)$, which grows as the curve widens.
+
+    Two facts about the bell curve connect entropy to the uncertainty principle. Both are stated here
+    without proof.
+
+    - **At a given width, the bell curve has the largest entropy.** No other shape of width $\sigma$ has more:
+      $h \le \tfrac12\ln(2\pi e\,\sigma^2)$. It is the most spread-out, least committal shape that the width
+      allows.
+    - **The two entropies cannot both be small.** For every lump, $h_x + h_k \ge \ln(\pi e)$, with equality only
+      for a bell curve (in position and in wave number). This is the **entropic uncertainty relation**. Here
+      the bell curve has the *smallest* total entropy.
+
+    The direction is therefore different in the two facts. For one variable at a fixed width the bell curve
+    maximizes the entropy, and for the pair of variables it minimizes the total. Putting the two together gives
+    the uncertainty relation of 6.1 again:
+
+    $$
+    \ln(\pi e) \;\le\; h_x + h_k \;\le\; \tfrac12\ln(2\pi e\,\sigma_x^2) + \tfrac12\ln(2\pi e\,\sigma_k^2)
+    = \ln(2\pi e\,\sigma_x\sigma_k) \quad\Longrightarrow\quad \sigma_x\sigma_k \ge \tfrac12 .
+    $$
+
+    The first inequality is the second fact, and the second inequality is the first fact applied to $x$ and to
+    $k$. For a bell curve both are equalities, which is why its product is exactly $\tfrac12$. The entropy
+    version is also the stronger statement. The flat band of the earlier figure has ripples that die away so
+    slowly that its width $\sigma_x$ is infinite, so the width relation says nothing about it, but its entropy
+    is finite and the entropic relation still applies.
+
+    The figure uses the family $a(k) = e^{-|k|^p/p}$ of the previous page, where $p=2$ is the bell curve. The
+    left and middle panels show $|a|^2$ and $|\psi|^2$ for the chosen $p$ with their entropies. The right panel
+    shows the total $h_x+h_k$ against $p$ (dark), the floor $\ln(\pi e)$ (dashed) and the upper bound
+    $\ln(2\pi e\,\sigma_x\sigma_k)$ (light). The total touches the floor only at $p=2$ and lies above it for
+    every other shape. At $p=2$ the two densities are even the same function, because the bell curve with
+    $\sigma_k=1/\sqrt{2}$ is its own transform (6.1).
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    entropy_p = mo.ui.slider(1.5, 6.0, step=0.25, value=3.0, label=r"shape exponent $p$", show_value=True)
+    return (entropy_p,)
+
+
+@app.cell
+def _(entropy_family_figure, entropy_p, mo, plt):
+    _fig = entropy_family_figure(entropy_p.value)
+    _out = mo.vstack([entropy_p, _fig])
+    plt.close(_fig)
+    _out
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    ### 6.3 The lump moves at the classical velocity
 
     Each component has its own rotation rate $\omega(k) = \hbar k^2/2m$. Write this exactly around the central
     wave number $k_0$:
@@ -1323,7 +1395,7 @@ def _(mo, packet_times_figure, plt):
 @app.cell
 def _(mo):
     mo.md(r"""
-    ### 6.3 The lump spreads
+    ### 6.4 The lump spreads
 
     The last term in the expansion, quadratic in $k-k_0$, is the one that does not simply shift the pattern.
     The components fall out of step with one another as time passes, and the lump widens. The exact result is
@@ -1351,7 +1423,7 @@ def _(mo, plt, spacetime_figure):
 @app.cell
 def _(mo):
     mo.md(r"""
-    ### 6.4 When is a particle classical?
+    ### 6.5 When is a particle classical?
 
     Two facts have been found: the lump travels at the classical velocity, and it spreads in the time $t_s$. A
     particle behaves classically if it travels a long way, compared with its own size, before the spreading
