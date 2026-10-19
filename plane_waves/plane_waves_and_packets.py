@@ -1091,7 +1091,10 @@ def _(mo):
     the rest of this section can be worked out in full. The simplest choice is to include every wave in a band
     of $k$ equally and none outside it, a flat top. The figure compares it with a bell curve, the
     **Gaussian** $a(k)\propto e^{-(k-k_0)^2/4\sigma_k^2}$, chosen to have the same root-mean-square width
-    $\sigma_k$ (the typical distance from $k_0$). The left panel is the probability of each $k$ and the right
+    $\sigma_k$ (the typical distance from $k_0$). The $4$ is there because $a(k)$ is an amplitude and the
+    probability of $k$ is its square: $|a|^2 \propto e^{-(k-k_0)^2/2\sigma_k^2}$, the standard bell curve of width
+    $\sigma_k$, with $2\sigma_k^2$ in the denominator. The amplitude of the lump in position is written the
+    same way, $e^{-x^2/4\sigma_x^2}$, so that its density is $e^{-x^2/2\sigma_x^2}$. The left panel is the probability of each $k$ and the right
     panel is the probability density of position that the sum gives at $t=0$, drawn on a logarithmic scale
     so that small values show.
     """)
