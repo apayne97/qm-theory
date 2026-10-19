@@ -25,8 +25,10 @@ def _():
         arrow_figure,
         band_shapes_figure,
         flat_vs_lump_figure,
+        gauss_equation_figure,
         interference_figure,
         interference_schematic,
+        min_uncertainty_figure,
         moving_wave_figure,
         oscillator_energy_figure,
         packet_times_figure,
@@ -40,19 +42,23 @@ def _():
         time_cosine_figure,
         time_features_figure,
         time_rotation_figure,
+        transform_check_figure,
         travelling_features_figure,
         wave_surface_figure,
+        width_tradeoff_figure,
     )
 
     return (
         arrow_figure,
         band_shapes_figure,
         flat_vs_lump_figure,
+        gauss_equation_figure,
         group_velocity,
         hole_amplitude,
         intensity,
         interference_figure,
         interference_schematic,
+        min_uncertainty_figure,
         mo,
         moving_wave_figure,
         np,
@@ -71,9 +77,11 @@ def _():
         time_cosine_figure,
         time_features_figure,
         time_rotation_figure,
+        transform_check_figure,
         travelling_features_figure,
         two_hole_distances,
         wave_surface_figure,
+        width_tradeoff_figure,
         wavelengths_in_lump,
         widths_travelled_before_spreading,
         width,
@@ -1054,7 +1062,7 @@ def _(mo):
       figure shows.
     - **The same shape in both variables.** Adding Gaussian-weighted plane waves gives a bell curve in $x$ again.
       One shape then carries through the whole calculation, and the sum can be done exactly, which gives the
-      closed-form results for the motion and spreading of the lump in the next two subsections. For most other
+      closed-form results for the motion and spreading of the lump in subsections 6.2 and 6.3. For most other
       choices of $a(k)$ there is no such formula.
     - **The tightest possible lump.** Of all shapes, the bell curve makes the product of the two widths,
       $\sigma_x\sigma_k$, as small as it can be, so it is the most localized lump that a given spread of
@@ -1065,7 +1073,7 @@ def _(mo):
     a bell curve centred on $k_0$ with root-mean-square width $\sigma_{k}$, and take every component to have
     the same phase at $t = 0$, so that they are all in step at
     $x = 0$. Then at $t = 0$ the probability of finding the particle is also a bell curve, centred on $x = 0$
-    with root-mean-square width $\sigma_x$, and the two widths are linked by
+    with root-mean-square width $\sigma_x$, and the two widths are linked by (proved in subsection 6.1)
 
     $$
     \sigma_x\,\sigma_{\textcolor{#6B913C}{k}} = \tfrac12 , \qquad\text{that is}\qquad \Delta x\,\Delta p = \frac{\hbar}{2},
@@ -1085,7 +1093,260 @@ def _(mo):
 @app.cell
 def _(mo):
     mo.md(r"""
-    ### 6.1 The lump moves at the classical velocity
+    ### 6.1 Why the bell curve keeps its shape: the uncertainty principle
+
+    The previous pages chose a bell curve for $a(k)$ and stated that the lump in position is then also a bell
+    curve, with $\sigma_x\sigma_k = \tfrac12$. This subsection proves it in small steps, because the proof
+    shows where the uncertainty principle comes from: it is a property of how a lump is built from waves.
+
+    **The plan.** (1) Name the operation that turns the amplitudes $a(k)$ into the lump $\psi(x)$. (2) Find
+    how that operation treats a slope and a multiplication by $k$. (3) Write down a simple equation that the
+    bell curve obeys. (4) Apply the operation to both sides of it. (5) Solve the result. (6) Read off the
+    widths.
+
+    **Step 1: the operation.** Take the centre of the band to be $k_0=0$. (A different $k_0$ multiplies
+    $\psi$ by $e^{ik_0x}$, which turns the arrow but does not change its length, so $|\psi|^2$ is the same.)
+    At $t=0$ the sum over the waves, written as an integral because the values of $k$ are packed closely, is
+
+    $$
+    \textcolor{#5ECCF3}{\psi}(x) = \int_{-\infty}^{\infty} g(\textcolor{#6B913C}{k})\, e^{\,i\textcolor{#6B913C}{k}x}\, d\textcolor{#6B913C}{k} ,
+    $$
+
+    where $g(k)$ stands for the amplitude $a(k)$. Give this recipe a name, $T$: it takes any function of $k$ and
+    returns a function of $x$,
+
+    $$
+    T[f](x) = \int_{-\infty}^{\infty} f(\textcolor{#6B913C}{k})\, e^{\,i\textcolor{#6B913C}{k}x}\, d\textcolor{#6B913C}{k} ,
+    \qquad\text{so that}\qquad \textcolor{#5ECCF3}{\psi} = T[g] .
+    $$
+
+    (This operation is called the Fourier transform.) To **transform both sides** of an equation means to apply
+    $T$ to the left side and to the right side. If $f_1(k) = f_2(k)$ for every $k$, then the two sides are the
+    same function, so the recipe gives the same result, $T[f_1] = T[f_2]$. The recipe is also **linear**:
+    $T[c\,f] = c\,T[f]$ for a constant $c$, and $T[f_1+f_2] = T[f_1]+T[f_2]$, because integrals have these
+    properties.
+
+    **Step 2: two rules for $T$.** The first rule says what $T$ does to a slope.
+
+    $$
+    \text{Rule A:}\qquad T[g'](x) = -\,ix\;T[g](x) .
+    $$
+
+    *Proof.* By definition $T[g'](x) = \int g'(k)\,e^{ikx}\,dk$. Use integration by parts,
+    $\int u\,dv = uv - \int v\,du$, with $u = e^{ikx}$ and $dv = g'(k)\,dk$, so that $v = g(k)$ and
+    $du = ix\,e^{ikx}\,dk$:
+
+    $$
+    \int g'(k)\,e^{ikx}\,dk = \Big[\,g(k)\,e^{ikx}\Big]_{-\infty}^{\infty} - \int g(k)\,\big(ix\,e^{ikx}\big)\,dk .
+    $$
+
+    The first term is zero: $g(k)$ goes to zero at both ends and $|e^{ikx}| = 1$. The second term is
+    $-ix\int g(k)\,e^{ikx}\,dk = -ix\,T[g]$. $\square$
+
+    The second rule says what $T$ does to a multiplication by $k$.
+
+    $$
+    \text{Rule B:}\qquad T[k\,g](x) = -\,i\,\frac{d}{dx}\,T[g](x) = -\,i\,\textcolor{#5ECCF3}{\psi}'(x) .
+    $$
+
+    *Proof.* The variable $x$ appears in the integrand only inside $e^{ikx}$, so the slope in $x$ can be taken
+    inside the integral, where $\frac{d}{dx}e^{ikx} = ik\,e^{ikx}$:
+
+    $$
+    \textcolor{#5ECCF3}{\psi}'(x) = \int g(k)\,\frac{d}{dx}e^{ikx}\,dk = i\int k\,g(k)\,e^{ikx}\,dk = i\,T[k\,g] .
+    $$
+
+    Dividing by $i$, and using $1/i = -i$, gives $T[k\,g] = -i\,\psi'$. $\square$
+
+    In words, $T$ swaps the two operations. **A slope in $k$ becomes a multiplication by $x$** (Rule A), and
+    **a multiplication by $k$ becomes a slope in $x$** (Rule B), each with a factor of $\pm i$.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    **Step 3: an equation that the bell curve obeys.** Let $g(k) = e^{-k^2/4\sigma_k^2}$. Its slope follows
+    from the chain rule, $\frac{d}{dk}e^{u} = e^{u}\,\frac{du}{dk}$ with $u = -k^2/4\sigma_k^2$ and
+    $\frac{du}{dk} = -k/2\sigma_k^2$:
+
+    $$
+    g'(\textcolor{#6B913C}{k}) = -\,\frac{\textcolor{#6B913C}{k}}{2\sigma_k^2}\; g(\textcolor{#6B913C}{k}) .
+    \tag{E}
+    $$
+
+    This equation says that at each $k$ the slope of the curve is $-k/2\sigma_k^2$ times its height. At the peak
+    $k=0$ the slope is zero. To the left of the peak, $k$ is negative and the slope is positive, so the
+    curve rises. To the right it falls. Equation (E) holds only for a bell curve; for other shapes the slope is
+    a different multiple of the height. The figure compares the slope measured from the curve with the right
+    side of (E); change $\sigma_k$ and they stay equal.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    gauss_sigma_eq = mo.ui.slider(0.4, 2.0, step=0.1, value=1.0, label=r"$\sigma_k$", show_value=True)
+    return (gauss_sigma_eq,)
+
+
+@app.cell
+def _(gauss_equation_figure, gauss_sigma_eq, mo, plt):
+    _fig = gauss_equation_figure(gauss_sigma_eq.value)
+    _out = mo.vstack([gauss_sigma_eq, _fig])
+    plt.close(_fig)
+    _out
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    **Step 4: transform both sides of (E).** The left side of (E) is the slope $g'$. Rule A gives
+
+    $$
+    T[g'] = -\,ix\,\textcolor{#5ECCF3}{\psi} .
+    $$
+
+    The right side of (E) is the constant $-1/2\sigma_k^2$ times $k\,g$. By linearity the constant comes
+    outside $T$, and Rule B gives $T[k\,g] = -i\,\psi'$:
+
+    $$
+    T\!\left[-\frac{k}{2\sigma_k^2}\,g\right] = -\frac{1}{2\sigma_k^2}\,T[k\,g]
+    = -\frac{1}{2\sigma_k^2}\,\big(-i\,\textcolor{#5ECCF3}{\psi}'\big) = \frac{i}{2\sigma_k^2}\,\textcolor{#5ECCF3}{\psi}' .
+    $$
+
+    The two sides are equal, so
+
+    $$
+    -\,ix\,\textcolor{#5ECCF3}{\psi} = \frac{i}{2\sigma_k^2}\,\textcolor{#5ECCF3}{\psi}' .
+    $$
+
+    Divide both sides by $i$ and multiply by $2\sigma_k^2$:
+
+    $$
+    \textcolor{#5ECCF3}{\psi}'(x) = -\,2\sigma_k^2\;x\;\textcolor{#5ECCF3}{\psi}(x) .
+    \tag{E'}
+    $$
+
+    Compare (E) with (E$'$). Both say that the slope is a constant times the position (in $k$ or in $x$) times
+    the height, with a minus sign. The equation for $\psi(x)$ has the same form as the equation for $g(k)$,
+    with $k$ replaced by $x$ and the constant $1/2\sigma_k^2$ replaced by $2\sigma_k^2$. The figure checks this
+    numerically. The left panel is the bell curve. The middle panel is its transform computed by summing over
+    $k$ on a grid, together with the formula that Step 5 will derive. The right panel shows the two sides of
+    the transformed equation, $-x\,\psi$ and $\psi'/2\sigma_k^2$ (the factors of $i$ cancel and are left out),
+    which lie on top of one another.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    gauss_sigma_tr = mo.ui.slider(0.4, 2.0, step=0.1, value=0.7, label=r"$\sigma_k$", show_value=True)
+    return (gauss_sigma_tr,)
+
+
+@app.cell
+def _(gauss_sigma_tr, mo, plt, transform_check_figure):
+    _fig = transform_check_figure(gauss_sigma_tr.value)
+    _out = mo.vstack([gauss_sigma_tr, _fig])
+    plt.close(_fig)
+    _out
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    **Step 5: solve for $\psi(x)$.** Divide (E$'$) by $\psi$:
+
+    $$
+    \frac{\textcolor{#5ECCF3}{\psi}'(x)}{\textcolor{#5ECCF3}{\psi}(x)} = -\,2\sigma_k^2\,x .
+    $$
+
+    The left side is the slope of $\ln\psi$, since $\frac{d}{dx}\ln\psi = \psi'/\psi$. The function whose
+    slope is $-2\sigma_k^2 x$ is $-\sigma_k^2x^2$ plus a constant $C$, because $\frac{d}{dx}(-\sigma_k^2x^2) =
+    -2\sigma_k^2x$. So $\ln\psi = -\sigma_k^2x^2 + C$. Take the exponential of both sides and call $e^{C}$ by
+    the name $\psi(0)$, its value at $x=0$:
+
+    $$
+    \textcolor{#5ECCF3}{\psi}(x) = \textcolor{#5ECCF3}{\psi}(0)\; e^{-\sigma_k^2x^2} .
+    $$
+
+    This is a bell curve in $x$. The only unknown is the constant $\psi(0)$, which sets the overall size.
+    It is the area under $g$, $\psi(0) = T[g](0) = \int g\,dk = 2\sigma_k\sqrt{\pi}$, the value used in the
+    middle panel above, and it does not affect the shape. The shape is fixed because (E$'$) has only this
+    solution up to the constant: a bell curve in $k$ gives a bell curve in $x$ and nothing else.
+
+    **Step 6: read off the widths.** The probability density is the squared length,
+    $|\psi|^2 \propto e^{-2\sigma_k^2x^2}$. A bell curve of root-mean-square width $\sigma_x$ is
+    $e^{-x^2/2\sigma_x^2}$, so matching the exponents gives $\dfrac{1}{2\sigma_x^2} = 2\sigma_k^2$, that is
+
+    $$
+    \sigma_x = \frac{1}{2\sigma_k}, \qquad\text{so that}\qquad \sigma_x\,\sigma_{\textcolor{#6B913C}{k}} = \frac12 .
+    $$
+
+    The amplitude $a(k)\propto e^{-k^2/4\sigma_k^2}$ was chosen so that its square $|a|^2$ has width
+    $\sigma_k$, which is why the same $\sigma_k$ appears here. Since $\Delta x = \sigma_x$ and
+    $\Delta p = \hbar\sigma_k$ (section 5, $p=\hbar k$), this is $\Delta x\,\Delta p = \hbar/2$, the
+    uncertainty principle. The lump built from waves has a width in position that is fixed by the width of the band of waves
+    that made it. Squeeze one and the other widens. The figure shows both densities with their widths, each
+    drawn with total probability 1 on a fixed scale, so the height changes as the width does. The right
+    panel is the curve $\sigma_x = 1/2\sigma_k$ with the point for the current slider value. No bell curve
+    lies off the curve, and the next paragraph says why no other state lies below it.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    gauss_sigma_w = mo.ui.slider(0.3, 2.0, step=0.05, value=0.8, label=r"$\sigma_k$", show_value=True)
+    return (gauss_sigma_w,)
+
+
+@app.cell
+def _(gauss_sigma_w, mo, plt, width_tradeoff_figure):
+    _fig = width_tradeoff_figure(gauss_sigma_w.value)
+    _out = mo.vstack([gauss_sigma_w, _fig])
+    plt.close(_fig)
+    _out
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    **Why this is the smallest product.** The bell curve is not the only choice, and the same two-step
+    calculation (build $\psi$ from $a(k)$, then measure both widths) can be done for other shapes. The figure
+    does it numerically for the family $a(k) = e^{-|k|^p/p}$. The exponent $p=2$ is the bell curve; $p=1.5$
+    has fatter tails, and large $p$ is a flat top with soft edges. The product $\sigma_x\sigma_k$ is lowest,
+    exactly $\tfrac12$, at $p=2$ and is larger for every other shape in the family. This
+    illustrates a general fact: for every shape, $\sigma_x\sigma_k \geq \tfrac12$, with equality only for the
+    bell curve. (The general proof is not given here.) That is why the bell curve was called the tightest possible lump.
+
+    **What it says about particles.** A particle described as a lump of waves cannot have both a sharp position
+    and a sharp wave number. The lump is narrow in $x$ only if many wave numbers are added, and the width in
+    $k$ then cannot be small. The relation $\sigma_x\sigma_k = \tfrac12$ is not an extra rule laid on top of
+    the wave picture. It is a consequence of building a lump from waves, through the properties of
+    $T$ proved in Step 2.
+    """)
+    return
+
+
+@app.cell
+def _(min_uncertainty_figure, mo, plt):
+    _fig = min_uncertainty_figure()
+    _out = mo.vstack([_fig])
+    plt.close(_fig)
+    _out
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    ### 6.2 The lump moves at the classical velocity
 
     Each component has its own rotation rate $\omega(k) = \hbar k^2/2m$. Write this exactly around the central
     wave number $k_0$:
@@ -1119,7 +1380,7 @@ def _(mo, packet_times_figure, plt):
 @app.cell
 def _(mo):
     mo.md(r"""
-    ### 6.2 The lump spreads
+    ### 6.3 The lump spreads
 
     The last term in the expansion, quadratic in $k-k_0$, is the one that does not simply shift the pattern.
     The components fall out of step with one another as time passes, and the lump widens. The exact result is
@@ -1147,7 +1408,7 @@ def _(mo, plt, spacetime_figure):
 @app.cell
 def _(mo):
     mo.md(r"""
-    ### 6.3 When is a particle classical?
+    ### 6.4 When is a particle classical?
 
     Two facts have been found: the lump travels at the classical velocity, and it spreads in the time $t_s$. A
     particle behaves classically if it travels a long way, compared with its own size, before the spreading

@@ -1,6 +1,7 @@
 """Figures for the plane-wave notebook. Each function returns a matplotlib Figure."""
 
 import sys
+from functools import lru_cache
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -163,6 +164,148 @@ def probability_figure(k, omega, t):
     ax.set_xlabel("position $x$")
     ax.set_ylabel("relative probability")
     ax.legend(loc="upper right", fontsize=8, ncol=2)
+    fig.tight_layout()
+    return fig
+
+
+def _gauss_transform(sigma_k, k_half=10.0, n=4001):
+    """g(k) = exp(-k^2 / 4 sigma_k^2) and psi(x) = integral of g(k) exp(ikx) dk, summed on a grid."""
+    k = np.linspace(-k_half * sigma_k, k_half * sigma_k, n)
+    dk = k[1] - k[0]
+    g = np.exp(-(k**2) / (4 * sigma_k**2))
+    x = np.linspace(-4 / sigma_k, 4 / sigma_k, 801)
+    psi = (g[None, :] * np.exp(1j * np.outer(x, k))).sum(axis=1) * dk
+    return k, g, x, psi
+
+
+def gauss_equation_figure(sigma_k):
+    """The bell curve g(k), its slope g'(k), and the formula -k g / (2 sigma_k^2) that the slope equals."""
+    k = np.linspace(-5, 5, 1001)
+    g = np.exp(-(k**2) / (4 * sigma_k**2))
+    slope = np.gradient(g, k)
+    formula = -k * g / (2 * sigma_k**2)
+    fig, ax = plt.subplots(figsize=(8, 3.4))
+    ax.axhline(0, color="0.85", lw=0.8)
+    ax.plot(k, g, color=K_COLOR, lw=2.2, label=r"$g(k)$")
+    ax.plot(k, slope, color=OMEGA_COLOR, lw=3.5, alpha=0.5, label=r"slope $g'(k)$, measured from the curve")
+    ax.plot(k, formula, color=INK, lw=1.3, ls="--", label=r"$-\dfrac{k}{2\sigma_k^2}\,g(k)$, from the formula")
+    ax.set_ylim(-1.0, 1.15)
+    ax.set_xlabel("wave number $k$")
+    ax.legend(loc="lower right", fontsize=8)
+    fig.tight_layout()
+    return fig
+
+
+def transform_check_figure(sigma_k):
+    """Left: g(k). Middle: its transform psi(x), summed numerically, against the formula. Right: both sides of
+    the transformed equation, -x psi(x) and psi'(x) / (2 sigma_k^2)."""
+    k, g, x, psi = _gauss_transform(sigma_k)
+    formula = 2 * sigma_k * np.sqrt(np.pi) * np.exp(-(sigma_k**2) * x**2)
+    lhs = -x * psi.real
+    rhs = np.gradient(psi.real, x) / (2 * sigma_k**2)
+    fig, axes = plt.subplots(1, 3, figsize=(11, 3.2))
+    ax = axes[0]
+    kk = np.linspace(-5, 5, 400)
+    ax.plot(kk, np.exp(-(kk**2) / (4 * sigma_k**2)), color=K_COLOR, lw=2.2)
+    ax.set_xlabel("wave number $k$")
+    ax.set_title(r"$g(k)$", fontsize=10)
+    ax.set_ylim(0, 1.1)
+    ax = axes[1]
+    ax.plot(x, psi.real, color=RE_COLOR, lw=3.5, alpha=0.5, label=r"$\psi(x)$, summed over $k$")
+    ax.plot(x, formula, color=INK, lw=1.3, ls="--", label=r"$2\sigma_k\sqrt{\pi}\,e^{-\sigma_k^2x^2}$")
+    ax.set_xlabel("position $x$")
+    ax.set_title(r"the transform of $g$", fontsize=10)
+    ax.legend(fontsize=7, loc="upper right")
+    ax = axes[2]
+    ax.axhline(0, color="0.85", lw=0.8)
+    ax.plot(x, lhs, color=OMEGA_COLOR, lw=3.5, alpha=0.5, label=r"left side: $-x\,\psi(x)$")
+    ax.plot(x, rhs, color=INK, lw=1.3, ls="--", label=r"right side: $\psi'(x)/2\sigma_k^2$")
+    ax.set_xlabel("position $x$")
+    ax.set_title("the transformed equation", fontsize=10)
+    ax.legend(fontsize=7, loc="upper right")
+    fig.tight_layout()
+    return fig
+
+
+def width_tradeoff_figure(sigma_k):
+    """|a(k)|^2 and |psi(x)|^2 (each with total probability 1) with their widths, and the curve sigma_x = 1/(2 sigma_k)."""
+    sigma_x = 1 / (2 * sigma_k)
+    k = np.linspace(-7, 7, 1200)
+    x = np.linspace(-5, 5, 1200)
+    rho_k = np.exp(-(k**2) / (2 * sigma_k**2)) / (sigma_k * np.sqrt(2 * np.pi))
+    rho_x = np.exp(-(x**2) / (2 * sigma_x**2)) / (sigma_x * np.sqrt(2 * np.pi))
+    fig, axes = plt.subplots(1, 3, figsize=(11, 3.3))
+    ax = axes[0]
+    ax.fill_between(k, 0, rho_k, color=K_COLOR, alpha=0.35)
+    ax.plot(k, rho_k, color=K_COLOR, lw=2)
+    ax.annotate("", xy=(sigma_k, 0.55 * rho_k.max()), xytext=(-sigma_k, 0.55 * rho_k.max()),
+                arrowprops=dict(arrowstyle="<->", color=INK))
+    ax.text(0, 0.6 * rho_k.max(), r"$2\sigma_k$", ha="center", va="bottom", fontsize=9)
+    ax.set_ylim(0, 1.35)
+    ax.set_xlabel("wave number $k$")
+    ax.set_title(rf"$|a(k)|^2$,  $\sigma_k = {sigma_k:.2f}$", fontsize=10)
+    ax = axes[1]
+    ax.fill_between(x, 0, rho_x, color=PROB_COLOR, alpha=0.8)
+    ax.plot(x, rho_x, color="0.35", lw=2)
+    ax.annotate("", xy=(sigma_x, 0.55 * rho_x.max()), xytext=(-sigma_x, 0.55 * rho_x.max()),
+                arrowprops=dict(arrowstyle="<->", color=INK))
+    ax.text(0, 0.6 * rho_x.max(), r"$2\sigma_x$", ha="center", va="bottom", fontsize=9)
+    ax.set_ylim(0, 1.75)
+    ax.set_xlabel("position $x$")
+    ax.set_title(rf"$|\psi(x)|^2$,  $\sigma_x = 1/2\sigma_k = {sigma_x:.2f}$", fontsize=10)
+    ax = axes[2]
+    s = np.linspace(0.15, 3.0, 300)
+    ax.fill_between(s, 0, 1 / (2 * s), color="0.88")
+    ax.plot(s, 1 / (2 * s), color="0.35", lw=2)
+    ax.plot([sigma_k], [sigma_x], "o", color=OMEGA_COLOR, ms=9, zorder=3)
+    ax.text(0.8, 0.08, r"$\sigma_x\sigma_k<\frac{1}{2}$" + "\nnot possible", fontsize=8, ha="center", color="0.3")
+    ax.set_xlim(0, 3)
+    ax.set_ylim(0, 3)
+    ax.set_xlabel(r"$\sigma_k$")
+    ax.set_ylabel(r"$\sigma_x$")
+    ax.set_title(r"$\sigma_x\sigma_k = \frac{1}{2}$", fontsize=10)
+    fig.tight_layout()
+    return fig
+
+
+@lru_cache(maxsize=1)
+def _uncertainty_products():
+    """sigma_x sigma_k for a(k) = exp(-|k|^p / p) over a range of exponents p (p = 2 is the Gaussian)."""
+    exps = np.linspace(1.5, 6.0, 19)
+    k = np.linspace(-14, 14, 2001)
+    dk = k[1] - k[0]
+    x = np.linspace(-60, 60, 4001)
+    dx = x[1] - x[0]
+    kernel = np.exp(1j * np.outer(x, k))
+    prods = []
+    for p in exps:
+        a = np.exp(-(np.abs(k) ** p) / p)
+        rho_k = a**2 / ((a**2).sum() * dk)
+        sk = np.sqrt((k**2 * rho_k).sum() * dk)
+        rho_x = np.abs(kernel @ a * dk) ** 2
+        rho_x /= rho_x.sum() * dx
+        sx = np.sqrt((x**2 * rho_x).sum() * dx)
+        prods.append(sx * sk)
+    return exps, np.array(prods)
+
+
+def min_uncertainty_figure():
+    """sigma_x sigma_k for a family of shapes a(k): the Gaussian (p = 2) gives the smallest product, 1/2."""
+    exps, prods = _uncertainty_products()
+    k = np.linspace(-3, 3, 400)
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 3.3))
+    for p, c in ((1.5, "0.6"), (2.0, K_COLOR), (6.0, "0.3")):
+        ax1.plot(k, np.exp(-(np.abs(k) ** p) / p), lw=2.2 if p == 2.0 else 1.5, color=c, label=rf"$p={p:g}$")
+    ax1.set_xlabel("wave number $k$")
+    ax1.set_ylabel(r"$a(k) = e^{-|k|^p/p}$")
+    ax1.legend(fontsize=8)
+    ax2.axhline(0.5, color="0.7", ls="--", lw=1)
+    ax2.plot(exps, prods, "o-", color="0.35", lw=1.5, ms=4)
+    ax2.plot([2.0], [prods[np.argmin(np.abs(exps - 2.0))]], "o", color=K_COLOR, ms=10, zorder=3, label="Gaussian")
+    ax2.set_xlabel(r"shape exponent $p$")
+    ax2.set_ylabel(r"$\sigma_x\,\sigma_k$")
+    ax2.set_ylim(0.45, 0.75)
+    ax2.legend(fontsize=8, loc="upper left")
     fig.tight_layout()
     return fig
 
