@@ -1820,8 +1820,42 @@ def _(md):
 
     where $E = \hbar\omega$ and $p = \hbar k$ are the energy and momentum of section 5. In words, applying
     $i\hbar\,\partial/\partial t$ to a plane wave gives back the same wave multiplied by its energy, and applying
-    $-i\hbar\,\partial/\partial x$ gives back the wave multiplied by its momentum. In this language the
-    Schrödinger equation is the statement $E = p^2/2m$, with the derivative for momentum applied twice:
+    $-i\hbar\,\partial/\partial x$ gives back the wave multiplied by its momentum.
+
+    **Two waves.** Equations \eqref{eq:plane-wave-derivatives} and \eqref{eq:energy-momentum-derivatives} are
+    statements about one component. Take a composite wave function with two components,
+    $\psi = \psi_1 + \psi_2$, where $\psi_1$ has the wave number $k_1$, energy $E_1$ and momentum $p_1$, and $\psi_2$
+    has $k_2$, $E_2$ and $p_2$. The derivative of a sum is the sum of the derivatives, so each component is
+    treated by its own equation:
+
+    $$
+    i\hbar\,\frac{\partial \textcolor{#5ECCF3}{\psi}}{\partial t} = E_1\,\textcolor{#5ECCF3}{\psi}_1 + E_2\,\textcolor{#5ECCF3}{\psi}_2,
+    \qquad
+    {-}\,i\hbar\,\frac{\partial \textcolor{#5ECCF3}{\psi}}{\partial x} = p_1\,\textcolor{#5ECCF3}{\psi}_1 + p_2\,\textcolor{#5ECCF3}{\psi}_2 . \label{eq:two-wave-derivatives}
+    $$
+
+    Each component comes back multiplied by its own number. The result is a multiple of $\psi$ only if the
+    numbers are equal, $E_1 = E_2$ (or $p_1 = p_2$). So a composite wave function does not have a single energy or
+    a single momentum, and Eq. \eqref{eq:energy-momentum-derivatives} does not say that it does. Applying
+    $i\hbar\,\partial/\partial t$ or $-i\hbar\,\partial/\partial x$ to it gives a new function, in which each
+    component is weighted by its own energy or momentum. The same holds for any number of components. The
+    average of the momenta, weighted by the size of each component, is the average momentum of the lump,
+    $\hbar k_0$ for the packet of section 6, which is what the total flow in Step 8 measures.
+
+    The Schrödinger equation holds for the composite as well. Its right side is
+    $-\frac{\hbar^2}{2m}\,\partial^2\psi/\partial x^2 = \frac{\hbar^2k_1^2}{2m}\,\psi_1 + \frac{\hbar^2k_2^2}{2m}\,\psi_2$, because each
+    $\psi_k$ has $\partial^2\psi_k/\partial x^2 = -k^2\psi_k$. Since $E_k = \hbar^2k^2/2m$, this is the same as
+    the left side:
+
+    $$
+    i\hbar\,\frac{\partial \textcolor{#5ECCF3}{\psi}}{\partial t} = E_1\,\textcolor{#5ECCF3}{\psi}_1 + E_2\,\textcolor{#5ECCF3}{\psi}_2
+    = \frac{\hbar^2k_1^2}{2m}\,\textcolor{#5ECCF3}{\psi}_1 + \frac{\hbar^2k_2^2}{2m}\,\textcolor{#5ECCF3}{\psi}_2
+    = -\frac{\hbar^2}{2m}\,\frac{\partial^2 \textcolor{#5ECCF3}{\psi}}{\partial x^2} . \label{eq:two-wave-schrodinger}
+    $$
+
+    Neither side is a multiple of $\psi$, but the two sides agree component by component, and this is why the
+    equation holds for every lump. In this language the Schrödinger equation is the statement $E = p^2/2m$,
+    with the derivative for momentum applied twice:
 
     $$
     i\hbar\,\frac{\partial \textcolor{#5ECCF3}{\psi}}{\partial t} = \frac{1}{2m}\left({-}i\hbar\,\frac{\partial}{\partial x}\right)\left({-}i\hbar\,\frac{\partial}{\partial x}\right)\textcolor{#5ECCF3}{\psi} . \label{eq:energy-as-derivatives}
