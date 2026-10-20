@@ -516,6 +516,59 @@ def packet_flow_figure(k0, sigma0, t):
     return fig
 
 
+def quantum_term_figure(sigma0, t, k0=1.0):
+    """The Gaussian packet (hbar = m = 1) in the frame of its centre u = x - k0 t: the density, the quantum term
+    Q = -(1/2) R''/R with R = |psi|, and the force -dQ/dx on the probability, which equals the acceleration
+    dv/dt + v dv/dx of the probability computed from the packet (dashed). Q and the force are drawn where the density
+    is not negligible. The axes are fixed."""
+    ts = 2 * sigma0**2
+    sigma_t = sigma0 * np.sqrt(1 + (t / ts) ** 2)
+    u = np.linspace(-8, 8, 3201)
+    x = u + k0 * t
+
+    def psi_at(tt):
+        return packet(x, tt, k0, sigma0)
+
+    rho = np.abs(psi_at(t)) ** 2
+    visible = rho > 0.02 * rho.max()
+
+    def velocity(tt):
+        p = psi_at(tt)
+        return np.imag(np.conj(p) * np.gradient(p, x)) / np.abs(p) ** 2
+
+    dt = 1e-3
+    accel = (velocity(t + dt) - velocity(t - dt)) / (2 * dt) + velocity(t) * np.gradient(velocity(t), x)
+    amplitude = np.abs(psi_at(t))
+    q_numeric = -0.5 * np.gradient(np.gradient(amplitude, x), x) / amplitude
+    q = (1 / (4 * sigma_t**2)) * (1 - u**2 / (2 * sigma_t**2))
+    force = u / (4 * sigma_t**4)
+
+    fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(9, 6.6), sharex=True)
+    _density(ax1, u, rho, rf"$\rho$ at $t={t:g}$")
+    ax1.set_ylim(0, 0.45)
+    ax1.set_ylabel(r"density $\rho$")
+    ax1.set_title(rf"width $\sigma(t) = {sigma_t:.2f}$", fontsize=10)
+    ax1.legend(loc="upper right", fontsize=8)
+
+    ax2.axhline(0, color="0.85", lw=0.8)
+    ax2.plot(u[visible], q[visible], color=OMEGA_COLOR, lw=2.4, label=r"$Q = \frac{\hbar^2}{4m\sigma^2}\left(1-\frac{u^2}{2\sigma^2}\right)$")
+    ax2.plot(u[visible][8:-8], q_numeric[visible][8:-8], color=INK, lw=1.1, ls="--", label=r"$-\frac{\hbar^2}{2m}R''/R$ from the packet")
+    ax2.set_ylim(-0.85, 0.35)
+    ax2.set_ylabel(r"quantum term $Q$")
+    ax2.legend(loc="lower center", fontsize=8)
+
+    ax3.axhline(0, color="0.85", lw=0.8)
+    ax3.plot(u[visible], force[visible], color=OMEGA_COLOR, lw=2.4, label=r"$-\frac{1}{m}\,\partial Q/\partial x = \frac{\hbar^2 u}{4m^2\sigma^4}$")
+    ax3.plot(u[visible][8:-8], accel[visible][8:-8], color=INK, lw=1.1, ls="--", label=r"$\partial v/\partial t + v\,\partial v/\partial x$ from the packet")
+    ax3.set_ylim(-0.8, 0.8)
+    ax3.set_xlim(-8, 8)
+    ax3.set_xlabel(r"position relative to the centre, $u = x - v_0 t$")
+    ax3.set_ylabel("acceleration of the probability")
+    ax3.legend(loc="upper left", fontsize=8)
+    fig.tight_layout()
+    return fig
+
+
 def rest_energy_phase_figure(phase, k0=5.0, sigma_x=1.5, t=2.0):
     """A packet with and without the factor exp(-i phase) from the rest energy: Re psi changes, |psi|^2 does not."""
     v = group_velocity(k0)

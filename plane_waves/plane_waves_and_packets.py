@@ -29,6 +29,7 @@ def _():
         width,
     )
     from wave_plots import (
+        quantum_term_figure,
         packet_flow_figure,
         conservation_figure,
         arrow_figure,
@@ -62,6 +63,7 @@ def _():
     )
 
     return (
+        quantum_term_figure,
         packet_flow_figure,
         conservation_figure,
         arrow_figure,
@@ -1481,7 +1483,7 @@ def _(md):
     $$
 
     At the time $t_s$ the width has grown by a factor $\sqrt{2}$. The time-and-space map shows the same
-    packet as a whole: it moves along the classical path (dashed) and gets wider and fainter. Step 7 of section 7 shows how the
+    packet as a whole: it moves along the classical path (dashed) and gets wider and fainter. Step 8 of section 7 shows how the
     probability flows inside this packet.
     """)
     return
@@ -1571,6 +1573,9 @@ def _(md):
       therefore nearly the same velocity;
     - the lump travels many times its own width before it spreads appreciably, so for all practical purposes
       it follows the path $x = vt$.
+
+    The quantum term $Q$ of Step 9 in section 7 is smaller than the kinetic energy by this same factor,
+    $1/(k_0\sigma_x)^2$.
 
     When $k_0\sigma_x$ is of order one, the position and the momentum cannot both be sharp enough to speak
     of a path, and the quantum character is plain. Two examples, at the values of the physical constants:
@@ -1905,9 +1910,57 @@ def _(mo, np, packet):
 @app.cell
 def _(md):
     md(r"""
-    **Step 7: the flow in a wave packet.** The Gaussian packet of section 6 is a lump that moves and widens, so
+    **Step 7: the velocity of the probability.** Write $\psi$ as an arrow, as in section 2: $\psi = R\,e^{i\theta}$,
+    with length $R = \sqrt{\rho}$ and angle $\theta$, the phase. Then $\psi^{*}\,\partial\psi/\partial x
+    = R\,(R' + iR\theta') = RR' + iR^2\theta'$, where a prime is a derivative in $x$. In the flow of
+    Eq. \eqref{eq:continuity} the combination $\psi^{*}\psi' - \psi\,\psi^{*\prime}$ is this number minus its
+    complex conjugate, which is $2i$ times its imaginary part, so it equals $2iR^2\theta'$. The flow is therefore
+
+    $$
+    j = \frac{\hbar}{2mi}\cdot 2iR^2\theta' = \rho\,v, \qquad v = \frac{\hbar}{m}\,\frac{\partial \textcolor{#7030A0}{\theta}}{\partial x} . \label{eq:velocity-phase}
+    $$
+
+    In words, the velocity of the probability is $\hbar/m$ times the rate at which the phase changes with
+    position. For a plane wave $\theta = kx$, which gives $v = \hbar k/m = p/m$.
+
+    Now put $\psi = R\,e^{i\theta}$ into the free Schrödinger equation, Eq. \eqref{eq:schrodinger-free}. By the
+    product rule, $\partial\psi/\partial t = (\partial R/\partial t + iR\,\partial\theta/\partial t)\,e^{i\theta}$, and
+    applying the derivative in $x$ twice gives
+
+    $$
+    \frac{\partial^2 \textcolor{#5ECCF3}{\psi}}{\partial x^2} = \Big(R'' - R\theta'^2 + i\big(2R'\theta' + R\theta''\big)\Big)\,e^{i\textcolor{#7030A0}{\theta}} . \label{eq:polar-derivatives}
+    $$
+
+    Cancel the common factor $e^{i\theta}$. Both sides are now a real part plus $i$ times a real part, and two such
+    numbers are equal only if their real parts are equal and their imaginary parts are equal. The imaginary
+    parts of $i\hbar\,\partial\psi/\partial t = -\frac{\hbar^2}{2m}\,\partial^2\psi/\partial x^2$ give
+
+    $$
+    \frac{\partial R}{\partial t} = -\frac{\hbar}{2m}\Big(2R'\theta' + R\theta''\Big) . \label{eq:polar-amplitude}
+    $$
+
+    Multiply by $2R$. The left side is $\partial(R^2)/\partial t = \partial\rho/\partial t$, and on the right
+    $2RR'\theta' + R^2\theta'' = \partial(R^2\theta')/\partial x$, so
+
+    $$
+    \frac{\partial \rho}{\partial t} = -\frac{\partial}{\partial x}\Big(\rho\,\frac{\hbar}{m}\,\theta'\Big) = -\frac{\partial}{\partial x}\big(\rho\,v\big) = -\frac{\partial j}{\partial x} . \label{eq:continuity-polar}
+    $$
+
+    This is the continuity equation, Eq. \eqref{eq:conservation-form}, now with the flow written as
+    $j = \rho v$ and the velocity given by the phase. It is the imaginary part of the Schrödinger equation, so
+    conservation of probability is one half of it. The real parts of the two sides give a second equation, which
+    says how the phase $\theta$ changes in time.
+    """)
+    return
+
+
+@app.cell
+def _(md):
+    md(r"""
+    **Step 8: the flow in a wave packet.** The Gaussian packet of section 6 is a lump that moves and widens, so
     it shows what the probability flow looks like in a real case. Dividing the flow by the density gives the
-    local velocity of the probability, $v = j/\rho$, so that $j = v\rho$ as in the figure of Step 1. For the
+    local velocity of the probability, $v = j/\rho = (\hbar/m)\,\partial\theta/\partial x$ (Eq. \eqref{eq:velocity-phase}), so that
+    $j = v\rho$ as in the figure of Step 1. For the
     packet of section 6, the flow $j = \frac{\hbar}{m}\,\mathrm{Im}\big(\psi^{*}\,\partial\psi/\partial x\big)$ (the
     expression of Eq. \eqref{eq:continuity}) gives the local velocity
 
@@ -1952,6 +2005,87 @@ def _(mo):
 def _(mo, packet_flow_figure, pf_k0, pf_sigma, pf_t, plt):
     _fig = packet_flow_figure(pf_k0.value, pf_sigma.value, pf_t.value)
     _out = mo.vstack([mo.hstack([pf_k0, pf_sigma, pf_t], justify="start"), _fig])
+    plt.close(_fig)
+    _out
+    return
+
+
+@app.cell
+def _(md):
+    md(r"""
+    **Step 9: the second equation, and what makes the lump widen.** Step 7 used the imaginary parts of the two
+    sides of the Schrödinger equation. The real parts, the terms without $i$, are $-\hbar R\,\partial\theta/\partial t$ on
+    the left and $-\frac{\hbar^2}{2m}\big(R'' - R\theta'^2\big)$ on the right. Divide both by $-\hbar R$:
+
+    $$
+    \frac{\partial \textcolor{#7030A0}{\theta}}{\partial t} = -\frac{\hbar}{2m}\,\textcolor{#7030A0}{\theta}'^2 + \frac{\hbar}{2m}\,\frac{R''}{R} . \label{eq:polar-phase}
+    $$
+
+    This says how the phase changes in time. Multiply by $-\hbar$ and use $v = \hbar\theta'/m$ from
+    Eq. \eqref{eq:velocity-phase}:
+
+    $$
+    -\hbar\,\frac{\partial \textcolor{#7030A0}{\theta}}{\partial t} = \tfrac12 m v^2 + Q, \qquad Q = -\frac{\hbar^2}{2m}\,\frac{R''}{R} . \label{eq:local-energy}
+    $$
+
+    - **The left side** is $\hbar$ times the rate at which the phase turns, which for $\theta = kx-\omega t$
+      is $\hbar\omega = E$ (section 5). It is a local energy.
+    - **The term $\tfrac12 m v^2$** is the kinetic energy of the local velocity, the classical part.
+    - **The term $Q$** depends only on the shape of the amplitude $R$, through its curvature $R''$. For a plane
+      wave $R$ is constant, so $Q = 0$ and $E = \tfrac12 mv^2 = p^2/2m$, as in section 5. For a lump $Q$ is not
+      zero.
+
+    The first equation, Eq. \eqref{eq:continuity-polar}, is conservation of probability. The second is a
+    conservation of energy with the extra term $Q$, and together the two are the Schrödinger equation.
+
+    To see what $Q$ does, take the derivative of Eq. \eqref{eq:polar-phase} with respect to $x$ and multiply by
+    $\hbar/m$. The derivative of $\theta'^2$ is $2\theta'\theta''$, and $(\hbar/m)\,\theta' = v$, so
+    $(\hbar/m)^2\,\theta'\theta'' = v\,\partial v/\partial x$. This gives
+
+    $$
+    \frac{\partial v}{\partial t} + v\,\frac{\partial v}{\partial x} = -\frac{1}{m}\,\frac{\partial Q}{\partial x} . \label{eq:probability-force}
+    $$
+
+    The left side is the acceleration of the probability as it flows. The right side is a force per unit mass
+    that comes from $Q$ and from nothing else. For the Gaussian packet the amplitude is
+    $R \propto e^{-u^2/4\sigma^2}$ with $u = x - v_0 t$ and $\sigma = \sigma(t)$ of Eq. \eqref{eq:width-growth}, so
+    $R''/R = u^2/4\sigma^4 - 1/2\sigma^2$, and
+
+    $$
+    Q = \frac{\hbar^2}{4m\sigma^2}\left(1 - \frac{u^2}{2\sigma^2}\right), \qquad
+    -\frac{1}{m}\frac{\partial Q}{\partial x} = \frac{\hbar^2}{4m^2\sigma^4}\,u . \label{eq:q-gaussian}
+    $$
+
+    The force is zero at the centre and pushes the probability away from it in proportion to the distance $u$.
+    Points ahead of the centre are pushed forward and points behind it are pushed back, which is the widening of
+    Step 8. At $t = 0$ the force is $u/t_s^2$, so the velocity gradient grows as $t/t_s^2$, the small-$t$ form of
+    Eq. \eqref{eq:widening-rate}. In general, with $\sigma^4 = \sigma_x^4\,(t^2+t_s^2)^2/t_s^4$, the force equals
+    $u\,t_s^2/(t^2+t_s^2)^2$, which is exactly the acceleration obtained from the velocity of
+    Eq. \eqref{eq:packet-velocity}.
+
+    The size of $Q$ explains when a particle is classical. $Q$ is about $\hbar^2/m\sigma^2$, and the kinetic
+    energy of the motion is $\tfrac12 mv_0^2 = \hbar^2k_0^2/2m$, so $Q$ is smaller than the kinetic energy by the
+    factor $1/(k_0\sigma_x)^2$. For $k_0\sigma_x \gg 1$ the term $Q$ is negligible and the second equation is the
+    classical equation for a free particle, which is the condition of section 6.5. The figure shows the
+    Gaussian packet in the frame of its centre, with $\hbar = m = 1$. The top panel is the density and its width,
+    the middle panel is $Q$ (solid, from the formula; dashed, from the packet), and the bottom panel is the
+    force from $Q$ (solid) and the acceleration of the probability computed from the packet (dashed). The two
+    lie on top of one another where the density is not negligible. The axes are fixed.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    qt_sigma = mo.ui.slider(1.0, 2.0, step=0.1, value=1.0, label=r"initial width $\sigma_x$", show_value=True)
+    qt_t = mo.ui.slider(0.0, 8.0, step=0.5, value=2.0, label=r"time $t$", show_value=True)
+    return qt_sigma, qt_t
+
+
+@app.cell
+def _(mo, plt, qt_sigma, qt_t, quantum_term_figure):
+    _fig = quantum_term_figure(qt_sigma.value, qt_t.value)
+    _out = mo.vstack([mo.hstack([qt_sigma, qt_t], justify="start"), _fig])
     plt.close(_fig)
     _out
     return
@@ -2024,6 +2158,10 @@ def _(mo):
     - In the free Gaussian packet the probability flow is $j = v\rho$ with a local velocity that equals $v_0$ at
       the centre and grows linearly across the lump: the centre moves at the classical velocity, and the
       velocity gradient $t/(t^2+t_s^2)$ is the rate at which the lump widens.
+    - Written with $\psi = R\,e^{i\theta}$, the Schrödinger equation is two real equations: the continuity equation
+      with velocity $v = \hbar\theta'/m$, and an energy equation $-\hbar\,\partial_t\theta = \tfrac12 mv^2 + Q$ with
+      $Q = -\tfrac{\hbar^2}{2m}R''/R$. The force $-\partial_x Q/m$ is what widens the lump, and $Q$ is negligible
+      when $k_0\sigma_x \gg 1$.
     - The lump behaves like a classical particle when $k_0\sigma_x = p_0/2\Delta p \gg 1$: its momentum is
       known to a small fraction of itself, and it travels $2k_0\sigma_x$ of its own widths before it spreads.
     """)
