@@ -569,6 +569,48 @@ def quantum_term_figure(sigma0, t, k0=1.0):
     return fig
 
 
+def box_states_figure(weight, t):
+    """Particle in a box, 0 < x < 1 (hbar = m = L = 1): psi_n = sqrt(2) sin(n pi x), E_n = n^2 pi^2 / 2.
+
+    A composite of the first two stationary states with probabilities 1 - weight and weight. Left: the energy levels,
+    with the probability of each drawn as a bar and the average energy dashed. Right: the density |psi(x, t)|^2
+    (solid) and its time average (dotted). The axes are fixed."""
+    x = np.linspace(0, 1, 2001)
+    energy = lambda n: n**2 * np.pi**2 / 2
+    state = lambda n: np.sqrt(2) * np.sin(n * np.pi * x)
+    c1, c2 = np.sqrt(1 - weight), np.sqrt(weight)
+    omega12 = energy(2) - energy(1)
+    density = c1**2 * state(1) ** 2 + c2**2 * state(2) ** 2 + 2 * c1 * c2 * state(1) * state(2) * np.cos(omega12 * t)
+    average = c1**2 * state(1) ** 2 + c2**2 * state(2) ** 2
+    mean_energy = (1 - weight) * energy(1) + weight * energy(2)
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10.5, 3.8), gridspec_kw={"width_ratios": [1, 1.6]})
+    for n in range(1, 4):
+        ax1.hlines(energy(n), 0, 1, color="0.8", lw=1.5)
+        ax1.text(1.03, energy(n), f"$n={n}$", va="center", fontsize=8, color="0.4")
+    for n, prob in ((1, 1 - weight), (2, weight)):
+        ax1.hlines(energy(n), 0, prob, color=OMEGA_COLOR, lw=6)
+    ax1.axhline(mean_energy, color=INK, lw=1.2, ls="--")
+    ax1.text(0.5, mean_energy + 0.6, rf"average energy $\langle E\rangle = {mean_energy:.2f}$", ha="center", fontsize=8)
+    ax1.set_xlim(0, 1.2)
+    ax1.set_ylim(0, 50)
+    ax1.set_xticks([0, 0.5, 1])
+    ax1.set_xlabel("probability of the energy")
+    ax1.set_ylabel(r"energy $E$ (units $\hbar^2/mL^2$)")
+    ax1.set_title("energy levels", fontsize=10)
+
+    ax2.plot(x, average, color="0.5", lw=1.2, ls=":", label="time average")
+    _density(ax2, x, density, rf"$|\psi|^2$ at $t={t:g}$")
+    ax2.set_xlim(0, 1)
+    ax2.set_ylim(0, 3.6)
+    ax2.set_xlabel("position $x$ (in units of $L$)")
+    ax2.set_ylabel(r"density $|\psi|^2$")
+    ax2.set_title(rf"the density oscillates with period $2\pi\hbar/(E_2-E_1) = {2 * np.pi / omega12:.3f}$", fontsize=10)
+    ax2.legend(loc="upper right", fontsize=8)
+    fig.tight_layout()
+    return fig
+
+
 def rest_energy_phase_figure(phase, k0=5.0, sigma_x=1.5, t=2.0):
     """A packet with and without the factor exp(-i phase) from the rest energy: Re psi changes, |psi|^2 does not."""
     v = group_velocity(k0)

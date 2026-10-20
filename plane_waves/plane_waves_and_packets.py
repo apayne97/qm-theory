@@ -29,6 +29,7 @@ def _():
         width,
     )
     from wave_plots import (
+        box_states_figure,
         quantum_term_figure,
         packet_flow_figure,
         conservation_figure,
@@ -63,6 +64,7 @@ def _():
     )
 
     return (
+        box_states_figure,
         quantum_term_figure,
         packet_flow_figure,
         conservation_figure,
@@ -168,6 +170,10 @@ def _(mo):
           of position (section 6.1).
         - **Entropy** $S$: the average of $-\ln\rho$, a measure of how spread out a distribution is (section 6.2).
         - **Schrödinger equation**: the equation for how $\psi$ changes in time (section 7).
+        - **Stationary state**: a state of definite energy, $\psi_E(x)\,e^{-iEt/\hbar}$, whose probability density does not
+          change in time (section 8).
+        - **Hamiltonian** $\hat H$: the operation $-\frac{\hbar^2}{2m}\,d^2/dx^2 + V(x)$ whose eigenvalues are the allowed
+          energies (section 8).
         - **Probability flow** $j$: the probability crossing a point per unit time, positive towards larger $x$ (section 7).
         - **Continuity equation**: a conservation law, $\partial\rho/\partial t = -\partial j/\partial x$ (section 7).
         """)
@@ -2162,6 +2168,125 @@ def _(heat_t, heat_vs_schrodinger_figure, mo, plt):
 
 
 @app.cell
+def _(md):
+    md(r"""
+    ## 8 Stationary states and the time-independent equation
+
+    Section 7 found the equation for a particle in a potential energy $V(x)$, Eq. \eqref{eq:schrodinger-potential},
+    and it holds for every wave function. Some of its solutions are special, because their dependence on time
+    separates from their dependence on position. These **stationary states** lead to the time-independent
+    Schrödinger equation, which is the starting point for the hydrogen atom.
+
+    **Step 1: separate time and position.** Look for a solution that is a function of $x$ times a function of
+    $t$, $\psi(x,t) = \psi_E(x)\,T(t)$. The derivative in time acts only on $T$, and the derivatives in position
+    act only on $\psi_E$, so Eq. \eqref{eq:schrodinger-potential} becomes
+    $i\hbar\,\psi_E\,dT/dt = \big({-\tfrac{\hbar^2}{2m}}\psi_E'' + V\psi_E\big)\,T$. Divide by $\psi_E\,T$:
+
+    $$
+    i\hbar\,\frac{1}{T}\frac{dT}{dt} = \frac{1}{\textcolor{#5ECCF3}{\psi}_E}\left({-}\frac{\hbar^2}{2m}\,\textcolor{#5ECCF3}{\psi}_E'' + V(x)\,\textcolor{#5ECCF3}{\psi}_E\right) . \label{eq:separation}
+    $$
+
+    The left side depends only on $t$ and the right side only on $x$. A function of $t$ can equal a function of
+    $x$ for all $t$ and $x$ only if both are the same constant. Call it $E$. The left side then says
+    $i\hbar\,dT/dt = E\,T$, which is solved by $T = e^{-iEt/\hbar}$ (check: $i\hbar\cdot(-iE/\hbar) = E$), and the
+    right side says
+
+    $$
+    {-}\frac{\hbar^2}{2m}\,\frac{d^2 \textcolor{#5ECCF3}{\psi}_E}{dx^2} + V(x)\,\textcolor{#5ECCF3}{\psi}_E = \textcolor{#FF8021}{E}\,\textcolor{#5ECCF3}{\psi}_E . \label{eq:tise}
+    $$
+
+    This is the **time-independent Schrödinger equation**. Write $\hat H = -\frac{\hbar^2}{2m}\,d^2/dx^2 + V(x)$
+    for the operation on the left, the **Hamiltonian** ($\hat H$ with a hat, since $H$ is the wave height). The
+    equation is $\hat H\psi_E = E\,\psi_E$, an **eigenvalue equation**: the operation $\hat H$ returns the same
+    function multiplied by a number $E$. The function $\psi_E$ is an eigenfunction and $E$ is its eigenvalue.
+
+    A stationary state is $\psi(x,t) = \psi_E(x)\,e^{-iEt/\hbar}$. Its density $|\psi|^2 = |\psi_E|^2$ does not
+    change in time, because $e^{-iEt/\hbar}$ is an arrow of length 1 that only turns, at the rate $E/\hbar$ of
+    section 5. It has a definite energy $E$: $i\hbar\,\partial\psi/\partial t = E\,\psi$ and
+    $\hat H\psi = E\,\psi$. For $V = 0$ the stationary states are the plane waves of section 5, with
+    $E = \hbar^2k^2/2m$. When $V$ depends on $x$, plane waves are no longer solutions of Eq. \eqref{eq:tise}.
+
+    **Step 2: an example, a particle in a box.** Let $V = 0$ for $0 < x < L$ and let $\psi$ be zero at the walls,
+    $x = 0$ and $x = L$. Inside the box Eq. \eqref{eq:tise} is $\psi_E'' = -(2mE/\hbar^2)\,\psi_E$, solved by
+    $\sin(kx)$ with $k^2 = 2mE/\hbar^2$. It is zero at $x = 0$, and it is zero at $x = L$ only if
+    $kL = n\pi$ with $n = 1, 2, 3, \dots$ The allowed states and energies are
+
+    $$
+    \textcolor{#5ECCF3}{\psi}_n(x) = \sqrt{\frac{2}{L}}\,\sin\frac{n\pi x}{L}, \qquad \textcolor{#FF8021}{E}_n = \frac{n^2\pi^2\hbar^2}{2mL^2} . \label{eq:box-states}
+    $$
+
+    (The factor $\sqrt{2/L}$ makes the total probability 1, and the states for different $n$ are orthogonal:
+    $\int\psi_n\psi_m\,dx = 0$ for $n \neq m$.) Only certain energies are allowed, and this quantization comes from
+    the condition at the walls.
+
+    **Step 3: a general state is a weighted sum.** Eq. \eqref{eq:schrodinger-potential} is linear, so a weighted
+    sum of its solutions is a solution. A general state is
+
+    $$
+    \textcolor{#5ECCF3}{\psi}(x,t) = \sum_n c_n\,\textcolor{#5ECCF3}{\psi}_n(x)\,e^{-i\textcolor{#FF8021}{E}_n t/\hbar}, \qquad \sum_n |c_n|^2 = 1 . \label{eq:stationary-sum}
+    $$
+
+    This is the same idea as the sum over plane waves in section 6, with the stationary states of the
+    situation in place of the plane waves. The weights $c_n$ are complex numbers, and $\sum|c_n|^2 = 1$
+    keeps the total probability equal to 1. Apply $\hat H$ to it. Each term is an eigenfunction, so
+
+    $$
+    \hat H\,\textcolor{#5ECCF3}{\psi} = \sum_n c_n\,\textcolor{#FF8021}{E}_n\,\textcolor{#5ECCF3}{\psi}_n\,e^{-i\textcolor{#FF8021}{E}_n t/\hbar} = i\hbar\,\frac{\partial \textcolor{#5ECCF3}{\psi}}{\partial t} . \label{eq:composite-hamiltonian}
+    $$
+
+    The equality with $i\hbar\,\partial\psi/\partial t$ holds term by term, so the time-dependent equation is
+    satisfied, as in Eq. \eqref{eq:two-wave-schrodinger}. But $\hat H\psi$ is not a multiple of $\psi$, unless
+    only one $c_n$ is not zero. So the time-independent equation, $\hat H\psi = E\,\psi$, holds only for the stationary
+    states. For the sum there is no single $E$, and one cannot write $E\,\psi = c_1E_1\psi_1 + c_2E_2\psi_2$. What the
+    sum has is a probability $|c_n|^2$ of being found with the energy $E_n$, and an average energy
+    $\langle E\rangle = \sum_n |c_n|^2 E_n$.
+
+    The density of the sum changes in time. For two states, with real $\psi_n$ and real weights $c_1$ and $c_2$,
+
+    $$
+    |\textcolor{#5ECCF3}{\psi}|^2 = c_1^2\,\textcolor{#5ECCF3}{\psi}_1^2 + c_2^2\,\textcolor{#5ECCF3}{\psi}_2^2 + 2c_1c_2\,\textcolor{#5ECCF3}{\psi}_1\textcolor{#5ECCF3}{\psi}_2\,\cos\!\frac{(\textcolor{#FF8021}{E}_2 - \textcolor{#FF8021}{E}_1)\,t}{\hbar} . \label{eq:two-state-density}
+    $$
+
+    The two turning arrows interfere, as in section 3, and the cross term oscillates at the frequency
+    $(E_2 - E_1)/\hbar$. Each stationary state alone has a density that does not change. The figure shows a sum of
+    the two lowest states of the box, with $\hbar = m = L = 1$. The slider sets the probability of the second
+    state. The left panel shows the energy levels, with the probability of each as a bar and the average energy
+    dashed, and the right panel shows the density at the time $t$ with its time average dotted. The axes are
+    fixed.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    box_weight = mo.ui.slider(0.0, 1.0, step=0.1, value=0.5, label=r"probability of the second state $|c_2|^2$", show_value=True)
+    box_t = mo.ui.slider(0.0, 0.85, step=0.025, value=0.0, label=r"time $t$", show_value=True)
+    return box_t, box_weight
+
+
+@app.cell
+def _(box_states_figure, box_t, box_weight, mo, plt):
+    _fig = box_states_figure(box_weight.value, box_t.value)
+    _out = mo.vstack([mo.hstack([box_weight, box_t], justify="start"), _fig])
+    plt.close(_fig)
+    _out
+    return
+
+
+@app.cell
+def _(md):
+    md(r"""
+    **Step 4: towards the hydrogen atom.** The same steps apply to the electron in a hydrogen atom. The potential
+    energy is $V = -e^2/(4\pi\varepsilon_0 r)$ in three dimensions, and the time-independent equation is again an
+    eigenvalue equation, $\hat H\psi = E\,\psi$, with the stationary states $\psi_{nlm}$ (the orbitals) and the
+    energies $E_n = -13.6\ \mathrm{eV}/n^2$. A general state is a weighted sum of the orbitals, as in
+    Eq. \eqref{eq:stationary-sum}. Plane waves are not eigenfunctions there, but the structure of the argument
+    is unchanged: find the stationary states, then build every state as a sum over them.
+    """)
+    return
+
+
+@app.cell
 def _(mo):
     mo.md(r"""
     ## Summary
@@ -2196,6 +2321,10 @@ def _(mo):
       with velocity $v = \hbar\theta'/m$, and an energy equation $-\hbar\,\partial_t\theta = \tfrac12 mv^2 + Q$ with
       $Q = -\tfrac{\hbar^2}{2m}R''/R$. The force $-\partial_x Q/m$ is what widens the lump, and $Q$ is negligible
       when $k_0\sigma_x \gg 1$.
+    - A state of definite energy is $\psi_E(x)\,e^{-iEt/\hbar}$ with $\hat H\psi_E = E\,\psi_E$ (the time-independent
+      equation, found by separating $t$ and $x$). A general state is a weighted sum of these and obeys only the
+      time-dependent equation. It has no single energy, only probabilities $|c_n|^2$, and its density changes in
+      time.
     - The lump behaves like a classical particle when $k_0\sigma_x = p_0/2\Delta p \gg 1$: its momentum is
       known to a small fraction of itself, and it travels $2k_0\sigma_x$ of its own widths before it spreads.
     """)
