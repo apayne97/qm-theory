@@ -121,3 +121,30 @@ def two_hole_distances(x, d, L):
 def intensity(h):
     """Intensity |h|^2 (the constant of proportionality is dropped)."""
     return np.abs(h) ** 2
+
+
+# ---------------------------------------------------------------------------
+# The particle in a box as a matrix
+# ---------------------------------------------------------------------------
+
+
+def box_grid(n_points, length=1.0):
+    """The n_points interior grid points x_j = j dx (j = 1 ... n_points) of a box 0 < x < length, and the spacing
+    dx = length / (n_points + 1). The walls x = 0 and x = length carry psi = 0 and are not grid points."""
+    dx = length / (n_points + 1)
+    return dx * np.arange(1, n_points + 1), dx
+
+
+def box_hamiltonian(n_points, length=1.0, hbar=1.0, mass=1.0):
+    """The Hamiltonian of the particle in a box (V = 0) on the grid of box_grid, as an n_points x n_points matrix.
+
+    psi'' at x_j is replaced by (psi_{j+1} - 2 psi_j + psi_{j-1}) / dx^2, with psi_0 = psi_{n+1} = 0 at the walls,
+    so H = hbar^2 / (2 m dx^2) times the matrix with 2 on the diagonal and -1 on the two diagonals next to it."""
+    _, dx = box_grid(n_points, length)
+    off = -np.ones(n_points - 1)
+    return hbar**2 / (2 * mass * dx**2) * (2 * np.eye(n_points) + np.diag(off, 1) + np.diag(off, -1))
+
+
+def box_energy(n, length=1.0, hbar=1.0, mass=1.0):
+    """The exact energy n^2 pi^2 hbar^2 / (2 m L^2) of the n-th state of the box."""
+    return n**2 * np.pi**2 * hbar**2 / (2 * mass * length**2)

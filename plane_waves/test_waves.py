@@ -205,3 +205,42 @@ def test_centre_of_pattern_is_bright_and_symmetric():
     total = intensity(hole_amplitude(r1, k) + hole_amplitude(r2, k))
     assert np.isclose(total[1], 4.0)
     assert np.isclose(total[0], total[2])
+
+
+# ---------------------------------------------------------------------------
+# The particle in a box as a matrix
+# ---------------------------------------------------------------------------
+
+from waves import box_energy, box_grid, box_hamiltonian  # noqa: E402
+
+
+def test_box_matrix_eigenvectors_are_samples_of_the_sines():
+    n_points = 40
+    x, dx = box_grid(n_points)
+    _, vectors = np.linalg.eigh(box_hamiltonian(n_points))
+    for n in range(1, 6):
+        sample = np.sqrt(2) * np.sin(n * np.pi * x)
+        overlap = np.sum(sample * vectors[:, n - 1]) * np.sqrt(dx)  # unit vector against sampled sine, both unit norm
+        assert np.isclose(abs(overlap), 1.0, atol=1e-12)
+
+
+def test_box_matrix_energies_approach_the_exact_ones():
+    for n_points, tolerance in ((10, 0.02), (40, 0.002)):
+        energies = np.linalg.eigvalsh(box_hamiltonian(n_points))
+        for n in range(1, 4):
+            assert abs(energies[n - 1] / box_energy(n) - 1) < tolerance * n**2
+    energies = np.linalg.eigvalsh(box_hamiltonian(400))
+    assert np.isclose(energies[0], box_energy(1), rtol=1e-4)
+
+
+def test_box_matrix_is_symmetric_and_vectors_orthonormal():
+    h = box_hamiltonian(25)
+    assert np.allclose(h, h.T)
+    _, vectors = np.linalg.eigh(h)
+    assert np.allclose(vectors.T @ vectors, np.eye(25))
+
+
+def test_box_matrix_acts_like_the_second_derivative():
+    x, dx = box_grid(200)
+    psi = np.sin(3 * np.pi * x)
+    assert np.allclose(box_hamiltonian(200) @ psi, box_energy(3) * psi, rtol=1e-3, atol=1e-3)

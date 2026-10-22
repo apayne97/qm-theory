@@ -29,6 +29,7 @@ def _():
         width,
     )
     from wave_plots import (
+        box_matrix_figure,
         box_states_figure,
         quantum_term_figure,
         packet_flow_figure,
@@ -64,6 +65,7 @@ def _():
     )
 
     return (
+        box_matrix_figure,
         box_states_figure,
         quantum_term_figure,
         packet_flow_figure,
@@ -2276,7 +2278,96 @@ def _(box_states_figure, box_t, box_weight, mo, plt):
 @app.cell
 def _(md):
     md(r"""
-    **Step 4: towards the hydrogen atom.** The same steps apply to the electron in a hydrogen atom. The potential
+    **Step 4: the same problem as a matrix.** So far $\psi_E(x)$ is a continuous function. To see why
+    $\hat H\psi_E = E\,\psi_E$ is the eigenvalue problem of linear algebra, put the box on a grid of $N$ points
+    $x_j = j\,\Delta x$, with $j = 1, \dots, N$ and $\Delta x = L/(N+1)$. The walls at $x = 0$ and $x = L$ are
+    where $\psi = 0$, so they are not unknowns. Write $\psi_j = \psi(x_j)$ and collect the $N$ numbers into a column
+    $\boldsymbol\psi = (\psi_1, \dots, \psi_N)^{\mathsf T}$. This list of numbers stands for the function, and the
+    more points, the closer the two are.
+
+    The second derivative is the change of the slope. The slope between $x_j$ and $x_{j+1}$ is
+    $(\psi_{j+1}-\psi_j)/\Delta x$, and the slope between $x_{j-1}$ and $x_j$ is $(\psi_j-\psi_{j-1})/\Delta x$, so
+    $\psi''(x_j) \approx (\psi_{j+1} - 2\psi_j + \psi_{j-1})/\Delta x^2$. Inside the box $V = 0$, so row $j$ of
+    $\hat H\psi$ is
+
+    $$
+    (\hat H\psi)_j = \frac{\hbar^2}{2m\,\Delta x^2}\left(-\psi_{j-1} + 2\psi_j - \psi_{j+1}\right),
+    \qquad \psi_0 = \psi_{N+1} = 0 .
+    $$
+
+    Each row combines a value with its two neighbours, which is a row of a matrix times the column
+    $\boldsymbol\psi$. With $\varepsilon = \hbar^2/(2m\,\Delta x^2)$,
+
+    $$
+    \hat{\mathbf H} = \varepsilon
+    \begin{pmatrix}
+    2 & -1 & 0 & \cdots & 0 \\
+    -1 & 2 & -1 & \cdots & 0 \\
+    0 & -1 & 2 & \ddots & \vdots \\
+    \vdots & \vdots & \ddots & \ddots & -1 \\
+    0 & 0 & \cdots & -1 & 2
+    \end{pmatrix},
+    \qquad
+    \hat{\mathbf H}\,\textcolor{#5ECCF3}{\boldsymbol\psi} = \textcolor{#FF8021}{E}\,\textcolor{#5ECCF3}{\boldsymbol\psi} . \label{eq:box-matrix}
+    $$
+
+    The first and last rows have only one neighbour, because the missing one is a wall where $\psi = 0$: the
+    condition at the walls is built into the matrix. Eq. \eqref{eq:box-matrix} is the eigenvalue problem for a
+    symmetric $N \times N$ matrix, with $N$ eigenvalues $E$ and $N$ eigenvectors $\boldsymbol\psi$. Here is how the
+    notation so far translates (real functions):
+
+    | continuous | on the grid |
+    |:---|:---|
+    | function $\psi(x)$ | column $\boldsymbol\psi$ with entries $\psi_j = \psi(x_j)$ |
+    | operation $\hat H$ | matrix $\hat{\mathbf H}$ |
+    | $\hat H\psi_E = E\,\psi_E$ | $\hat{\mathbf H}\boldsymbol\psi = E\,\boldsymbol\psi$ |
+    | $\int \psi_n\,\psi_m\,dx$ | $\Delta x\sum_j \psi_{n,j}\,\psi_{m,j}$, a dot product |
+    | normalization $\int\psi^2\,dx = 1$ | $\Delta x\sum_j\psi_j^2 = 1$: the column $\sqrt{\Delta x}\,\boldsymbol\psi$ has length 1 |
+    | weight $c_n = \int\psi_n\,\psi\,dx$ | dot product of the unit column of $\psi_n$ with that of $\psi$ |
+    | $\psi = \sum_n c_n\,\psi_n$ | the vector $\boldsymbol\psi$ written as a sum of eigenvectors |
+
+    The figure solves the matrix problem for a chosen $N$. The dots are an eigenvector of $\hat{\mathbf H}$, one
+    number per grid point, and the line is $\sqrt{2/L}\,\sin(n\pi x/L)$ from Eq. \eqref{eq:box-states}. The dots
+    lie on the line: the eigenvectors of the matrix are exactly samples of the sines. The eigenvalues are
+    $E_n = (\hbar^2/m\,\Delta x^2)\,[1-\cos(n\pi\,\Delta x/L)]$, which is the $E_n$ of Eq. \eqref{eq:box-states}
+    when $n\,\Delta x/L$ is small. The low states are accurate and the higher ones are too low, and a grid of $N$
+    points has only $N$ states: a sine with $n > N$ wiggles faster than the grid can show. The infinite ladder of
+    energies appears as $N \to \infty$. Raise $N$ and watch the dots meet the lines.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    box_grid_points = mo.ui.slider(2, 60, step=1, value=8, label=r"grid points $N$", show_value=True)
+    box_matrix_state = mo.ui.slider(1, 8, step=1, value=2, label=r"state $n$", show_value=True)
+    return box_grid_points, box_matrix_state
+
+
+@app.cell
+def _(box_grid_points, box_matrix_figure, box_matrix_state, mo, plt):
+    _fig = box_matrix_figure(box_grid_points.value, box_matrix_state.value)
+    _out = mo.vstack([mo.hstack([box_grid_points, box_matrix_state], justify="start"), _fig])
+    plt.close(_fig)
+    _out
+    return
+
+
+@app.cell
+def _(md):
+    md(r"""
+    The weighted sum of Step 3 is then an ordinary vector written in the basis of eigenvectors,
+    $\boldsymbol\psi = \sum_n c_n\,\boldsymbol\psi_n$, and $\hat{\mathbf H}\boldsymbol\psi = \sum_n c_n E_n\,\boldsymbol\psi_n$
+    scales each component by a different number, so it points in a different direction from $\boldsymbol\psi$
+    unless a single $c_n$ is not zero. This is the statement of Step 3 in the language of matrices.
+    """)
+    return
+
+
+@app.cell
+def _(md):
+    md(r"""
+    **Step 5: towards the hydrogen atom.** The same steps apply to the electron in a hydrogen atom. The potential
     energy is $V = -e^2/(4\pi\varepsilon_0 r)$ in three dimensions, and the time-independent equation is again an
     eigenvalue equation, $\hat H\psi = E\,\psi$, with the stationary states $\psi_{nlm}$ (the orbitals) and the
     energies $E_n = -13.6\ \mathrm{eV}/n^2$. A general state is a weighted sum of the orbitals, as in
@@ -2325,6 +2416,9 @@ def _(mo):
       equation, found by separating $t$ and $x$). A general state is a weighted sum of these and obeys only the
       time-dependent equation. It has no single energy, only probabilities $|c_n|^2$, and its density changes in
       time.
+    - On a grid of $N$ points a function is a column of $N$ numbers and $\hat H$ is an $N\times N$ matrix, so
+      $\hat H\psi_E = E\,\psi_E$ is an ordinary eigenvalue problem. For the box the eigenvectors are samples of the
+      sines and the eigenvalues approach $n^2\pi^2\hbar^2/2mL^2$ as $N$ grows.
     - The lump behaves like a classical particle when $k_0\sigma_x = p_0/2\Delta p \gg 1$: its momentum is
       known to a small fraction of itself, and it travels $2k_0\sigma_x$ of its own widths before it spreads.
     """)

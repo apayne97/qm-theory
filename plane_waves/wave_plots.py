@@ -9,6 +9,9 @@ import numpy as np
 from matplotlib.colors import LinearSegmentedColormap
 
 from waves import (
+    box_energy,
+    box_grid,
+    box_hamiltonian,
     group_velocity,
     height,
     hole_amplitude,
@@ -607,6 +610,55 @@ def box_states_figure(weight, t):
     ax2.set_ylabel(r"density $|\psi|^2$")
     ax2.set_title(rf"the density oscillates with period $2\pi\hbar/(E_2-E_1) = {2 * np.pi / omega12:.3f}$", fontsize=10)
     ax2.legend(loc="upper right", fontsize=8)
+    fig.tight_layout()
+    return fig
+
+
+def box_matrix_figure(n_points, n):
+    """The particle in a box (hbar = m = L = 1) as a matrix on n_points grid points. Left: the matrix H (orange:
+    positive, blue: negative, white: zero). Middle: the n-th eigenvector as one number per grid point (dots), on the
+    continuous state sqrt(2) sin(n pi x) (line). Right: the lowest eigenvalues of the matrix (dots) against the exact
+    energies (lines)."""
+    x, dx = box_grid(n_points)
+    energies, vectors = np.linalg.eigh(box_hamiltonian(n_points))
+    n = min(n, n_points)
+    vector = vectors[:, n - 1] / np.sqrt(dx)  # unit vector -> values of psi_n(x_j), so that sum psi^2 dx = 1
+    peak_j = np.argmax(np.abs(vector))
+    vector = vector * np.sign(vector[peak_j] * np.sin(n * np.pi * x[peak_j]))  # eigh fixes the sign only up to +-1
+    fine = np.linspace(0, 1, 801)
+
+    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(11.5, 3.6), gridspec_kw={"width_ratios": [1, 1.5, 1]})
+    h = box_hamiltonian(n_points)
+    limit = np.abs(h).max()
+    ax1.imshow(h, cmap=LinearSegmentedColormap.from_list("h", [H_COLOR, "white", OMEGA_COLOR]), vmin=-limit, vmax=limit)
+    ax1.set_title(rf"$H$: a {n_points}$\times${n_points} matrix", fontsize=10)
+    ax1.set_xlabel("column $k$")
+    ax1.set_ylabel("row $j$")
+    ticks = list(range(0, n_points, max(1, n_points // 5)))
+    ax1.set_xticks(ticks, [str(t + 1) for t in ticks])
+    ax1.set_yticks(ticks, [str(t + 1) for t in ticks])
+
+    ax2.axhline(0, color="0.85", lw=0.8)
+    ax2.plot(fine, np.sqrt(2) * np.sin(n * np.pi * fine), color=CX_COLOR, lw=1.8, label=rf"$\psi_{{{n}}}(x)$, continuous")
+    ax2.vlines(x, 0, vector, color=CX_COLOR, lw=1.0, alpha=0.6)
+    ax2.plot(x, vector, "o", color=INK, ms=4.5, label=rf"eigenvector of $H$: $\psi_j$ at $x_j = j\,\Delta x$")
+    ax2.plot([0, 1], [0, 0], "s", color=A_COLOR, ms=4, label=r"walls: $\psi = 0$")
+    ax2.set_xlim(-0.03, 1.03)
+    ax2.set_ylim(-1.7, 2.7)
+    ax2.set_xlabel("position $x$ (in units of $L$)")
+    ax2.set_title(rf"state $n={n}$ with $N={n_points}$ grid points", fontsize=10)
+    ax2.legend(loc="upper right", fontsize=7.5, ncol=1)
+
+    shown = min(n_points, 6)
+    for m in range(1, shown + 1):
+        ax3.hlines(box_energy(m), 0.05, 0.55, color="0.75", lw=1.5)
+        ax3.plot([0.8], [energies[m - 1]], "o", color=OMEGA_COLOR if m == n else INK, ms=5)
+        ax3.text(0.95, box_energy(m), f"$n={m}$", va="center", fontsize=8, color="0.4")
+    ax3.set_xlim(0, 1.25)
+    ax3.set_ylim(0, box_energy(shown) * 1.08)
+    ax3.set_xticks([0.3, 0.8], ["exact", "matrix"])
+    ax3.set_ylabel(r"energy $E$ (units $\hbar^2/mL^2$)")
+    ax3.set_title("eigenvalues of $H$", fontsize=10)
     fig.tight_layout()
     return fig
 
