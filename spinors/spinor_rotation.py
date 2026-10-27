@@ -404,15 +404,25 @@ def _(mo):
     so the rotation matrix differs from the identity by a term proportional to $\epsilon$:
     $R(\epsilon)\approx 1+\epsilon K$. For a rotation about $z$,
 
-    $$K_z=\begin{pmatrix}0&-1&0\\1&0&0\\0&0&0\end{pmatrix}.$$
+    $$R_z(\epsilon)\approx\begin{pmatrix}1&-\epsilon&0\\ \epsilon&1&0\\0&0&1\end{pmatrix}
+    =1+\epsilon\begin{pmatrix}0&-1&0\\1&0&0\\0&0&0\end{pmatrix},\qquad
+    K_z=\begin{pmatrix}0&-1&0\\1&0&0\\0&0&0\end{pmatrix}.$$
 
-    The matrix $K$ is the derivative of the rotation matrix with respect to the angle, evaluated at zero angle:
-    $K = dR/d\alpha\,\big|_{\alpha=0}$.[^jacobian] A rotation through a finite angle $\alpha$ is a composition
+    The same matrix follows by differentiating. The matrix $K$ is the derivative of the rotation matrix with
+    respect to the angle, evaluated at zero angle: $K = dR/d\alpha\,\big|_{\alpha=0}$.[^jacobian] Differentiate
+    each entry of $R_z(\alpha)$, using $\dfrac{d\cos\alpha}{d\alpha}=-\sin\alpha$ and
+    $\dfrac{d\sin\alpha}{d\alpha}=\cos\alpha$; the constant entries (the $1$ and the zeros) have derivative $0$:
+
+    $$\frac{dR_z}{d\alpha}=\begin{pmatrix}-\sin\alpha&-\cos\alpha&0\\ \cos\alpha&-\sin\alpha&0\\0&0&0\end{pmatrix}.$$
+
+    At $\alpha=0$ we have $\sin 0=0$ and $\cos 0=1$, so
+    $K_z=\dfrac{dR_z}{d\alpha}\Big|_{\alpha=0}=\begin{pmatrix}0&-1&0\\1&0&0\\0&0&0\end{pmatrix}$, as above. A rotation through a finite angle $\alpha$ is a composition
     of many small ones, $R(\alpha)=\lim_{n\to\infty}(1+\tfrac{\alpha}{n}K)^n=e^{\alpha K}$, the matrix analogue
     of continuously compounded interest.
 
     The $J$ matrix is defined as $J=iK$, so that $R(\alpha)=e^{-i\alpha J}$. The factor $i$ ensures that $J$
-    has real eigenvalues, as required of a quantity whose measured values are real. Hence **each entry of a
+    has real eigenvalues, as required of a quantity whose measured values are real. For the rotation about $z$,
+    $J_z=iK_z=\begin{pmatrix}0&-i&0\\ i&0&0\\0&0&0\end{pmatrix}$. Hence **each entry of a
     $J$ matrix is $i$ times the derivative, at zero angle, of the corresponding entry of the rotation matrix.**
     Select an axis below; the matrices are computed by numerical differentiation of the rotation matrices
     of section 1 at zero angle.
