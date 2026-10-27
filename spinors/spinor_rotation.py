@@ -22,7 +22,13 @@ def _():
     )
     from belt_plots import belt_figure, double_turn_ball_figure, single_turn_ball_figure
     from dirac_belt import belt_frames
-    from rotation_plots import circulation_figure, component_planes_figure, x_oscillation_figure, z_rotation_figure
+    from rotation_plots import (
+        circulation_figure,
+        component_planes_figure,
+        stern_gerlach_figure,
+        x_oscillation_figure,
+        z_rotation_figure,
+    )
 
     def latex_matrix(m, digits=2):
         """Format a small real/complex matrix as a LaTeX pmatrix."""
@@ -57,6 +63,7 @@ def _():
         rotation_matrix_so3,
         single_turn_ball_figure,
         spin_matrices,
+        stern_gerlach_figure,
         su2_to_so3,
         x_oscillation_figure,
         z_rotation_figure,
@@ -839,14 +846,47 @@ def _(mo):
     ## 4 Why this construction does not describe the electron, and why the electron matters
 
     Sections 2 and 3 started from the rotation of ordinary three-dimensional vectors and therefore produced a
-    system with three levels, $m_s=+1,0,-1$. The electron is not of this kind.
+    system with three levels, $m_s=+1,0,-1$. They also showed that a definite spin component along one axis leaves
+    the components along the other axes uncertain. The electron is not of this kind.
 
-    **Experiment.** In a Stern-Gerlach experiment, a beam of silver atoms (whose magnetic moment is that of a
-    single unpaired electron) passes through a non-uniform magnetic field, which deflects each atom according to
-    the value of its spin component along the field direction. For a spin-1 system three beams would emerge, one
-    for each of $m_s=+1,0,-1$. Experimentally **exactly two beams emerge**, for any orientation of the magnet. The
-    spin component of the electron along any axis takes only two values, so its state has two amplitudes.
+    **The device.** A Stern-Gerlach magnet has a non-uniform magnetic field along one axis. It deflects each atom
+    of a beam according to the value of its spin component along that axis, so it splits the beam into one beam
+    for each possible value. Silver atoms are used, because their magnetic moment is that of a single unpaired
+    electron.
 
+    **Experiment.** For a spin-1 system, a magnet along $z$ would produce three beams, one for each of
+    $m_z=+1,0,-1$. Experimentally **exactly two beams emerge**, for any orientation of the magnet. The spin
+    component of the electron along any axis takes only two values, so its state has two amplitudes.
+
+    **Magnets in sequence.** The figure shows three magnets in a row, along $z$, then $x$, then $z$. After each of
+    the first two, only the upper beam is kept; the blocked beams are marked ✗. Each label gives the fraction of the
+    beam entering a magnet that leaves in that beam. The sequence tests the previous section:
+
+    - A second magnet along $z$ directly after the first would send all of the kept beam into the same upper beam,
+      since $m_z$ is definite.
+    - The magnet along $x$ splits that beam into equal parts, since a definite $m_z$ leaves $m_x$ uncertain.
+    - The last magnet, along $z$, splits the $m_x=+\tfrac12$ beam into equal parts again. Making $m_x$ definite
+      destroyed the definite value of $m_z$ prepared by the first magnet.
+
+    The lower row shows the same sequence for spin 1, with three beams and the fractions $\tfrac14,\tfrac12,\tfrac14$
+    that were found in section 3. The electron behaves in the same way, except that it has two levels instead of
+    three, and a state with two levels needs two amplitudes.
+    """)
+    return
+
+
+@app.cell
+def _(mo, plt, stern_gerlach_figure):
+    _fig = stern_gerlach_figure()
+    _out = mo.vstack([_fig])
+    plt.close(_fig)
+    _out
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
     **Why it matters.** As the introduction noted, electrons are fermions. Three separate statements are
     involved, and only the first can be addressed with rotations:
 

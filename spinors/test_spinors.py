@@ -166,3 +166,17 @@ def test_raising_operator_shifts_m_by_exactly_one(j):
     m = np.diag(jz).real
     rows, cols = np.nonzero(np.abs(jp) > 1e-12)
     assert np.allclose(m[rows] - m[cols], 1)
+
+
+@pytest.mark.parametrize("j", [0.5, 1, 1.5, 2])
+def test_stern_gerlach_sequence_is_binomial(j):
+    from math import comb
+
+    from spinors import stern_gerlach_sequence
+
+    n = int(round(2 * j))
+    expected = np.array([comb(n, k) for k in range(n + 1)]) / 2**n
+    p_x, p_z = stern_gerlach_sequence(j)
+    assert np.allclose(p_x, expected)
+    assert np.allclose(p_z, expected)
+    assert np.isclose(p_x.sum(), 1) and np.isclose(p_z.sum(), 1)

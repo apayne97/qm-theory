@@ -134,3 +134,18 @@ def raising_operator(j: float) -> np.ndarray:
     """J+ = Jx + i Jy. It raises m by exactly 1."""
     jx, jy, _ = spin_matrices(j)
     return jx + 1j * jy
+
+
+def stern_gerlach_sequence(j: float) -> tuple[np.ndarray, np.ndarray]:
+    """Beam fractions in a z, x, z sequence of Stern-Gerlach magnets, for spin j.
+
+    The beam with m_z = +j is kept after the first magnet and sent through a magnet along x; the beam with
+    m_x = +j is then kept and sent through a second magnet along z. Returns (p_x, p_z): the fractions of the
+    beams with m = j, j-1, ..., -j leaving the x magnet and the second z magnet.
+    """
+    jx = spin_matrices(j)[0]
+    values, vectors = np.linalg.eigh(jx)
+    vectors = vectors[:, np.argsort(-values)]  # eigenvectors of J_x for m_x = j, ..., -j
+    p_x = np.abs(vectors[0, :]) ** 2  # overlap of the m_z = +j state (first basis vector) with each
+    p_z = np.abs(vectors[:, 0]) ** 2  # components of the m_x = +j state on the m_z basis
+    return p_x, p_z

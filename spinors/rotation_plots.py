@@ -1,11 +1,13 @@
 """Figure for section 1: the same rotation about z seen in the plane and in three dimensions."""
 
+from fractions import Fraction
+
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.lines import Line2D
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
-from spinors import rotation_matrix_so3
+from spinors import rotation_matrix_so3, stern_gerlach_sequence
 
 # An asymmetric letter F, so that the turning (and any reflection) of the plane is visible.
 _F = np.array(
@@ -234,5 +236,66 @@ def x_oscillation_figure(wt_deg, alpha_deg):
         labels=["m = +1 part, ahead by α", "m = −1 part, behind by α", "sum"],
         loc="lower right", fontsize=8, frameon=False,
     )
+    fig.tight_layout()
+    return fig
+
+
+def _fraction_label(p):
+    f = Fraction(float(p)).limit_denominator(12)
+    return f"{f.numerator}/{f.denominator}" if f.denominator > 1 else str(f.numerator)
+
+
+def _magnet(ax, x0, y, label, half_height):
+    ax.add_patch(plt.Rectangle((x0, y - half_height), 1, 2 * half_height, facecolor="0.9", edgecolor="0.3", lw=1.2))
+    ax.text(x0 + 0.5, y, label, ha="center", va="center", fontsize=13, fontweight="bold")
+
+
+def _fan(ax, x0, y0, spin, fractions, axis_name, final=False, stub=4.6):
+    """Beams leaving a magnet centred at height y0, labelled with their m and fraction of the beam.
+
+    The top beam (m = +j) is kept and continues; the others are blocked unless this is the last magnet.
+    """
+    m_values = spin - np.arange(len(fractions))
+    for m, p in zip(m_values, fractions):
+        keep = m == spin or final
+        style = dict(color="tab:blue", lw=2.5) if keep else dict(color="0.6", lw=1.2, ls="--")
+        sign = "+" if m > 0 else ("−" if m < 0 else "")
+        label = f"m_{axis_name} = {sign}{Fraction(abs(float(m))).limit_denominator(2)}: {_fraction_label(p)}"
+        ax.plot([x0, x0 + 2], [y0, y0 + m], **style)
+        if m == spin and not final:
+            ax.plot([x0 + 2, x0 + stub], [y0 + m, y0 + m], **style)
+            ax.text(x0 + 2.2, y0 + m + 0.15, label, fontsize=8, ha="left", va="bottom", color="tab:blue")
+        else:
+            ax.plot([x0 + 2, x0 + 2.3], [y0 + m, y0 + m], **style)
+            if not keep:
+                ax.text(x0 + 2.45, y0 + m, "✗", color="0.5", ha="center", va="center", fontsize=10)
+            ax.text(x0 + 2.8 if not keep else x0 + 2.45, y0 + m, label, fontsize=8, ha="left", va="center",
+                    color="tab:blue" if keep else "0.4")
+
+
+def stern_gerlach_figure():
+    """Three Stern-Gerlach magnets in a row (z, x, z) for spin 1/2 and spin 1, with the beam fractions."""
+    fig, axes = plt.subplots(2, 1, figsize=(11, 7.4))
+    for ax, spin, title in [(axes[0], 0.5, "spin 1/2 (the electron)"), (axes[1], 1.0, "spin 1 (an ordinary vector)")]:
+        p_x, p_z = stern_gerlach_sequence(spin)
+        n = len(p_x)
+        half = spin + 0.6
+        flat = np.full(n, 1 / n)
+        # source and first magnet (z), unpolarised beam
+        ax.plot([0, 1], [0, 0], color="tab:blue", lw=2.5)
+        _magnet(ax, 1, 0, "Z", half)
+        _fan(ax, 2, 0, spin, flat, "z", stub=5.4)
+        # second magnet (x): the m_z = +j beam enters it
+        y1 = spin
+        _magnet(ax, 7.4, y1, "X", half)
+        _fan(ax, 8.4, y1, spin, p_x, "x", stub=5.2)
+        # third magnet (z): the m_x = +j beam enters it
+        y2 = 2 * spin
+        _magnet(ax, 13.6, y2, "Z", half)
+        _fan(ax, 14.6, y2, spin, p_z, "z", final=True)
+        ax.set_xlim(-0.3, 20.4)
+        ax.set_ylim(-spin - 1.0, 2 * spin + spin + 1.0)
+        ax.set_title(title, fontsize=11, loc="left")
+        ax.axis("off")
     fig.tight_layout()
     return fig
