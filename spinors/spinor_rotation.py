@@ -22,7 +22,7 @@ def _():
     )
     from belt_plots import belt_figure, double_turn_ball_figure, single_turn_ball_figure
     from dirac_belt import belt_frames
-    from rotation_plots import circulation_figure, component_planes_figure, z_rotation_figure
+    from rotation_plots import circulation_figure, component_planes_figure, x_oscillation_figure, z_rotation_figure
 
     def latex_matrix(m, digits=2):
         """Format a small real/complex matrix as a LaTeX pmatrix."""
@@ -58,6 +58,7 @@ def _():
         single_turn_ball_figure,
         spin_matrices,
         su2_to_so3,
+        x_oscillation_figure,
         z_rotation_figure,
     )
 
@@ -513,10 +514,8 @@ def _(mo):
     This explains the rotation rule. An arrow turning steadily about $z$ looks the same after a rotation about
     $z$, only at a different moment of its cycle. Turning the picture through $\alpha$ is the same as advancing
     $\omega t$ by $\alpha$ for $m_s=+1$ (and by $-\alpha$ for $m_s=-1$), which multiplies the vector by the phase
-    $e^{-im_s\alpha}$. A back-and-forth oscillation along $x$ is different. It is the sum of equal counter-clockwise
-    and clockwise circulations, $\hat x=(e_{+1}+e_{-1})/\sqrt2$, where $e_{\pm1}$ are the vectors with
-    $m_s=\pm1$ above, as the last panel shows. Under a rotation the two parts acquire opposite phases and no longer
-    add up to an oscillation along $x$, which is why $\hat x$ is not an eigenvector of $J_z$.
+    $e^{-im_s\alpha}$. A back-and-forth oscillation along $x$ behaves differently; the example after the figure
+    shows why it is not an eigenvector of $J_z$.
     """)
     return
 
@@ -531,6 +530,52 @@ def _(mo):
 @app.cell
 def _(circ_phase, circulation_figure, mo, plt):
     _fig = circulation_figure(circ_phase.value)
+    _out = mo.vstack([_fig])
+    plt.close(_fig)
+    _out
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    **An example: why $\hat x$ is not an eigenvector.** The vector $\hat x$, drawn over time, is an arrow
+    oscillating back and forth along $x$. Write $e_{+1}$ and $e_{-1}$ for the eigenvectors with $m_s=+1$ and $m_s=-1$.
+    Adding them,
+
+    $$\hat x=\frac1{\sqrt2}\,(e_{+1}+e_{-1}),\qquad e_{\pm1}=\tfrac1{\sqrt2}\begin{pmatrix}1\\ \pm i\\ 0\end{pmatrix},$$
+
+    because the $y$ entries $i$ and $-i$ cancel and the $x$ entries add. In the circulation picture, a
+    counter-clockwise arrow and a clockwise arrow of the same length always have opposite $y$ components, so their
+    sum has no $y$ component: it only moves back and forth along $x$ (the last panel of the figure above).
+
+    Now rotate through an angle $\alpha$ about $z$. Each part is an eigenvector, so each is multiplied by its
+    own phase, $e^{-i\alpha}$ for $m_s=+1$ and $e^{+i\alpha}$ for $m_s=-1$:
+
+    $$R_z(\alpha)\,\hat x=\frac1{\sqrt2}\left(e^{-i\alpha}e_{+1}+e^{i\alpha}e_{-1}\right)
+    =\begin{pmatrix}\cos\alpha\\ \sin\alpha\\ 0\end{pmatrix}=\cos\alpha\,\hat x+\sin\alpha\,\hat y.$$
+
+    The two phases are different, so the result is not the original vector times one number; it is a different
+    vector, unless $\alpha$ is a multiple of $\pi$. An eigenvector would come back as itself times a phase. In the
+    picture, turning both arrows through $\alpha$ in the plane puts the counter-clockwise arrow ahead in its cycle
+    by $\alpha$ and the clockwise arrow behind by $\alpha$. Their $y$ components then no longer cancel. The sum is
+    again an oscillation, but along the direction at angle $\alpha$ from the $x$ axis. The figure shows the
+    oscillation before and after the turn.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    xosc_wt = mo.ui.slider(0, 360, step=5, value=50, label="time, ωt (degrees)", full_width=True)
+    xosc_alpha = mo.ui.slider(0, 360, step=5, value=60, label="rotation about z, α (degrees)", full_width=True)
+    mo.vstack([xosc_wt, xosc_alpha])
+    return xosc_alpha, xosc_wt
+
+
+@app.cell
+def _(mo, plt, x_oscillation_figure, xosc_alpha, xosc_wt):
+    _fig = x_oscillation_figure(xosc_wt.value, xosc_alpha.value)
     _out = mo.vstack([_fig])
     plt.close(_fig)
     _out

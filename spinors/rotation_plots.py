@@ -193,3 +193,46 @@ def circulation_figure(wt_deg):
         ax.axvline(0, color="0.85", lw=0.8)
     fig.tight_layout()
     return fig
+
+
+def x_oscillation_figure(wt_deg, alpha_deg):
+    """An oscillation along x as two circulating arrows, before and after a turn through alpha about z.
+
+    Purple: the m = +1 part (counter-clockwise), orange: the m = -1 part (clockwise), black: their sum.
+    """
+    wt = np.radians(wt_deg)
+    fig, axes = plt.subplots(1, 2, figsize=(8, 4))
+    for ax, a, title in [
+        (axes[0], 0.0, "before the turn: oscillation along x"),
+        (axes[1], np.radians(alpha_deg), "after turning through α"),
+    ]:
+        purple = np.array([np.cos(wt + a), np.sin(wt + a)]) / 2
+        orange = np.array([np.cos(-wt + a), np.sin(-wt + a)]) / 2
+        total = purple + orange
+        direction = np.array([np.cos(a), np.sin(a)])
+        ax.plot(*zip(-direction, direction), color="0.6", lw=1.2, ls=":")
+        if a:
+            ax.plot(*zip((-1, 0), (1, 0)), color="0.85", lw=1.2, ls="--")
+        ax.annotate("", xy=purple, xytext=(0, 0),
+                    arrowprops=dict(arrowstyle="-|>", color="tab:purple", lw=1.8, alpha=0.8))
+        ax.annotate("", xy=orange, xytext=(0, 0),
+                    arrowprops=dict(arrowstyle="-|>", color="tab:orange", lw=1.8, alpha=0.8))
+        ax.annotate("", xy=total, xytext=(0, 0), arrowprops=dict(arrowstyle="-|>", color="0.15", lw=2.8))
+        ax.plot(*zip(purple, total), color="tab:orange", lw=0.8, ls=":")
+        ax.plot(*zip(orange, total), color="tab:purple", lw=0.8, ls=":")
+        ax.set_xlim(-1.15, 1.15)
+        ax.set_ylim(-1.15, 1.15)
+        ax.set_aspect("equal")
+        ax.axhline(0, color="0.9", lw=0.8)
+        ax.axvline(0, color="0.9", lw=0.8)
+        ax.set_xlabel("x")
+        ax.set_ylabel("y")
+        ax.set_title(title, fontsize=10)
+    axes[1].legend(
+        handles=[Line2D([], [], color="tab:purple", lw=2), Line2D([], [], color="tab:orange", lw=2),
+                 Line2D([], [], color="0.15", lw=2.8)],
+        labels=["m = +1 part, ahead by α", "m = −1 part, behind by α", "sum"],
+        loc="lower right", fontsize=8, frameon=False,
+    )
+    fig.tight_layout()
+    return fig
