@@ -68,15 +68,15 @@ def z_rotation_figure(angle_deg):
     return fig
 
 
-def component_planes_figure(v0, angle_deg):
-    """The three components of R_z(angle) v0, each as an arrow in its own complex plane.
+def component_planes_figure(v0, angle_deg, axis=(0, 0, 1)):
+    """The three components of R(angle) v0 about `axis` (default z), each as an arrow in its own complex plane.
 
     The grey arrow is the component before the rotation, the coloured arrow after it, and the thin curve the
     path followed as the angle grows from 0.
     """
     v0 = np.asarray(v0, dtype=complex)
     angles = np.radians(np.linspace(0, angle_deg, max(int(angle_deg) // 2, 2)))
-    path = np.array([rotation_matrix_so3((0, 0, 1), a) @ v0 for a in angles])
+    path = np.array([rotation_matrix_so3(axis, a) @ v0 for a in angles])
     v = path[-1]
 
     fig, axes = plt.subplots(1, 3, figsize=(10.5, 3.6))

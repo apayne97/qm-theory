@@ -528,6 +528,59 @@ def _(mo):
     of different values of $m_s$, so its components no longer turn together under $R_z$: angular momentum along
     $z$ has been exchanged with the source of the field, as in the classical precession above.
 
+    The figure shows this for the state with $m_s=+1$. The state is turned through an angle about $z$, which
+    respects the symmetry, or about $x$, which does not (a turn about $x$ stands in for the effect of a field
+    along $x$). Under the turn about $z$ the $x$ and $y$ arrows keep turning together. Under the turn about $x$
+    they do not, and the probabilities of finding each value of $m_s$, shown beneath the figure, spread out from
+    $m_s=+1$.
+
+    [^translations]: The same argument applied to shifts of position and of time gives the conservation of
+        momentum and of energy; see section 5 of the companion notebook
+        `../plane_waves/plane_waves_and_packets.py`. In the language of matrices, the statement is that the
+        operation of letting a state evolve commutes with the rotation matrices, which is the commutation of
+        $\hat H$ with $J$ mentioned in section 1.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    evolve_axis = mo.ui.radio(
+        options={
+            "about z (the symmetry is respected)": (0, 0, 1),
+            "about x (the symmetry is broken)": (1, 0, 0),
+        },
+        value="about z (the symmetry is respected)",
+        label="turn",
+    )
+    evolve_angle = mo.ui.slider(0, 360, step=5, value=60, label="angle of the turn (degrees)", full_width=True)
+    mo.vstack([evolve_axis, evolve_angle])
+    return evolve_angle, evolve_axis
+
+
+@app.cell
+def _(component_planes_figure, evolve_angle, evolve_axis, mo, np, plt, rotation_matrix_so3):
+    _s = 1 / np.sqrt(2)
+    _v0 = np.array([_s, 1j * _s, 0])
+    _w = rotation_matrix_so3(evolve_axis.value, np.radians(evolve_angle.value)) @ _v0
+    _eig = {"+1": np.array([_s, 1j * _s, 0]), "0": np.array([0, 0, 1]), "-1": np.array([_s, -1j * _s, 0])}
+    _p = {k: abs(np.vdot(e, _w)) ** 2 for k, e in _eig.items()}
+    _fig = component_planes_figure(_v0, evolve_angle.value, axis=evolve_axis.value)
+    _out = mo.vstack([
+        _fig,
+        mo.md(
+            "Probability of $m_s=+1$: " + f"**{_p['+1']:.2f}**" + ", of $m_s=0$: " + f"**{_p['0']:.2f}**"
+            + ", of $m_s=-1$: " + f"**{_p['-1']:.2f}**"
+        ),
+    ])
+    plt.close(_fig)
+    _out
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
     **An example: light.** The electric field of a light wave is a vector, so light is a spin-1 system. Take a wave
     travelling along $z$. At a fixed point in space its electric field is an arrow in the $xy$-plane. In
     **circularly polarised** light this arrow turns at a steady rate, making one full turn per period of the wave.
@@ -545,12 +598,6 @@ def _(mo):
     The figure follows a spin-1 state whose spin points along $+x$ (amplitudes $\tfrac12,\ \tfrac1{\sqrt2},\
     \tfrac12$ on $m_s=+1,0,-1$). Left: the direction of the spin in the $xy$-plane. Right: the three amplitudes,
     each drawn as an arrow in the complex plane.
-
-    [^translations]: The same argument applied to shifts of position and of time gives the conservation of
-        momentum and of energy; see section 5 of the companion notebook
-        `../plane_waves/plane_waves_and_packets.py`. In the language of matrices, the statement is that the
-        operation of letting a state evolve commutes with the rotation matrices, which is the commutation of
-        $\hat H$ with $J$ mentioned in section 1.
 
     [^photon0]: A system with spin 1 normally has all three levels $m_s=+1,0,-1$. Light is a special case because
         it travels at the fastest possible speed; this is why it has only two.
