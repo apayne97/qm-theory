@@ -506,13 +506,27 @@ def _(mo):
     phases are all equal to $1$ at $\alpha=2\pi$, so the state returns to itself after a full turn, as expected
     for an ordinary vector.
 
-    **Conservation of $m_s$.** The same phase gives the quantum form of the conservation law of section 1. Take a
-    state of definite $m_s$, so that a rotation about $z$ only multiplies it by $e^{-im_s\alpha}$, and suppose the
-    physical situation is unchanged by rotations about $z$. Then turning the state and afterwards letting it
-    evolve for a time gives the same result as letting it evolve and afterwards turning it. Turning the
-    initial state multiplies it by $e^{-im_s\alpha}$, so the evolved state, when turned, is multiplied by the
-    same factor $e^{-im_s\alpha}$. Evolution therefore leaves the value of $m_s$ unchanged, whatever the details of
-    the interaction: **a state of definite $m_s$ keeps that value of $m_s$ for all time.**[^translations]
+    **Rotational symmetry and the conservation of $m_s$.** The phase $e^{-im_s\alpha}$ gives the quantum form of the
+    conservation law of section 1. The argument has four steps. Write $R_z(\alpha)$ for a turn about $z$ and $U$
+    for letting a state evolve for a time.
+
+    1. **Symmetry.** Suppose the physical situation is unchanged by rotations about $z$. Then turning the state
+       and afterwards letting it evolve gives the same result as letting it evolve and afterwards turning it:
+       $R_z(\alpha)\,U=U\,R_z(\alpha)$ for every $\alpha$.
+    2. **A state of definite $m_s$.** This is an eigenvector of $J_z$. A rotation about $z$ multiplies all of its
+       components by the same phase $e^{-im_s\alpha}$, as in the figure above. The sizes of its components, and
+       the phases between them (for $m_s=\pm1$, $v_y=\pm i\,v_x$), do not change under the turn.
+    3. **Evolution keeps this property.** Let $v$ have definite $m_s$ and let $w=Uv$ be the evolved state. Then
+       $R_z w=R_zUv=UR_zv=U\,(e^{-im_s\alpha}v)=e^{-im_s\alpha}\,w$. The evolved state is multiplied by the same
+       phase, so all of its components again turn together and it has the same $m_s$.
+    4. **Conservation.** The value of $m_s$, the component of angular momentum along $z$, therefore does not change,
+       whatever the details of the interaction: **a state of definite $m_s$ keeps that value of $m_s$ for all
+       time.**[^translations]
+
+    If the symmetry is broken, step 1 fails and the rest does not follow. With a field pointing along $x$, for
+    example, turning and then evolving differs from evolving and then turning. The evolved state is then a mixture
+    of different values of $m_s$, so its components no longer turn together under $R_z$: angular momentum along
+    $z$ has been exchanged with the source of the field, as in the classical precession above.
 
     **An example: light.** The electric field of a light wave is a vector, so light is a spin-1 system. Take a wave
     travelling along $z$. At a fixed point in space its electric field is an arrow in the $xy$-plane. In
