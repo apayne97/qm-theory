@@ -208,8 +208,9 @@ def _(mo):
 @app.cell
 def _(angle_z, mo, plt, z_rotation_figure):
     _fig = z_rotation_figure(angle_z.value)
-    mo.vstack([_fig])
+    _out = mo.vstack([_fig])
     plt.close(_fig)
+    _out
     return
 
 
@@ -483,13 +484,14 @@ def _(angle_c, component_planes_figure, latex_matrix, mo, np, plt, rotation_matr
     _v0 = np.array(state_choice_c.value, dtype=complex)
     _v = rotation_matrix_so3((0, 0, 1), np.radians(angle_c.value)) @ _v0
     _fig = component_planes_figure(_v0, angle_c.value)
-    mo.vstack([
+    _out = mo.vstack([
         _fig,
         mo.md(
             r"$$R_z(\alpha)\,v=" + latex_matrix(_v.reshape(-1, 1)) + "$$"
         ),
     ])
     plt.close(_fig)
+    _out
     return
 
 
