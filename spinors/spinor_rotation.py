@@ -22,7 +22,7 @@ def _():
     )
     from belt_plots import belt_figure, double_turn_ball_figure, single_turn_ball_figure
     from dirac_belt import belt_frames
-    from rotation_plots import component_planes_figure, z_rotation_figure
+    from rotation_plots import circulation_figure, component_planes_figure, z_rotation_figure
 
     def latex_matrix(m, digits=2):
         """Format a small real/complex matrix as a LaTeX pmatrix."""
@@ -44,6 +44,7 @@ def _():
         component_planes_figure,
         belt_frames,
         bloch_vector,
+        circulation_figure,
         double_turn_ball_figure,
         interference_intensity,
         latex_matrix,
@@ -497,6 +498,48 @@ def _(mo):
     a mixture of $\hat x$ and $\hat y$, so $\hat x$ is not multiplied by a number; the vectors with $m_s=\pm1$ are the
     combinations $\hat x\pm i\hat y$.
 
+    **What the eigenvectors mean.** Multiply an eigenvector by the steady phase $e^{-i\omega t}$ and take the real
+    part, which is the arrow itself as it would be seen over time. For $m_s=+1$,
+
+    $$\mathrm{Re}\left[e^{-i\omega t}\,\tfrac1{\sqrt2}\begin{pmatrix}1\\ i\\ 0\end{pmatrix}\right]
+    =\tfrac1{\sqrt2}\begin{pmatrix}\cos\omega t\\ \sin\omega t\\ 0\end{pmatrix},$$
+
+    an arrow of constant length turning **counter-clockwise** about $z$ at a constant rate. For $m_s=-1$ the sign of
+    the $y$ component is reversed and the arrow turns **clockwise**. For $m_s=0$ the arrow only points along $z$,
+    so it does not circulate about $z$ at all. The states of definite $m_s$ are therefore the states of constant
+    circulation about the axis: counter-clockwise for $m_s=+1$ (angular momentum along $+z$, by the right-hand
+    rule), clockwise for $m_s=-1$, and none for $m_s=0$.
+
+    This explains the rotation rule. An arrow turning steadily about $z$ looks the same after a rotation about
+    $z$, only at a different moment of its cycle. Turning the picture through $\alpha$ is the same as advancing
+    $\omega t$ by $\alpha$ for $m_s=+1$ (and by $-\alpha$ for $m_s=-1$), which multiplies the vector by the phase
+    $e^{-im_s\alpha}$. A back-and-forth oscillation along $x$ is different. It is the sum of equal counter-clockwise
+    and clockwise circulations, $\hat x=(e_{+1}+e_{-1})/\sqrt2$, where $e_{\pm1}$ are the vectors with
+    $m_s=\pm1$ above, as the last panel shows. Under a rotation the two parts acquire opposite phases and no longer
+    add up to an oscillation along $x$, which is why $\hat x$ is not an eigenvector of $J_z$.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    circ_phase = mo.ui.slider(0, 360, step=5, value=40, label="time, ωt (degrees)", full_width=True)
+    circ_phase
+    return (circ_phase,)
+
+
+@app.cell
+def _(circ_phase, circulation_figure, mo, plt):
+    _fig = circulation_figure(circ_phase.value)
+    _out = mo.vstack([_fig])
+    plt.close(_fig)
+    _out
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
     **The rotation applied to these vectors.** The matrix $R_z(\alpha)$ of this section sends the basic vectors to
 
     $$R_z\hat x=\cos\alpha\,\hat x+\sin\alpha\,\hat y,\qquad R_z\hat y=-\sin\alpha\,\hat x+\cos\alpha\,\hat y,$$

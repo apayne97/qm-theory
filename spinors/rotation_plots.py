@@ -138,3 +138,58 @@ def component_planes_figure(v0, angle_deg, axis=(0, 0, 1)):
     fig.tight_layout()
     return fig
 
+
+
+def circulation_figure(wt_deg):
+    """The real arrow Re[v exp(-i w t)] for the three eigenvectors of J_z, and for x-hat as their sum."""
+    wt = np.radians(wt_deg)
+    s = 1 / np.sqrt(2)
+    sweep = np.linspace(0, wt, max(int(wt_deg) // 2, 2))
+
+    def arrow(v, ph):
+        return (np.asarray(v, dtype=complex) * np.exp(-1j * ph)).real
+
+    fig, axes = plt.subplots(1, 4, figsize=(14, 3.6))
+    cases = [
+        (axes[0], (s, 1j * s), "tab:purple", "m = +1: counter-clockwise"),
+        (axes[1], (s, -1j * s), "tab:orange", "m = −1: clockwise"),
+    ]
+    for ax, v, color, title in cases:
+        r = s
+        ang = np.linspace(0, 2 * np.pi, 200)
+        ax.plot(r * np.cos(ang), r * np.sin(ang), color="0.85", lw=1, ls=":")
+        trail = np.array([arrow(v, p) for p in sweep])
+        ax.plot(trail[:, 0], trail[:, 1], color=color, lw=1.5, alpha=0.6)
+        tip = arrow(v, wt)
+        ax.annotate("", xy=tip, xytext=(0, 0), arrowprops=dict(arrowstyle="-|>", color=color, lw=2.8))
+        ax.set_title(title, fontsize=10, color=color)
+        ax.set_xlabel("x")
+        ax.set_ylabel("y")
+
+    ax = axes[2]
+    ax.plot([0, 0], [-1.1, 1.1], color="0.85", lw=1, ls=":")
+    zc = np.cos(wt)
+    ax.annotate("", xy=(0, zc), xytext=(0, 0), arrowprops=dict(arrowstyle="-|>", color="tab:blue", lw=2.8))
+    ax.set_title("m = 0: along z, no circulation", fontsize=10, color="tab:blue")
+    ax.set_xlabel("x")
+    ax.set_ylabel("z")
+
+    ax = axes[3]
+    a = arrow((s, 1j * s), wt) / np.sqrt(2)
+    b = arrow((s, -1j * s), wt) / np.sqrt(2)
+    ax.annotate("", xy=a, xytext=(0, 0), arrowprops=dict(arrowstyle="-|>", color="tab:purple", lw=1.8, alpha=0.7))
+    ax.annotate("", xy=b, xytext=(0, 0), arrowprops=dict(arrowstyle="-|>", color="tab:orange", lw=1.8, alpha=0.7))
+    ax.annotate("", xy=a + b, xytext=(0, 0), arrowprops=dict(arrowstyle="-|>", color="0.15", lw=2.8))
+    ax.plot(a[0] + np.zeros(2), [a[1], -a[1]], color="0.7", lw=0.8, ls=":")
+    ax.set_title("sum of the two: oscillation along x", fontsize=10)
+    ax.set_xlabel("x")
+    ax.set_ylabel("y")
+
+    for ax in axes:
+        ax.set_xlim(-1.1, 1.1)
+        ax.set_ylim(-1.1, 1.1)
+        ax.set_aspect("equal")
+        ax.axhline(0, color="0.85", lw=0.8)
+        ax.axvline(0, color="0.85", lw=0.8)
+    fig.tight_layout()
+    return fig
