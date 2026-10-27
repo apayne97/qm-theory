@@ -183,7 +183,7 @@ def _(mo):
     **The same rotation acting on complex numbers.** The matrix $R(\alpha)$ has real entries, but it can also be
     applied to a vector $(x,y)$ whose components are complex numbers. Each component is then an arrow in its own
     complex plane, and the matrix combines the two arrows: the new $x$ is $x\cos\alpha-y\sin\alpha$ and the new
-    $y$ is $x\sin\alpha+y\cos\alpha$. For $\hat x=(1,0)$ and $\hat y=(0,1)$ both components stay on the real
+    $y$ is $x\sin\alpha+y\cos\alpha$. For $\hat x=(1,0)$, $\hat y=(0,1)$ or $(1,1)/\sqrt2$ both components stay on the real
     axis and only change size. For a vector with a complex component the result is different. Take
     $(1,\,i)$: since $\sin\alpha+i\cos\alpha=i\,e^{-i\alpha}$,
 
@@ -210,6 +210,7 @@ def _(mo):
             "ŷ = (0, 1)": (0, 1),
             "(x̂ + iŷ)/√2": (1 / 2**0.5, 1j / 2**0.5),
             "(x̂ − iŷ)/√2": (1 / 2**0.5, -1j / 2**0.5),
+            "(x̂ + ŷ)/√2 = (1, 1)/√2": (1 / 2**0.5, 1 / 2**0.5),
         },
         value="(x̂ + iŷ)/√2",
         label="vector before the rotation",
@@ -540,6 +541,7 @@ def _(mo):
             "ẑ, an arrow along z (m_s = 0)": (0, 0, 1),
             "(x̂ + iŷ)/√2 (m_s = +1)": (1 / 2**0.5, 1j / 2**0.5, 0),
             "(x̂ − iŷ)/√2 (m_s = −1)": (1 / 2**0.5, -1j / 2**0.5, 0),
+            "(1, 1, 1)/√3": (1 / 3**0.5, 1 / 3**0.5, 1 / 3**0.5),
         },
         value="(x̂ + iŷ)/√2 (m_s = +1)",
         label="state before the rotation",
