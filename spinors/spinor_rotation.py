@@ -891,7 +891,7 @@ def _(mo):
     involved, and only the first can be addressed with rotations:
 
     1. **Which spins can exist.** Rotation symmetry, together with the unobservability of the overall sign of a
-       state (section 5.1), allows $j=0,\tfrac12,1,\tfrac32,\dots$. Half-integer spin is *permitted*, but rotation
+       state (section 5.2), allows $j=0,\tfrac12,1,\tfrac32,\dots$. Half-integer spin is *permitted*, but rotation
        symmetry does not *require* nature to use it. Experiment does: the two beams above.
     2. **Half-integer spin implies a fermion.** This is the spin-statistics theorem (Pauli, 1940), proved in
        relativistic quantum field theory. It does not follow from rotation symmetry alone and is outside the scope
@@ -901,7 +901,7 @@ def _(mo):
     What rotations can show is what a two-level system requires of its rotation matrices, and that half-integer
     spin brings a sign change under a $2\pi$ rotation. That is the content of section 5.
 
-    A two-component state cannot be rotated by the $3\times3$ matrices of section 1, which act on
+    A state with two amplitudes, called a **spinor** (section 5.1), cannot be rotated by the $3\times3$ matrices of section 1, which act on
     three-component objects. What is required is a family of $2\times2$ matrices that combine under
     multiplication in the same way as the rotations do. The existence of such matrices is not guaranteed by the
     $3\times3$ case, and finding them is the content of section 5, which ends with $J$ obtained exactly as in
@@ -916,11 +916,54 @@ def _(mo):
     ---
     ## 5 Building the description of spin 1/2
 
-    The description is assembled in five steps: how amplitudes and probabilities treat a sign (5.1); a
-    minimal model with two amplitudes, which fixes $m_s=\pm\tfrac12$ (5.2); the resulting matrices and $J$
-    (5.3); the effect of a $2\pi$ rotation (5.4); and why two matrices describe each rotation (5.5).
+    The description is assembled in six steps: spinors, the states with two amplitudes, and what the matrices that
+    turn them must do (5.1); how amplitudes and probabilities treat a sign (5.2); a minimal model with two
+    amplitudes, which fixes $m_s=\pm\tfrac12$ and the direction of a spinor (5.3); the matrices for all three axes
+    and $J$ (5.4); the effect of a $2\pi$ rotation (5.5); and why two matrices describe each rotation (5.6).
 
-    ### 5.1 Amplitudes, probabilities and the sign of a state
+    ### 5.1 Spinors
+
+    The experiment of section 4 shows that the state of an electron has two amplitudes, one for each of the two
+    values of the spin component along $z$. A list of two complex numbers used in this way,
+
+    $$\psi=\begin{pmatrix}a_1\\ a_2\end{pmatrix},$$
+
+    is called a **spinor**. Here $a_1$ and $a_2$ are the amplitudes for $m_z=+\tfrac12$ and $m_z=-\tfrac12$, and
+    since the electron is found in one of the two beams, $|a_1|^2+|a_2|^2=1$. A spinor is not an arrow in space,
+    but it determines one: the direction in which the spin points, found from the two amplitudes in section 5.3.
+    The two kinds of object compare as follows.
+
+    - An **ordinary vector** has three real components $(x,y,z)$, and a rotation through $\alpha$ about an axis acts
+      on it with a real $3\times3$ matrix $R(\alpha)$ (section 1).
+    - A **spinor** has two complex components $(a_1,a_2)$, and the same rotation acts on it with a complex
+      $2\times2$ matrix $U(\alpha)$.
+
+    **What the matrices $U$ must do.** The matrix for a rotation through $\alpha$ about a given axis is required to
+    satisfy three conditions.
+
+    1. *It keeps the total probability.* The sum $|a_1|^2+|a_2|^2$ must remain $1$ after the rotation. A matrix
+       with this property is called **unitary**, and it plays the role that keeping lengths plays for $R$.
+    2. *It turns the spin direction like an ordinary vector.* If the spin of a spinor points along some direction,
+       the rotated spinor must point along the direction obtained by turning that direction with the matrix $R(\alpha)$
+       of section 1.
+    3. *It combines like rotations.* A rotation through $a$ followed by one through $b$ about the same axis is a
+       rotation through $a+b$, so $U(b)\,U(a)=U(a+b)$. More generally the matrix for two rotations in succession is
+       the product of their matrices, so the order matters for different axes, exactly as for the matrices $R$. The
+       one freedom allowed is an overall sign, which section 5.2 shows to be unobservable.
+
+    The sections that follow determine these matrices. Section 5.3 finds the direction of a spinor and the matrix
+    for rotations about $z$. Section 5.4 obtains the matrices for the other two axes from condition 3 and the
+    direction of a spinor, and gets $J$ as in section 2; the result is the set of Pauli matrices. Section 5.5 shows
+    what is new compared with vectors: a rotation through $2\pi$ reverses the sign of a spinor. Section 5.6 shows
+    why each rotation then corresponds to two matrices that differ by a sign.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    ### 5.2 Amplitudes, probabilities and the sign of a state
 
     A quantum state is described by a list of complex numbers called **amplitudes**. The probability of an
     outcome is the squared size of the corresponding amplitude,
@@ -953,7 +996,7 @@ def _(mo):
     The consequence for rotations is the following. **A rotation that multiplies the amplitudes of a state by
     $-1$ leaves every probability of that state unchanged, yet the change can be detected by interfering the
     rotated state with an unrotated copy.** Such a sign is therefore permitted in the rotation matrices of a
-    quantum system, and it is exactly what a rotation through $2\pi$ does to the electron (section 5.4). The
+    quantum system, and it is exactly what a rotation through $2\pi$ does to the electron (section 5.5). The
     slider below varies the phase of $a_2$.
     """)
     return
@@ -1006,14 +1049,14 @@ def _(amp_phase, np, plt):
 @app.cell
 def _(mo):
     mo.md(r"""
-    ### 5.2 A model with two amplitudes
+    ### 5.3 A model with two amplitudes
 
     An electron has two levels, so the smallest model has two amplitudes of unit size, written as complex numbers
     with relative phase $\delta$ and common phase $\gamma$:
 
     $$a_1 = e^{i(\gamma - \delta/2)}, \qquad a_2 = e^{i(\gamma + \delta/2)}.$$
 
-    - **Probability.** Combining the two as in section 5.1 gives $P=\left|\tfrac{a_1+a_2}{2}\right|^2=\cos^2(\delta/2)$:
+    - **Probability.** Combining the two as in section 5.2 gives $P=\left|\tfrac{a_1+a_2}{2}\right|^2=\cos^2(\delta/2)$:
       equal to 1 at $\delta=0$, to 0 at $\delta=\pi$, and repeating with period $2\pi$ in $\delta$. The common phase
       $\gamma$ does not appear.
     - **A complete description requires both $(\gamma,\delta)$**, because $\gamma$ matters as soon as the state is
@@ -1107,22 +1150,48 @@ def _(mo):
 @app.cell
 def _(mo):
     mo.md(r"""
-    ### 5.3 The matrices and $J$ for spin 1/2
+    ### 5.4 The matrices and $J$ for spin 1/2
 
-    With $m_s=\pm\tfrac12$ (section 5.2), a rotation through $\alpha$ about $z$ multiplies the two amplitudes by
+    With $m_s=\pm\tfrac12$ (section 5.3), a rotation through $\alpha$ about $z$ multiplies the two amplitudes by
     $e^{\mp i\alpha/2}$:
 
     $$U_z(\alpha)=\begin{pmatrix}e^{-i\alpha/2}&0\\0&e^{i\alpha/2}\end{pmatrix}.$$
 
-    The matrices for rotations about $x$ and $y$ are those $2\times2$ matrices that combine under
-    multiplication in the same way as the ordinary rotations of section 1:
+    **Rotations about $x$ and $y$.** Turning about the $x$ axis is the same as turning the $x$ axis into the $z$
+    axis, turning about $z$, and turning back. For ordinary vectors this is $R_x(\alpha)=Q\,R_z(\alpha)\,Q^{-1}$, where
+    $Q$ is any rotation that carries the $z$ axis to the $x$ axis, such as a quarter turn about $y$. Condition 3 of
+    section 5.1 requires the same relation for spinors,
 
-    $$U_x(\alpha)=\begin{pmatrix}\cos\frac\alpha2&-i\sin\frac\alpha2\\-i\sin\frac\alpha2&\cos\frac\alpha2\end{pmatrix},\qquad
-    U_y(\alpha)=\begin{pmatrix}\cos\frac\alpha2&-\sin\frac\alpha2\\\sin\frac\alpha2&\cos\frac\alpha2\end{pmatrix}.$$
+    $$U_x(\alpha)=Q\,U_z(\alpha)\,Q^{-1},$$
+
+    where $Q$ is now a $2\times2$ matrix that carries a spinor with spin along $z$ to a spinor with spin along $x$.
+    Section 5.3 gives these spinors: spin along $+z$ is $(1,0)$, spin along $-z$ is $(0,1)$, and spin along $\pm x$ is
+    $\tfrac1{\sqrt2}(1,\pm1)$, the relative phase being $\delta=0$ or $\pi$. The columns of $Q$ are the images of
+    $(1,0)$ and $(0,1)$, so
+
+    $$Q=\frac1{\sqrt2}\begin{pmatrix}1&-1\\1&1\end{pmatrix}.$$
+
+    The sign of the second column was chosen freely: multiplying either column by a phase multiplies $Q$ on the right
+    by a diagonal matrix, which commutes with the diagonal matrix $U_z$ and so leaves $U_x$ unchanged. Multiplying
+    out gives
+
+    $$U_x(\alpha)=\begin{pmatrix}\cos\frac\alpha2&-i\sin\frac\alpha2\\-i\sin\frac\alpha2&\cos\frac\alpha2\end{pmatrix}.$$
+
+    For the $y$ axis, spin along $\pm y$ has relative phase $\delta=\pm\tfrac\pi2$, that is $\tfrac1{\sqrt2}(1,\pm i)$,
+    so $Q=\tfrac1{\sqrt2}\begin{pmatrix}1&1\\i&-i\end{pmatrix}$ and
+
+    $$U_y(\alpha)=\begin{pmatrix}\cos\frac\alpha2&-\sin\frac\alpha2\\\sin\frac\alpha2&\cos\frac\alpha2\end{pmatrix}.$$
+
+    These are the matrices of the rotations about $x$ and $y$, obtained without any further assumption.[^pauli_comm]
 
     $J$ is now obtained exactly as in section 2: $K=dU/d\alpha$ at zero angle and $J=iK$. Select an axis
-    below. The cell also checks the requirement stated above: it computes the ordinary $3\times3$ rotation
-    implemented by $U$ and compares it with the matrix of section 1.[^convention]
+    below. The cell also checks condition 2 of section 5.1: it computes the ordinary $3\times3$ rotation
+    implemented by $U$ and compares it with the matrix of section 1. It also checks the construction above, by
+    multiplying out $Q\,U_z\,Q^{-1}$.[^convention]
+
+    [^pauli_comm]: The same matrices follow from the commutation relations $[J_x,J_y]=iJ_z$ (and its cyclic
+        permutations), which the $3\times3$ matrices $J$ of section 2 satisfy, together with $J_z=\mathrm{diag}(\tfrac12,-\tfrac12)$.
+        The derivation is in the companion notebook `archived_commutator_loop_and_ladder.py`.
 
     [^convention]: These matrices turn the state through $\alpha$. Some texts instead turn the coordinate axes
         through $\alpha$, which is the same as turning the state through $-\alpha$. Each matrix is then replaced
@@ -1147,6 +1216,13 @@ def _(axis_choice_half, latex_matrix, mo, np, rotation, rotation_matrix_so3, su2
     _j = 1j * _k
     _ev = np.linalg.eigvalsh(_j)
     _err = np.abs(su2_to_so3(rotation(0.5, _axis, 0.7)) - rotation_matrix_so3(_axis, 0.7)).max()
+    _s = 1 / np.sqrt(2)
+    _q = {
+        "x": np.array([[_s, -_s], [_s, _s]]),
+        "y": np.array([[_s, _s], [1j * _s, -1j * _s]]),
+        "z": np.eye(2),
+    }[axis_choice_half.value]
+    _err_q = np.abs(_q @ rotation(0.5, (0, 0, 1), 0.7) @ _q.conj().T - rotation(0.5, _axis, 0.7)).max()
 
     mo.md(
         f"**Rotation about {axis_choice_half.value}, spin 1/2**\n\n"
@@ -1154,6 +1230,7 @@ def _(axis_choice_half, latex_matrix, mo, np, rotation, rotation_matrix_so3, su2
         f"Eigenvalues of $J_{axis_choice_half.value}$: **{', '.join(f'{x:+.1f}' for x in _ev)}**\n\n"
         f"Largest difference between the rotation implemented by $U$ (at $\\alpha=0.7$) and the matrix of section 1: "
         f"{_err:.1e}.\n\n"
+        f"Largest difference between $Q\\,U_z\\,Q^{{-1}}$ and $U$ (at $\\alpha=0.7$): {_err_q:.1e}.\n\n"
         "The three matrices $J_x$, $J_y$, $J_z$ are the Pauli matrices divided by 2."
     )
     return
@@ -1162,10 +1239,10 @@ def _(axis_choice_half, latex_matrix, mo, np, rotation, rotation_matrix_so3, su2
 @app.cell
 def _(mo):
     mo.md(r"""
-    ### 5.4 The effect of a $2\pi$ rotation
+    ### 5.5 The effect of a $2\pi$ rotation
 
     With $m_s=\pm\tfrac12$, a rotation through $2\pi$ multiplies both amplitudes by $e^{\mp i\pi}=-1$. For integer
-    $m_s$ it multiplies them by $1$. By section 5.1 the sign change alters no probability of the rotated state
+    $m_s$ it multiplies them by $1$. By section 5.2 the sign change alters no probability of the rotated state
     on its own; it can only be detected by interference with an unrotated copy.
 
     The slider runs from $0$ to $4\pi$. The panels show
@@ -1297,9 +1374,9 @@ def _(
 @app.cell
 def _(mo):
     mo.md(r"""
-    ### 5.5 Two matrices for every rotation
+    ### 5.6 Two matrices for every rotation
 
-    By section 5.1, multiplying all amplitudes of a state by $-1$ changes no probability. A physical rotation
+    By section 5.2, multiplying all amplitudes of a state by $-1$ changes no probability. A physical rotation
     therefore cannot distinguish a matrix $U$ from $-U$: **every rotation has two valid $2\times2$ matrices.**
     The slider below runs $\alpha$ from $0$ to $4\pi$. Left: the two numbers
     $(a,b)=(\cos\frac\alpha2,\sin\frac\alpha2)$ from which the electron's matrix
@@ -1372,7 +1449,7 @@ def _(mo):
     ---
     ## 6 The belt trick: a picture of the $4\pi$ rotation
 
-    Sections 5.4 and 5.5 show with formulas that a rotation through $2\pi$ reverses the sign of the spin-1/2
+    Sections 5.5 and 5.6 show with formulas that a rotation through $2\pi$ reverses the sign of the spin-1/2
     matrix and that $4\pi$ is needed to restore it. A physical model shows the same fact as a shape.
 
     **The model.** A belt joins a fixed wall to a plate, and the plate is turned about the vertical axis. At each
@@ -1387,11 +1464,11 @@ def _(mo):
     are the two faces of the belt, and the pointer on the plate shows the plate's orientation.
 
     [^beltformula]: The orientations are written as unit quaternions, which are the $2\times2$ matrices of
-        section 5.3 in other notation: $U = w - i(x\sigma_x + y\sigma_y + z\sigma_z)$, where $\sigma_x,\sigma_y,\sigma_z$
+        section 5.4 in other notation: $U = w - i(x\sigma_x + y\sigma_y + z\sigma_z)$, where $\sigma_x,\sigma_y,\sigma_z$
         are twice the spin-1/2 $J$ matrices. The formula and its construction are in `dirac_belt.py`, and
         `test_dirac_belt.py` checks that the wall and plate conditions hold, that the belt changes continuously
         with $\alpha$, that it repeats after $4\pi$ but not after $2\pi$, that the belt at $2\pi$ is exactly one
-        full twist about its own axis, and that the quaternions agree with the matrices of section 5.3.
+        full twist about its own axis, and that the quaternions agree with the matrices of section 5.4.
 
     ### 6.1 Turning the plate
 
@@ -1441,7 +1518,7 @@ def _(mo):
       the one shown.
 
     **The same fact as the sign of the spinor.** Each orientation along the belt can be described by a
-    $2\times2$ matrix $U$ of section 5.3, and two matrices $\pm U$ describe each orientation (section 5.5).
+    $2\times2$ matrix $U$ of section 5.4, and two matrices $\pm U$ describe each orientation (section 5.6).
     Following the belt from the wall, where $U=1$, fixes a continuous choice of sign. At the plate this choice is
     the electron's matrix $U_z(\alpha)$, which is $-1$ at $\alpha=2\pi$ and $+1$ at $\alpha=4\pi$. A belt with
     one twist is the picture of the sign $-1$, and a belt that has untwisted is the picture of the sign $+1$.
@@ -1498,7 +1575,7 @@ def _(mo):
     path of rotations. The belt at a given $\alpha$ is a path from the identity to the plate's orientation, and as
     the plate turns through $4\pi$ these belts sweep out a surface bounded by the plate's path. The shrinking
     paths in the ball are the same surface cut the other way. Such a surface exists for $4\pi$ and cannot exist for
-    $2\pi$. In the language of section 5.5, the $4\pi$ path lifts to a closed path of matrices $U$ (it ends at
+    $2\pi$. In the language of section 5.6, the $4\pi$ path lifts to a closed path of matrices $U$ (it ends at
     $U=+1$) and can be shrunk, whereas the $2\pi$ path lifts to a path from $U=+1$ to $U=-1$, which is not closed.
     """)
     return

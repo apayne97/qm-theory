@@ -362,6 +362,65 @@ def _(mo, np, rotation, spin_matrices):
 def _(mo):
     mo.md(r"""
     ---
+    ## The matrices for spin 1/2 from the commutation relations
+
+    (Cut from section 5.4 of the main notebook, where $U_x$ and $U_y$ are obtained by turning the axis.)
+    The matrices $J_x,J_y,J_z$ obtained from the ordinary $3\times3$ rotations satisfy
+
+    $$[J_x,J_y]=iJ_z,\qquad [J_y,J_z]=iJ_x,\qquad [J_z,J_x]=iJ_y,\qquad [A,B]=AB-BA.$$
+
+    These relations express the fact that rotations about different axes do not commute; the cell below checks them
+    numerically. Requiring that $2\times2$ matrices satisfy the same relations, with $J_z=\mathrm{diag}(\tfrac12,-\tfrac12)$
+    (from $m_s=\pm\tfrac12$), determines them.
+
+    Write $J_x=\begin{pmatrix}p&b\\c&d\end{pmatrix}$ with $J_x$ Hermitian, so that $p,d$ are real and $c=b^*$. Since $J_z$
+    is diagonal, $[J_z,J_x]=\begin{pmatrix}0&b\\-b^*&0\end{pmatrix}$, and $[J_z,J_x]=iJ_y$ gives
+
+    $$J_y=\begin{pmatrix}0&-ib\\ib^*&0\end{pmatrix}.$$
+
+    Then $[J_y,J_z]=\begin{pmatrix}0&ib\\ib^*&0\end{pmatrix}$ must equal $iJ_x=\begin{pmatrix}ip&ib\\ib^*&id\end{pmatrix}$, so
+    $p=d=0$ and $J_x=\begin{pmatrix}0&b\\b^*&0\end{pmatrix}$. Finally
+
+    $$[J_x,J_y]=\begin{pmatrix}2i|b|^2&0\\0&-2i|b|^2\end{pmatrix}=iJ_z=\begin{pmatrix}\tfrac i2&0\\0&-\tfrac i2\end{pmatrix}
+    \quad\Rightarrow\quad |b|=\tfrac12.$$
+
+    The phase of $b$ can be removed by redefining the phase of the second basis state, which leaves $J_z$ unchanged.
+    With $b=\tfrac12$, $J_x=\tfrac12\sigma_x$ and $J_y=\tfrac12\sigma_y$, the Pauli matrices divided by 2, and
+    $U=e^{-i\alpha J}$ gives the matrices $U_x$, $U_y$ of the main notebook.
+    """)
+    return
+
+
+@app.cell
+def _(mo, np, rotation_matrix_so3, spin_matrices):
+    _h = 1e-5
+
+    def _j3(axis):
+        return 1j * (rotation_matrix_so3(axis, _h) - rotation_matrix_so3(axis, -_h)) / (2 * _h)
+
+    def _cyclic_error(jx, jy, jz):
+        return max(
+            np.abs(jx @ jy - jy @ jx - 1j * jz).max(),
+            np.abs(jy @ jz - jz @ jy - 1j * jx).max(),
+            np.abs(jz @ jx - jx @ jz - 1j * jy).max(),
+        )
+
+    _e3 = _cyclic_error(_j3((1, 0, 0)), _j3((0, 1, 0)), _j3((0, 0, 1)))
+    _e2 = _cyclic_error(*spin_matrices(0.5))
+    _pauli = np.array([[[0, 1], [1, 0]], [[0, -1j], [1j, 0]], [[1, 0], [0, -1]]]) / 2
+    _ep = np.abs(np.array(spin_matrices(0.5)) - _pauli).max()
+    mo.md(
+        f"Largest violation of the commutation relations by the $3\\times3$ matrices: {_e3:.1e}; by the $2\\times2$ "
+        f"matrices: {_e2:.1e}. Largest difference between these $2\\times2$ matrices and the Pauli matrices "
+        f"divided by 2: {_ep:.1e}."
+    )
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    ---
     # Technical remarks (cut from the main notebook)
 
     - **Projective representations.** Quantum states are rays, so symmetry only requires
