@@ -180,6 +180,59 @@ def _(angle2d, latex_matrix, mo, np, plt):
 @app.cell
 def _(mo):
     mo.md(r"""
+    **The same rotation acting on complex numbers.** The matrix $R(\alpha)$ has real entries, but it can also be
+    applied to a vector $(x,y)$ whose components are complex numbers. Each component is then an arrow in its own
+    complex plane, and the matrix combines the two arrows: the new $x$ is $x\cos\alpha-y\sin\alpha$ and the new
+    $y$ is $x\sin\alpha+y\cos\alpha$. For $\hat x=(1,0)$ and $\hat y=(0,1)$ both components stay on the real
+    axis and only change size. For a vector with a complex component the result is different. Take
+    $(1,\,i)$: since $\sin\alpha+i\cos\alpha=i\,e^{-i\alpha}$,
+
+    $$R(\alpha)\begin{pmatrix}1\\ i\end{pmatrix}=\begin{pmatrix}\cos\alpha-i\sin\alpha\\ \sin\alpha+i\cos\alpha\end{pmatrix}
+    =e^{-i\alpha}\begin{pmatrix}1\\ i\end{pmatrix},$$
+
+    so both arrows turn through the same angle $-\alpha$ and keep their lengths, and the vector is only multiplied
+    by a phase. The same holds for $(1,-i)$ with $+\alpha$. These are the two vectors that a rotation in the plane
+    multiplies by a number; section 2 shows where they come from.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    state_choice_2d = mo.ui.dropdown(
+        options={
+            "x̂ = (1, 0)": (1, 0),
+            "ŷ = (0, 1)": (0, 1),
+            "(x̂ + iŷ)/√2": (1 / 2**0.5, 1j / 2**0.5),
+            "(x̂ − iŷ)/√2": (1 / 2**0.5, -1j / 2**0.5),
+        },
+        value="(x̂ + iŷ)/√2",
+        label="vector before the rotation",
+    )
+    angle_2d_c = mo.ui.slider(0, 360, step=5, value=50, label="rotation angle (degrees)", full_width=True)
+    mo.vstack([state_choice_2d, angle_2d_c])
+    return angle_2d_c, state_choice_2d
+
+
+@app.cell
+def _(angle_2d_c, component_planes_figure, latex_matrix, mo, np, plt, state_choice_2d):
+    _v0 = np.array(state_choice_2d.value, dtype=complex)
+    _t = np.radians(angle_2d_c.value)
+    _r = np.array([[np.cos(_t), -np.sin(_t)], [np.sin(_t), np.cos(_t)]])
+    _v = _r @ _v0
+    _fig = component_planes_figure(_v0, angle_2d_c.value)
+    _out = mo.vstack([
+        _fig,
+        mo.md(r"$$R(\alpha)\,v=" + latex_matrix(_r) + latex_matrix(_v0.reshape(-1, 1)) + "=" + latex_matrix(_v.reshape(-1, 1)) + "$$"),
+    ])
+    plt.close(_fig)
+    _out
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
     Performing two rotations in succession corresponds to multiplying their matrices. In the plane, a rotation
     through $a$ followed by one through $b$ is a rotation through $a+b$, so the order is immaterial.
 

@@ -68,18 +68,29 @@ def z_rotation_figure(angle_deg):
     return fig
 
 
+def _rotation(axis, a, n):
+    """Rotation by angle a: the 2x2 plane rotation for n = 2, else about `axis` in three dimensions."""
+    if n == 2:
+        c, s = np.cos(a), np.sin(a)
+        return np.array([[c, -s], [s, c]])
+    return rotation_matrix_so3(axis, a)
+
+
 def component_planes_figure(v0, angle_deg, axis=(0, 0, 1)):
-    """The three components of R(angle) v0 about `axis` (default z), each as an arrow in its own complex plane.
+    """The components of R(angle) v0, each as an arrow in its own complex plane.
+
+    Three components: a rotation about `axis` (default z). Two components: the plane rotation R(angle).
 
     The grey arrow is the component before the rotation, the coloured arrow after it, and the thin curve the
     path followed as the angle grows from 0.
     """
     v0 = np.asarray(v0, dtype=complex)
     angles = np.radians(np.linspace(0, angle_deg, max(int(angle_deg) // 2, 2)))
-    path = np.array([rotation_matrix_so3(axis, a) @ v0 for a in angles])
+    n = len(v0)
+    path = np.array([_rotation(axis, a, n) @ v0 for a in angles])
     v = path[-1]
 
-    fig, axes = plt.subplots(1, 3, figsize=(10.5, 3.6))
+    fig, axes = plt.subplots(1, n, figsize=(3.5 * n, 3.6))
     for k, (ax, color, name) in enumerate(zip(axes, _COLORS, ("x", "y", "z"))):
         ax.plot(path[:, k].real, path[:, k].imag, color=color, lw=1.2, alpha=0.6)
         start, end = v0[k], v[k]
@@ -97,3 +108,4 @@ def component_planes_figure(v0, angle_deg, axis=(0, 0, 1)):
         ax.set_title(f"{name} component", fontsize=10, color=color)
     fig.tight_layout()
     return fig
+
