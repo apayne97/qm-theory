@@ -454,8 +454,10 @@ def _(mo):
     $\hat x$, the components are real and stay on the real axis: a rotation about $z$ only moves amplitude between
     the $x$ and $y$ components. For the states with $m_s=\pm1$ the components are complex. A rotation turns the $x$
     and $y$ arrows together through the same angle, $-\alpha$ for $m_s=+1$ and $+\alpha$ for $m_s=-1$, and the $y$
-    arrow stays a quarter turn ahead of the $x$ arrow for $m_s=+1$ and behind it for $m_s=-1$. The $z$ component
-    does not change. The figure applies $R_z(\alpha)$ to the chosen state: grey arrows show the components before
+    arrow stays a quarter turn ahead of the $x$ arrow for $m_s=+1$ and behind it for $m_s=-1$. The lengths of the
+    arrows, the sizes of the amplitudes, stay constant and only their common phase advances: this is what it means
+    for a vector to be an eigenvector of $J_z$, since the whole vector is multiplied by a single phase. The $z$
+    component does not change. The figure applies $R_z(\alpha)$ to the chosen state: grey arrows show the components before
     the rotation, coloured arrows after it, and the curves the paths followed as $\alpha$ grows.
     """)
     return
