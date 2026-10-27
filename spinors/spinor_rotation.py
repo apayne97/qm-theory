@@ -193,6 +193,11 @@ def _(mo):
     so both arrows turn through the same angle $-\alpha$ and keep their lengths, and the vector is only multiplied
     by a phase. The same holds for $(1,-i)$ with $+\alpha$. These are the two vectors that a rotation in the plane
     multiplies by a number; section 2 shows where they come from.
+
+    The left panel of the figure below is the plane of the figure above. A vector with complex components is a
+    pair of ordinary arrows in this plane, its real part (solid) and its imaginary part (dashed), and the
+    rotation turns each of them through $\alpha$ like any other arrow. The two complex planes to the right show
+    the resulting $x$ and $y$ components.
     """)
     return
 

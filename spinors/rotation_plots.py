@@ -2,6 +2,7 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.lines import Line2D
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
 from spinors import rotation_matrix_so3
@@ -76,10 +77,35 @@ def _rotation(axis, a, n):
     return rotation_matrix_so3(axis, a)
 
 
+def _plane_panel(ax, v0, v, r):
+    """The x-y plane: the rotated unit vectors, and the real and imaginary parts of the rotated vector."""
+    for col, color, name in [(0, "tab:red", "x̂"), (1, "tab:green", "ŷ")]:
+        e = np.eye(2)[:, col]
+        w = r @ e
+        ax.annotate("", xy=e, xytext=(0, 0), arrowprops=dict(arrowstyle="-|>", color="0.8", lw=1.2))
+        ax.annotate("", xy=w, xytext=(0, 0), arrowprops=dict(arrowstyle="-|>", color=color, lw=1.8, alpha=0.6))
+        ax.text(w[0] * 1.2, w[1] * 1.2, name + "'", color=color, ha="center", va="center")
+    for part, ls in [(v.real, "-"), (v.imag, "--")]:
+        if np.hypot(*part) > 0.05:
+            ax.annotate("", xy=part, xytext=(0, 0),
+                        arrowprops=dict(arrowstyle="-|>", color="0.15", lw=2.2, ls=ls))
+    ax.legend(
+        handles=[Line2D([], [], color="0.15", lw=2.2), Line2D([], [], color="0.15", lw=2.2, ls="--")],
+        labels=["Re v", "Im v"], loc="lower right", fontsize=8, frameon=False,
+    )
+    ax.set_xlim(-1.4, 1.4)
+    ax.set_ylim(-1.4, 1.4)
+    ax.set_aspect("equal")
+    ax.axhline(0, color="0.9", lw=0.8)
+    ax.axvline(0, color="0.9", lw=0.8)
+    ax.set_title("the x-y plane", fontsize=10)
+
+
 def component_planes_figure(v0, angle_deg, axis=(0, 0, 1)):
     """The components of R(angle) v0, each as an arrow in its own complex plane.
 
-    Three components: a rotation about `axis` (default z). Two components: the plane rotation R(angle).
+    Three components: a rotation about `axis` (default z). Two components: the plane rotation R(angle),
+    with the x-y plane drawn to the left.
 
     The grey arrow is the component before the rotation, the coloured arrow after it, and the thin curve the
     path followed as the angle grows from 0.
@@ -90,7 +116,10 @@ def component_planes_figure(v0, angle_deg, axis=(0, 0, 1)):
     path = np.array([_rotation(axis, a, n) @ v0 for a in angles])
     v = path[-1]
 
-    fig, axes = plt.subplots(1, n, figsize=(3.5 * n, 3.6))
+    fig, axes = plt.subplots(1, n + (n == 2), figsize=(3.5 * (n + (n == 2)), 3.6))
+    if n == 2:
+        _plane_panel(axes[0], v0, v, _rotation(axis, np.radians(angle_deg), n))
+        axes = axes[1:]
     for k, (ax, color, name) in enumerate(zip(axes, _COLORS, ("x", "y", "z"))):
         ax.plot(path[:, k].real, path[:, k].imag, color=color, lw=1.2, alpha=0.6)
         start, end = v0[k], v[k]
