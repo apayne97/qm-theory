@@ -804,6 +804,37 @@ def _(np, plt, rotation, spin_matrices, theta_one):
 @app.cell
 def _(mo):
     mo.md(r"""
+    ### Definite spin refers to an axis
+
+    The values $m_s$ above are values of the spin component along $z$. A state with a definite value of the
+    component along $z$ does not in general have a definite value along another axis. The eigenvectors of $J_x$
+    follow in the same way as those of $J_z$, with $J_x=iK_x$ taken from the rotation about $x$:
+    $m_x=+1$ for $\tfrac1{\sqrt2}(0,1,i)$, $m_x=0$ for $\hat x$, and $m_x=-1$ for $\tfrac1{\sqrt2}(0,1,-i)$.
+
+    - The vector $\hat z$ has $m_z=0$ with certainty. Written with the eigenvectors of $J_x$ it is
+      $\hat z=\tfrac1{i\sqrt2}\left[\tfrac1{\sqrt2}(0,1,i)-\tfrac1{\sqrt2}(0,1,-i)\right]$, an equal combination of $m_x=+1$
+      and $m_x=-1$. A measurement of the component along $x$ gives $+1$ or $-1$, each with probability $\tfrac12$,
+      and never $0$.
+    - The state $e_{+1}=\tfrac1{\sqrt2}(1,i,0)$ has $m_z=+1$ with certainty. Along $x$ the probabilities of
+      $m_x=+1,0,-1$ are $\tfrac14,\tfrac12,\tfrac14$.
+    - The state in the last figure points along $+x$, so it has $m_x=+1$ with certainty. Along $z$ the
+      probabilities of $m_z=+1,0,-1$ are the squares of its amplitudes, $\tfrac14,\tfrac12,\tfrac14$.
+
+    The reason is the one found in section 1: rotations about different axes do not commute, so the matrices
+    $J_x$ and $J_z$ derived from them do not commute either. A state with a definite value of both would have to be
+    an eigenvector of both matrices, and no state of this system is.
+
+    "The spin points along $z$" therefore has a precise meaning: **the component along $z$ is definite**, and so is the
+    total spin. The components along $x$ and $y$ are then uncertain, with average $0$. It does not mean that the
+    three components $x$, $y$, $z$ all have definite values at once, as they would for an ordinary arrow. The one
+    exception is a system with spin $0$, for which every component is definitely $0$.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
     ---
     ## 4 Why this construction does not describe the electron, and why the electron matters
 
