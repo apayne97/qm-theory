@@ -22,6 +22,7 @@ def _():
     )
     from belt_plots import belt_figure, double_turn_ball_figure, single_turn_ball_figure
     from dirac_belt import belt_frames
+    from rotation_plots import component_planes_figure, z_rotation_figure
 
     def latex_matrix(m, digits=2):
         """Format a small real/complex matrix as a LaTeX pmatrix."""
@@ -40,6 +41,7 @@ def _():
 
     return (
         belt_figure,
+        component_planes_figure,
         belt_frames,
         bloch_vector,
         double_turn_ball_figure,
@@ -55,6 +57,7 @@ def _():
         single_turn_ball_figure,
         spin_matrices,
         su2_to_so3,
+        z_rotation_figure,
     )
 
 
@@ -186,6 +189,33 @@ def _(mo):
     R_y(\alpha)=\begin{pmatrix}\cos\alpha&0&\sin\alpha\\0&1&0\\-\sin\alpha&0&\cos\alpha\end{pmatrix},\;
     R_z(\alpha)=\begin{pmatrix}\cos\alpha&-\sin\alpha&0\\\sin\alpha&\cos\alpha&0\\0&0&1\end{pmatrix}.$$
 
+    The matrix $R_z$ contains the plane rotation $R(\alpha)$ in its upper left block, so a rotation about $z$ is
+    the plane rotation applied to the $x$ and $y$ coordinates, with the $z$ coordinate unchanged. The figure
+    shows both views of one rotation, applied to the letter F (an asymmetric shape, so that the turn is easy
+    to follow): in the plane, where the origin is the only fixed point, and in space, where every point of the $z$
+    axis stays fixed. The dashed outline marks the initial position.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    angle_z = mo.ui.slider(0, 360, step=5, value=40, label="rotation about z (degrees)", full_width=True)
+    angle_z
+    return (angle_z,)
+
+
+@app.cell
+def _(angle_z, mo, plt, z_rotation_figure):
+    _fig = z_rotation_figure(angle_z.value)
+    mo.vstack([_fig])
+    plt.close(_fig)
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
     **In three dimensions the order of rotations matters.** The figure shows an object (represented by its
     three axes: $\hat x$ red, $\hat y$ green, $\hat z$ blue) rotated about the fixed $x$ and $y$ axes in the two
     possible orders. The dashed triad marks the initial orientation.
@@ -371,6 +401,101 @@ def _(mo):
     matrices of section 2, $m_s=+1,0,-1$. A system with these three values is said to have **spin 1**; the
     spin number $j$ is the largest value of $m_s$.
 
+    A vector $v=(v_1,v_2,v_3)$ is an **eigenvector** of $J_z$, with **eigenvalue** $\lambda$, if $J_z$ only
+    multiplies it by a number: $J_zv=\lambda v$. With the matrix $J_z$ of section 2 this reads
+
+    $$\begin{pmatrix}0&-i&0\\ i&0&0\\ 0&0&0\end{pmatrix}\begin{pmatrix}v_1\\ v_2\\ v_3\end{pmatrix}
+    =\lambda\begin{pmatrix}v_1\\ v_2\\ v_3\end{pmatrix}
+    \quad\Longleftrightarrow\quad -i\,v_2=\lambda v_1,\qquad i\,v_1=\lambda v_2,\qquad 0=\lambda v_3.$$
+
+    *Eigenvalues.* Suppose $\lambda\neq0$. The third equation gives $v_3=0$, and the second gives
+    $v_2=iv_1/\lambda$. Substituting into the first, $-i\,(iv_1/\lambda)=v_1/\lambda=\lambda v_1$, so
+    $\lambda^2=1$ (otherwise $v_1=0$ and then $v_2=0$ as well, which is no vector at all). Hence $\lambda=+1$ or
+    $\lambda=-1$. For $\lambda=0$ the first two equations give $v_1=v_2=0$, while $v_3$ is unrestricted. The
+    eigenvalues are therefore $+1,\ 0,\ -1$, the values of $m_s$ quoted above.
+
+    *Eigenvectors.* For $\lambda=+1$ the equation $v_2=iv_1/\lambda$ gives $v_2=iv_1$ and $v_3=0$, so $v\propto(1,i,0)$.
+    For $\lambda=-1$ it gives $v_2=-iv_1$, so $v\propto(1,-i,0)$. For $\lambda=0$, $v\propto(0,0,1)$. Dividing the
+    first two by $\sqrt2$ makes each vector have length $1$:
+
+    $$m_s=+1:\ \tfrac1{\sqrt2}\begin{pmatrix}1\\ i\\ 0\end{pmatrix},\qquad
+    m_s=0:\ \begin{pmatrix}0\\ 0\\ 1\end{pmatrix},\qquad
+    m_s=-1:\ \tfrac1{\sqrt2}\begin{pmatrix}1\\ -i\\ 0\end{pmatrix}.$$
+
+    Only the vector along $z$ is one of the basic vectors $\hat x,\hat y,\hat z$. A rotation about $z$ turns $\hat x$ into
+    a mixture of $\hat x$ and $\hat y$, so $\hat x$ is not multiplied by a number; the vectors with $m_s=\pm1$ are the
+    combinations $\hat x\pm i\hat y$.
+
+    **The rotation applied to these vectors.** The matrix $R_z(\alpha)$ of this section sends the basic vectors to
+
+    $$R_z\hat x=\cos\alpha\,\hat x+\sin\alpha\,\hat y,\qquad R_z\hat y=-\sin\alpha\,\hat x+\cos\alpha\,\hat y,$$
+
+    and neither result is a number times the original. For the combination $\hat x+i\hat y$, which has amplitudes
+    $(1,\,i,\,0)$, the sum of the two results is
+
+    $$R_z(\hat x+i\hat y)=(\cos\alpha-i\sin\alpha)\,\hat x+(\sin\alpha+i\cos\alpha)\,\hat y
+    =e^{-i\alpha}\,(\hat x+i\hat y),$$
+
+    since $\sin\alpha+i\cos\alpha=i(\cos\alpha-i\sin\alpha)=i\,e^{-i\alpha}$. In the same way,
+    $R_z(\hat x-i\hat y)=e^{+i\alpha}(\hat x-i\hat y)$. These are the phases $e^{-im_s\alpha}$ for
+    $m_s=+1$ and $m_s=-1$.
+
+    The same result follows from $R_z(\alpha)=e^{-i\alpha J_z}$. For a vector $v$ with $J_zv=m_sv$ we have
+    $J_z^nv=m_s^nv$ for every power $n$, so, writing the exponential as its series,
+
+    $$e^{-i\alpha J_z}v=\sum_{n=0}^{\infty}\frac{(-i\alpha)^n}{n!}J_z^nv
+    =\sum_{n=0}^{\infty}\frac{(-i\alpha m_s)^n}{n!}\,v=e^{-im_s\alpha}\,v.$$
+
+    For $m_s=0$ the phase is $1$, which is the statement that $\hat z$ is unchanged by a rotation about $z$.
+
+    **The components as complex numbers.** In general the three components $(v_1,v_2,v_3)$ of a state are complex
+    numbers, and each can be drawn as an arrow in its own complex plane. For an ordinary arrow in space, such as
+    $\hat x$, the components are real and stay on the real axis: a rotation about $z$ only moves amplitude between
+    the $x$ and $y$ components. For the states with $m_s=\pm1$ the components are complex. A rotation turns the $x$
+    and $y$ arrows together through the same angle, $-\alpha$ for $m_s=+1$ and $+\alpha$ for $m_s=-1$, and the $y$
+    arrow stays a quarter turn ahead of the $x$ arrow for $m_s=+1$ and behind it for $m_s=-1$. The $z$ component
+    does not change. The figure applies $R_z(\alpha)$ to the chosen state: grey arrows show the components before
+    the rotation, coloured arrows after it, and the curves the paths followed as $\alpha$ grows.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    state_choice_c = mo.ui.dropdown(
+        options={
+            "x̂, an arrow along x": (1, 0, 0),
+            "ŷ, an arrow along y": (0, 1, 0),
+            "ẑ, an arrow along z (m_s = 0)": (0, 0, 1),
+            "(x̂ + iŷ)/√2 (m_s = +1)": (1 / 2**0.5, 1j / 2**0.5, 0),
+            "(x̂ − iŷ)/√2 (m_s = −1)": (1 / 2**0.5, -1j / 2**0.5, 0),
+        },
+        value="(x̂ + iŷ)/√2 (m_s = +1)",
+        label="state before the rotation",
+    )
+    angle_c = mo.ui.slider(0, 360, step=5, value=50, label="rotation about z (degrees)", full_width=True)
+    mo.vstack([state_choice_c, angle_c])
+    return angle_c, state_choice_c
+
+
+@app.cell
+def _(angle_c, component_planes_figure, latex_matrix, mo, np, plt, rotation_matrix_so3, state_choice_c):
+    _v0 = np.array(state_choice_c.value, dtype=complex)
+    _v = rotation_matrix_so3((0, 0, 1), np.radians(angle_c.value)) @ _v0
+    _fig = component_planes_figure(_v0, angle_c.value)
+    mo.vstack([
+        _fig,
+        mo.md(
+            r"$$R_z(\alpha)\,v=" + latex_matrix(_v.reshape(-1, 1)) + "$$"
+        ),
+    ])
+    plt.close(_fig)
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
     Express a state through its amplitudes on the three eigenvectors of $J_z$. Since $R(\alpha)=e^{-i\alpha J}$
     and $J_z$ has the value $m_s$ on each of these eigenvectors, **a rotation through $\alpha$ about $z$
     multiplies the amplitude of the level with value $m_s$ by the phase $e^{-im_s\alpha}$.** For integer $m_s$ these
@@ -385,6 +510,20 @@ def _(mo):
     same factor $e^{-im_s\alpha}$. Evolution therefore leaves the value of $m_s$ unchanged, whatever the details of
     the interaction: **a state of definite $m_s$ keeps that value of $m_s$ for all time.**[^translations]
 
+    **An example: light.** The electric field of a light wave is a vector, so light is a spin-1 system. Take a wave
+    travelling along $z$. At a fixed point in space its electric field is an arrow in the $xy$-plane. In
+    **circularly polarised** light this arrow turns at a steady rate, making one full turn per period of the wave.
+    There are two kinds, according to the sense of the turning. Write the arrow as the complex number
+    $E_x+iE_y$. For one sense it is $e^{i\omega t}$, and for the other it is $e^{-i\omega t}$.
+
+    Now rotate the whole setup through an angle $\alpha$ about $z$. The turning arrow is the same arrow at a different
+    moment of its cycle, so the amplitude is only multiplied by a phase, $e^{i\alpha}$ for one sense and $e^{-i\alpha}$
+    for the other. By the rule above, these are the states with $m_s=\mp1$: **the two senses of circular
+    polarisation are the states of definite $m_s=+1$ and $m_s=-1$.** After a rotation through $2\pi$ both phases
+    equal $1$, so the field returns to itself, as expected for an ordinary vector. Light has no state with $m_s=0$,
+    since that would be a field pointing along $z$, the direction of travel, and the field of a wave is always
+    perpendicular to it.[^photon0]
+
     The figure follows a spin-1 state whose spin points along $+x$ (amplitudes $\tfrac12,\ \tfrac1{\sqrt2},\
     \tfrac12$ on $m_s=+1,0,-1$). Left: the direction of the spin in the $xy$-plane. Right: the three amplitudes,
     each drawn as an arrow in the complex plane.
@@ -394,6 +533,9 @@ def _(mo):
         `../plane_waves/plane_waves_and_packets.py`. In the language of matrices, the statement is that the
         operation of letting a state evolve commutes with the rotation matrices, which is the commutation of
         $\hat H$ with $J$ mentioned in section 1.
+
+    [^photon0]: A system with spin 1 normally has all three levels $m_s=+1,0,-1$. Light is a special case because
+        it travels at the fastest possible speed; this is why it has only two.
     """)
     return
 
@@ -457,9 +599,7 @@ def _(mo):
        symmetry does not *require* nature to use it. Experiment does: the two beams above.
     2. **Half-integer spin implies a fermion.** This is the spin-statistics theorem (Pauli, 1940), proved in
        relativistic quantum field theory. It does not follow from rotation symmetry alone and is outside the scope
-       of this notebook. A heuristic argument: exchanging two particles resembles a half-turn of the pair, which
-       would contribute the sign $(-1)^{2j}$ found below for a $2\pi$ rotation. Rigorous proofs are considerably
-       more demanding.
+       of this notebook.
     3. **Consequences.** The exclusion principle produces atomic shells and chemistry.
 
     What rotations can show is what a two-level system requires of its rotation matrices, and that half-integer
