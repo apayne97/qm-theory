@@ -4,6 +4,8 @@ import sys
 from functools import lru_cache
 from pathlib import Path
 
+import matplotlib
+import matplotlib.colors
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -174,3 +176,54 @@ def save_icon(fig, path_stem, dpi=400):
     """Write `<stem>.svg` and `<stem>.png`, both with a transparent background and no extra margin."""
     fig.savefig(f"{path_stem}.svg", transparent=True, bbox_inches="tight", pad_inches=0.02)
     fig.savefig(f"{path_stem}.png", transparent=True, bbox_inches="tight", pad_inches=0.02, dpi=dpi)
+
+
+def ring_curve(m_l, rotation=0.0, radius=1.0, amplitude=0.3, n=1500):
+    """The real part of a wave round a ring, cos(m_l * theta), drawn as a radial wiggle of a circle.
+
+    Returns (x, y) of the closed curve r(theta) = radius + amplitude * cos(m_l * (theta - rotation)). The wave has
+    m_l wiggles round the ring; `rotation` turns the whole ring (and the wave on it) through that angle.
+    """
+    theta = np.linspace(0, 2 * np.pi, n)
+    r = radius + amplitude * np.cos(m_l * (theta - rotation))
+    return r * np.cos(theta), r * np.sin(theta)
+
+
+def ring_icon_figure(m_l, rotation=0.0, color=RE_COLOR, linewidth=10, size_inches=4.0, amplitude=0.3,
+                     reference=False, glow=False):
+    """The wiggly blue line of the icons wrapped round a circle, as a curve on a transparent background.
+
+    `reference` adds a thin dashed circle at the unwiggled radius (the zero line of the wave). `glow` puts the
+    soft red disc of the slide frames behind the ring.
+    """
+    x, y = ring_curve(m_l, rotation, amplitude=amplitude)
+    fig = plt.figure(figsize=(size_inches, size_inches))
+    fig.patch.set_alpha(0.0)
+    ax = fig.add_axes([0.03, 0.03, 0.94, 0.94])
+    ax.patch.set_alpha(0.0)
+    ax.axis("off")
+    lim = 1.0 + amplitude + 0.08
+    if glow:
+        n = 400
+        g = np.linspace(-lim, lim, n)
+        gx, gy = np.meshgrid(g, g)
+        rgba = np.zeros((n, n, 4))
+        rgba[..., :3] = matplotlib.colors.to_rgb(A_COLOR)
+        radius = np.hypot(gx, gy)
+        fade = np.clip((lim - radius) / 0.3, 0, 1)  # reaches zero before the edge of the canvas: no visible box
+        rgba[..., 3] = 0.85 * np.exp(-((radius / (1.0 + amplitude)) ** 2) * 2.0) * fade
+        ax.imshow(rgba, extent=[-lim, lim, -lim, lim], origin="lower", zorder=0)
+    if reference:
+        t = np.linspace(0, 2 * np.pi, 400)
+        ax.plot(np.cos(t), np.sin(t), color="0.55", lw=linewidth / 6, ls=(0, (4, 4)), zorder=1)
+    ax.plot(x, y, color=color, lw=linewidth, solid_capstyle="round", solid_joinstyle="round", zorder=2)
+    ax.set_xlim(-lim, lim)
+    ax.set_ylim(-lim, lim)
+    ax.set_aspect("equal")
+    return fig
+
+
+def save_ring_icon(fig, path_stem, dpi=400):
+    """Like `save_icon` but on a fixed square canvas (no cropping), so the rings of a before/after pair line up."""
+    fig.savefig(f"{path_stem}.svg", transparent=True)
+    fig.savefig(f"{path_stem}.png", transparent=True, dpi=dpi)

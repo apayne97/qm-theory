@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
 
+from oscillator_plots import ring_curve
 from oscillator import (
     count_nodes,
     density,
@@ -120,3 +121,25 @@ def test_a_wrong_energy_blows_up_at_the_right_end():
     assert abs(psi[-1]) > 20
     x, good = shoot(1.5)
     assert abs(good[-1]) < 1
+
+
+@pytest.mark.parametrize("m_l", [1, 2, 3, 4])
+def test_ring_curve_is_closed_and_has_m_wiggles(m_l):
+    x, y = ring_curve(m_l)
+    assert np.isclose(x[0], x[-1]) and np.isclose(y[0], y[-1])
+    r = np.hypot(x, y)[:-1]  # drop the repeated end point, then look for maxima all the way round
+    maxima = np.sum((r > np.roll(r, 1)) & (r >= np.roll(r, -1)))  # >= counts a tied pair of grid points once
+    assert maxima == m_l
+
+
+@pytest.mark.parametrize("m_l", [2, 3, 5])
+def test_ring_turned_by_one_wiggle_is_unchanged(m_l):
+    a = np.array(ring_curve(m_l, 0.0, n=7))
+    b = np.array(ring_curve(m_l, 2 * np.pi / m_l, n=7))
+    assert np.allclose(a, b)
+
+
+def test_ring_turned_by_part_of_a_wiggle_is_different():
+    a = np.array(ring_curve(3, 0.0, n=50))
+    b = np.array(ring_curve(3, 0.3, n=50))
+    assert not np.allclose(a, b)
