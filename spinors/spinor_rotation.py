@@ -22,6 +22,13 @@ def _():
     )
     from belt_plots import belt_figure, double_turn_ball_figure, single_turn_ball_figure
     from dirac_belt import belt_frames
+    from rotation_plots import (
+        circulation_figure,
+        component_planes_figure,
+        stern_gerlach_figure,
+        x_oscillation_figure,
+        z_rotation_figure,
+    )
 
     def latex_matrix(m, digits=2):
         """Format a small real/complex matrix as a LaTeX pmatrix."""
@@ -40,8 +47,10 @@ def _():
 
     return (
         belt_figure,
+        component_planes_figure,
         belt_frames,
         bloch_vector,
+        circulation_figure,
         double_turn_ball_figure,
         interference_intensity,
         latex_matrix,
@@ -54,7 +63,10 @@ def _():
         rotation_matrix_so3,
         single_turn_ball_figure,
         spin_matrices,
+        stern_gerlach_figure,
         su2_to_so3,
+        x_oscillation_figure,
+        z_rotation_figure,
     )
 
 
@@ -177,6 +189,66 @@ def _(angle2d, latex_matrix, mo, np, plt):
 @app.cell
 def _(mo):
     mo.md(r"""
+    **The same rotation acting on complex numbers.** The matrix $R(\alpha)$ has real entries, but it can also be
+    applied to a vector $(x,y)$ whose components are complex numbers. Each component is then an arrow in its own
+    complex plane, and the matrix combines the two arrows: the new $x$ is $x\cos\alpha-y\sin\alpha$ and the new
+    $y$ is $x\sin\alpha+y\cos\alpha$. For $\hat x=(1,0)$, $\hat y=(0,1)$ or $(1,1)/\sqrt2$ both components stay on the real
+    axis and only change size. For a vector with a complex component the result is different. Take
+    $(1,\,i)$: since $\sin\alpha+i\cos\alpha=i\,e^{-i\alpha}$,
+
+    $$R(\alpha)\begin{pmatrix}1\\ i\end{pmatrix}=\begin{pmatrix}\cos\alpha-i\sin\alpha\\ \sin\alpha+i\cos\alpha\end{pmatrix}
+    =e^{-i\alpha}\begin{pmatrix}1\\ i\end{pmatrix},$$
+
+    so both arrows turn through the same angle $-\alpha$ and keep their lengths, and the vector is only multiplied
+    by a phase. The same holds for $(1,-i)$ with $+\alpha$. These are the two vectors that a rotation in the plane
+    multiplies by a number; section 2 shows where they come from.
+
+    The left panel of the figure below is the plane of the figure above. A vector with complex components is a
+    pair of ordinary arrows in this plane, its real part (solid) and its imaginary part (dashed), and the
+    rotation turns each of them through $\alpha$ like any other arrow. The two complex planes to the right show
+    the resulting $x$ and $y$ components.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    state_choice_2d = mo.ui.dropdown(
+        options={
+            "x̂ = (1, 0)": (1, 0),
+            "ŷ = (0, 1)": (0, 1),
+            "(x̂ + iŷ)/√2": (1 / 2**0.5, 1j / 2**0.5),
+            "(x̂ − iŷ)/√2": (1 / 2**0.5, -1j / 2**0.5),
+            "(x̂ + ŷ)/√2 = (1, 1)/√2": (1 / 2**0.5, 1 / 2**0.5),
+            "(1, 1 + i)/√3": (1 / 3**0.5, (1 + 1j) / 3**0.5),
+        },
+        value="(x̂ + iŷ)/√2",
+        label="vector before the rotation",
+    )
+    angle_2d_c = mo.ui.slider(0, 360, step=5, value=50, label="rotation angle (degrees)", full_width=True)
+    mo.vstack([state_choice_2d, angle_2d_c])
+    return angle_2d_c, state_choice_2d
+
+
+@app.cell
+def _(angle_2d_c, component_planes_figure, latex_matrix, mo, np, plt, state_choice_2d):
+    _v0 = np.array(state_choice_2d.value, dtype=complex)
+    _t = np.radians(angle_2d_c.value)
+    _r = np.array([[np.cos(_t), -np.sin(_t)], [np.sin(_t), np.cos(_t)]])
+    _v = _r @ _v0
+    _fig = component_planes_figure(_v0, angle_2d_c.value)
+    _out = mo.vstack([
+        _fig,
+        mo.md(r"$$R(\alpha)\,v=" + latex_matrix(_r) + latex_matrix(_v0.reshape(-1, 1)) + "=" + latex_matrix(_v.reshape(-1, 1)) + "$$"),
+    ])
+    plt.close(_fig)
+    _out
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
     Performing two rotations in succession corresponds to multiplying their matrices. In the plane, a rotation
     through $a$ followed by one through $b$ is a rotation through $a+b$, so the order is immaterial.
 
@@ -186,6 +258,34 @@ def _(mo):
     R_y(\alpha)=\begin{pmatrix}\cos\alpha&0&\sin\alpha\\0&1&0\\-\sin\alpha&0&\cos\alpha\end{pmatrix},\;
     R_z(\alpha)=\begin{pmatrix}\cos\alpha&-\sin\alpha&0\\\sin\alpha&\cos\alpha&0\\0&0&1\end{pmatrix}.$$
 
+    The matrix $R_z$ contains the plane rotation $R(\alpha)$ in its upper left block, so a rotation about $z$ is
+    the plane rotation applied to the $x$ and $y$ coordinates, with the $z$ coordinate unchanged. The figure
+    shows both views of one rotation, applied to the letter F (an asymmetric shape, so that the turn is easy
+    to follow): in the plane, where the origin is the only fixed point, and in space, where every point of the $z$
+    axis stays fixed. The dashed outline marks the initial position.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    angle_z = mo.ui.slider(0, 360, step=5, value=40, label="rotation about z (degrees)", full_width=True)
+    angle_z
+    return (angle_z,)
+
+
+@app.cell
+def _(angle_z, mo, plt, z_rotation_figure):
+    _fig = z_rotation_figure(angle_z.value)
+    _out = mo.vstack([_fig])
+    plt.close(_fig)
+    _out
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
     **In three dimensions the order of rotations matters.** The figure shows an object (represented by its
     three axes: $\hat x$ red, $\hat y$ green, $\hat z$ blue) rotated about the fixed $x$ and $y$ axes in the two
     possible orders. The dashed triad marks the initial orientation.
@@ -315,15 +415,25 @@ def _(mo):
     so the rotation matrix differs from the identity by a term proportional to $\epsilon$:
     $R(\epsilon)\approx 1+\epsilon K$. For a rotation about $z$,
 
-    $$K_z=\begin{pmatrix}0&-1&0\\1&0&0\\0&0&0\end{pmatrix}.$$
+    $$R_z(\epsilon)\approx\begin{pmatrix}1&-\epsilon&0\\ \epsilon&1&0\\0&0&1\end{pmatrix}
+    =1+\epsilon\begin{pmatrix}0&-1&0\\1&0&0\\0&0&0\end{pmatrix},\qquad
+    K_z=\begin{pmatrix}0&-1&0\\1&0&0\\0&0&0\end{pmatrix}.$$
 
-    The matrix $K$ is the derivative of the rotation matrix with respect to the angle, evaluated at zero angle:
-    $K = dR/d\alpha\,\big|_{\alpha=0}$.[^jacobian] A rotation through a finite angle $\alpha$ is a composition
+    The same matrix follows by differentiating. The matrix $K$ is the derivative of the rotation matrix with
+    respect to the angle, evaluated at zero angle: $K = dR/d\alpha\,\big|_{\alpha=0}$.[^jacobian] Differentiate
+    each entry of $R_z(\alpha)$, using $\dfrac{d\cos\alpha}{d\alpha}=-\sin\alpha$ and
+    $\dfrac{d\sin\alpha}{d\alpha}=\cos\alpha$; the constant entries (the $1$ and the zeros) have derivative $0$:
+
+    $$\frac{dR_z}{d\alpha}=\begin{pmatrix}-\sin\alpha&-\cos\alpha&0\\ \cos\alpha&-\sin\alpha&0\\0&0&0\end{pmatrix}.$$
+
+    At $\alpha=0$ we have $\sin 0=0$ and $\cos 0=1$, so
+    $K_z=\dfrac{dR_z}{d\alpha}\Big|_{\alpha=0}=\begin{pmatrix}0&-1&0\\1&0&0\\0&0&0\end{pmatrix}$, as above. A rotation through a finite angle $\alpha$ is a composition
     of many small ones, $R(\alpha)=\lim_{n\to\infty}(1+\tfrac{\alpha}{n}K)^n=e^{\alpha K}$, the matrix analogue
     of continuously compounded interest.
 
     The $J$ matrix is defined as $J=iK$, so that $R(\alpha)=e^{-i\alpha J}$. The factor $i$ ensures that $J$
-    has real eigenvalues, as required of a quantity whose measured values are real. Hence **each entry of a
+    has real eigenvalues, as required of a quantity whose measured values are real. For the rotation about $z$,
+    $J_z=iK_z=\begin{pmatrix}0&-i&0\\ i&0&0\\0&0&0\end{pmatrix}$. Hence **each entry of a
     $J$ matrix is $i$ times the derivative, at zero angle, of the corresponding entry of the rotation matrix.**
     Select an axis below; the matrices are computed by numerical differentiation of the rotation matrices
     of section 1 at zero angle.
@@ -371,29 +481,293 @@ def _(mo):
     matrices of section 2, $m_s=+1,0,-1$. A system with these three values is said to have **spin 1**; the
     spin number $j$ is the largest value of $m_s$.
 
+    A vector $v=(v_1,v_2,v_3)$ is an **eigenvector** of $J_z$, with **eigenvalue** $\lambda$, if $J_z$ only
+    multiplies it by a number: $J_zv=\lambda v$. With the matrix $J_z$ of section 2 this reads
+
+    $$\begin{pmatrix}0&-i&0\\ i&0&0\\ 0&0&0\end{pmatrix}\begin{pmatrix}v_1\\ v_2\\ v_3\end{pmatrix}
+    =\lambda\begin{pmatrix}v_1\\ v_2\\ v_3\end{pmatrix}
+    \quad\Longleftrightarrow\quad -i\,v_2=\lambda v_1,\qquad i\,v_1=\lambda v_2,\qquad 0=\lambda v_3.$$
+
+    *Eigenvalues.* Suppose $\lambda\neq0$. The third equation gives $v_3=0$, and the second gives
+    $v_2=iv_1/\lambda$. Substituting into the first, $-i\,(iv_1/\lambda)=v_1/\lambda=\lambda v_1$, so
+    $\lambda^2=1$ (otherwise $v_1=0$ and then $v_2=0$ as well, which is no vector at all). Hence $\lambda=+1$ or
+    $\lambda=-1$. For $\lambda=0$ the first two equations give $v_1=v_2=0$, while $v_3$ is unrestricted. The
+    eigenvalues are therefore $+1,\ 0,\ -1$, the values of $m_s$ quoted above.
+
+    *Eigenvectors.* For $\lambda=+1$ the equation $v_2=iv_1/\lambda$ gives $v_2=iv_1$ and $v_3=0$, so $v\propto(1,i,0)$.
+    For $\lambda=-1$ it gives $v_2=-iv_1$, so $v\propto(1,-i,0)$. For $\lambda=0$, $v\propto(0,0,1)$. Dividing the
+    first two by $\sqrt2$ makes each vector have length $1$:
+
+    $$m_s=+1:\ \tfrac1{\sqrt2}\begin{pmatrix}1\\ i\\ 0\end{pmatrix},\qquad
+    m_s=0:\ \begin{pmatrix}0\\ 0\\ 1\end{pmatrix},\qquad
+    m_s=-1:\ \tfrac1{\sqrt2}\begin{pmatrix}1\\ -i\\ 0\end{pmatrix}.$$
+
+    Only the vector along $z$ is one of the basic vectors $\hat x,\hat y,\hat z$. A rotation about $z$ turns $\hat x$ into
+    a mixture of $\hat x$ and $\hat y$, so $\hat x$ is not multiplied by a number; the vectors with $m_s=\pm1$ are the
+    combinations $\hat x\pm i\hat y$.
+
+    **What the eigenvectors mean.** Multiply an eigenvector by the steady phase $e^{-i\omega t}$ and take the real
+    part, which is the arrow itself as it would be seen over time. For $m_s=+1$,
+
+    $$\mathrm{Re}\left[e^{-i\omega t}\,\tfrac1{\sqrt2}\begin{pmatrix}1\\ i\\ 0\end{pmatrix}\right]
+    =\tfrac1{\sqrt2}\begin{pmatrix}\cos\omega t\\ \sin\omega t\\ 0\end{pmatrix},$$
+
+    an arrow of constant length turning **counter-clockwise** about $z$ at a constant rate. For $m_s=-1$ the sign of
+    the $y$ component is reversed and the arrow turns **clockwise**. For $m_s=0$ the arrow only points along $z$,
+    so it does not circulate about $z$ at all. The states of definite $m_s$ are therefore the states of constant
+    circulation about the axis: counter-clockwise for $m_s=+1$ (angular momentum along $+z$, by the right-hand
+    rule), clockwise for $m_s=-1$, and none for $m_s=0$.
+
+    This explains the rotation rule. An arrow turning steadily about $z$ looks the same after a rotation about
+    $z$, only at a different moment of its cycle. Turning the picture through $\alpha$ is the same as advancing
+    $\omega t$ by $\alpha$ for $m_s=+1$ (and by $-\alpha$ for $m_s=-1$), which multiplies the vector by the phase
+    $e^{-im_s\alpha}$. A back-and-forth oscillation along $x$ behaves differently; the example after the figure
+    shows why it is not an eigenvector of $J_z$.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    circ_phase = mo.ui.slider(0, 360, step=5, value=40, label="time, ωt (degrees)", full_width=True)
+    circ_phase
+    return (circ_phase,)
+
+
+@app.cell
+def _(circ_phase, circulation_figure, mo, plt):
+    _fig = circulation_figure(circ_phase.value)
+    _out = mo.vstack([_fig])
+    plt.close(_fig)
+    _out
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    **An example: why $\hat x$ is not an eigenvector.** The vector $\hat x$, drawn over time, is an arrow
+    oscillating back and forth along $x$. Write $e_{+1}$ and $e_{-1}$ for the eigenvectors with $m_s=+1$ and $m_s=-1$.
+    Adding them,
+
+    $$\hat x=\frac1{\sqrt2}\,(e_{+1}+e_{-1}),\qquad e_{\pm1}=\tfrac1{\sqrt2}\begin{pmatrix}1\\ \pm i\\ 0\end{pmatrix},$$
+
+    because the $y$ entries $i$ and $-i$ cancel and the $x$ entries add. In the circulation picture, a
+    counter-clockwise arrow and a clockwise arrow of the same length always have opposite $y$ components, so their
+    sum has no $y$ component: it only moves back and forth along $x$ (the last panel of the figure above).
+
+    Now rotate through an angle $\alpha$ about $z$. Each part is an eigenvector, so each is multiplied by its
+    own phase, $e^{-i\alpha}$ for $m_s=+1$ and $e^{+i\alpha}$ for $m_s=-1$:
+
+    $$R_z(\alpha)\,\hat x=\frac1{\sqrt2}\left(e^{-i\alpha}e_{+1}+e^{i\alpha}e_{-1}\right)
+    =\begin{pmatrix}\cos\alpha\\ \sin\alpha\\ 0\end{pmatrix}=\cos\alpha\,\hat x+\sin\alpha\,\hat y.$$
+
+    The two phases are different, so the result is not the original vector times one number; it is a different
+    vector, unless $\alpha$ is a multiple of $\pi$. An eigenvector would come back as itself times a phase. In the
+    picture, turning both arrows through $\alpha$ in the plane puts the counter-clockwise arrow ahead in its cycle
+    by $\alpha$ and the clockwise arrow behind by $\alpha$. Their $y$ components then no longer cancel. The sum is
+    again an oscillation, but along the direction at angle $\alpha$ from the $x$ axis. The figure shows the
+    oscillation before and after the turn.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    xosc_wt = mo.ui.slider(0, 360, step=5, value=50, label="time, ωt (degrees)", full_width=True)
+    xosc_alpha = mo.ui.slider(0, 360, step=5, value=60, label="rotation about z, α (degrees)", full_width=True)
+    mo.vstack([xosc_wt, xosc_alpha])
+    return xosc_alpha, xosc_wt
+
+
+@app.cell
+def _(mo, plt, x_oscillation_figure, xosc_alpha, xosc_wt):
+    _fig = x_oscillation_figure(xosc_wt.value, xosc_alpha.value)
+    _out = mo.vstack([_fig])
+    plt.close(_fig)
+    _out
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    **The rotation applied to these vectors.** The matrix $R_z(\alpha)$ of this section sends the basic vectors to
+
+    $$R_z\hat x=\cos\alpha\,\hat x+\sin\alpha\,\hat y,\qquad R_z\hat y=-\sin\alpha\,\hat x+\cos\alpha\,\hat y,$$
+
+    and neither result is a number times the original. For the combination $\hat x+i\hat y$, which has amplitudes
+    $(1,\,i,\,0)$, the sum of the two results is
+
+    $$R_z(\hat x+i\hat y)=(\cos\alpha-i\sin\alpha)\,\hat x+(\sin\alpha+i\cos\alpha)\,\hat y
+    =e^{-i\alpha}\,(\hat x+i\hat y),$$
+
+    since $\sin\alpha+i\cos\alpha=i(\cos\alpha-i\sin\alpha)=i\,e^{-i\alpha}$. In the same way,
+    $R_z(\hat x-i\hat y)=e^{+i\alpha}(\hat x-i\hat y)$. These are the phases $e^{-im_s\alpha}$ for
+    $m_s=+1$ and $m_s=-1$.
+
+    The same result follows from $R_z(\alpha)=e^{-i\alpha J_z}$. For a vector $v$ with $J_zv=m_sv$ we have
+    $J_z^nv=m_s^nv$ for every power $n$, so, writing the exponential as its series,
+
+    $$e^{-i\alpha J_z}v=\sum_{n=0}^{\infty}\frac{(-i\alpha)^n}{n!}J_z^nv
+    =\sum_{n=0}^{\infty}\frac{(-i\alpha m_s)^n}{n!}\,v=e^{-im_s\alpha}\,v.$$
+
+    For $m_s=0$ the phase is $1$, which is the statement that $\hat z$ is unchanged by a rotation about $z$.
+
+    **The components as complex numbers.** In general the three components $(v_1,v_2,v_3)$ of a state are complex
+    numbers, and each can be drawn as an arrow in its own complex plane. For an ordinary arrow in space, such as
+    $\hat x$, the components are real and stay on the real axis: a rotation about $z$ only moves amplitude between
+    the $x$ and $y$ components. For the states with $m_s=\pm1$ the components are complex. A rotation turns the $x$
+    and $y$ arrows together through the same angle, $-\alpha$ for $m_s=+1$ and $+\alpha$ for $m_s=-1$, and the $y$
+    arrow stays a quarter turn ahead of the $x$ arrow for $m_s=+1$ and behind it for $m_s=-1$. The lengths of the
+    arrows, the sizes of the amplitudes, stay constant and only their common phase advances: this is what it means
+    for a vector to be an eigenvector of $J_z$, since the whole vector is multiplied by a single phase. The $z$
+    component does not change. The figure applies $R_z(\alpha)$ to the chosen state: grey arrows show the components before
+    the rotation, coloured arrows after it, and the curves the paths followed as $\alpha$ grows.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    state_choice_c = mo.ui.dropdown(
+        options={
+            "x̂, an arrow along x": (1, 0, 0),
+            "ŷ, an arrow along y": (0, 1, 0),
+            "ẑ, an arrow along z (m_s = 0)": (0, 0, 1),
+            "(x̂ + iŷ)/√2 (m_s = +1)": (1 / 2**0.5, 1j / 2**0.5, 0),
+            "(x̂ − iŷ)/√2 (m_s = −1)": (1 / 2**0.5, -1j / 2**0.5, 0),
+            "(1, 1, 1)/√3": (1 / 3**0.5, 1 / 3**0.5, 1 / 3**0.5),
+            "(1, 1 + i, 1)/2": (0.5, (1 + 1j) / 2, 0.5),
+        },
+        value="(x̂ + iŷ)/√2 (m_s = +1)",
+        label="state before the rotation",
+    )
+    angle_c = mo.ui.slider(0, 360, step=5, value=50, label="rotation about z (degrees)", full_width=True)
+    mo.vstack([state_choice_c, angle_c])
+    return angle_c, state_choice_c
+
+
+@app.cell
+def _(angle_c, component_planes_figure, latex_matrix, mo, np, plt, rotation_matrix_so3, state_choice_c):
+    _v0 = np.array(state_choice_c.value, dtype=complex)
+    _v = rotation_matrix_so3((0, 0, 1), np.radians(angle_c.value)) @ _v0
+    _fig = component_planes_figure(_v0, angle_c.value)
+    _out = mo.vstack([
+        _fig,
+        mo.md(
+            r"$$R_z(\alpha)\,v=" + latex_matrix(_v.reshape(-1, 1)) + "$$"
+        ),
+    ])
+    plt.close(_fig)
+    _out
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
     Express a state through its amplitudes on the three eigenvectors of $J_z$. Since $R(\alpha)=e^{-i\alpha J}$
     and $J_z$ has the value $m_s$ on each of these eigenvectors, **a rotation through $\alpha$ about $z$
     multiplies the amplitude of the level with value $m_s$ by the phase $e^{-im_s\alpha}$.** For integer $m_s$ these
     phases are all equal to $1$ at $\alpha=2\pi$, so the state returns to itself after a full turn, as expected
     for an ordinary vector.
 
-    **Conservation of $m_s$.** The same phase gives the quantum form of the conservation law of section 1. Take a
-    state of definite $m_s$, so that a rotation about $z$ only multiplies it by $e^{-im_s\alpha}$, and suppose the
-    physical situation is unchanged by rotations about $z$. Then turning the state and afterwards letting it
-    evolve for a time gives the same result as letting it evolve and afterwards turning it. Turning the
-    initial state multiplies it by $e^{-im_s\alpha}$, so the evolved state, when turned, is multiplied by the
-    same factor $e^{-im_s\alpha}$. Evolution therefore leaves the value of $m_s$ unchanged, whatever the details of
-    the interaction: **a state of definite $m_s$ keeps that value of $m_s$ for all time.**[^translations]
+    **Rotational symmetry and the conservation of $m_s$.** The phase $e^{-im_s\alpha}$ gives the quantum form of the
+    conservation law of section 1. The argument has four steps. Write $R_z(\alpha)$ for a turn about $z$ and $U$
+    for letting a state evolve for a time.
 
-    The figure follows a spin-1 state whose spin points along $+x$ (amplitudes $\tfrac12,\ \tfrac1{\sqrt2},\
-    \tfrac12$ on $m_s=+1,0,-1$). Left: the direction of the spin in the $xy$-plane. Right: the three amplitudes,
-    each drawn as an arrow in the complex plane.
+    1. **Symmetry.** Suppose the physical situation is unchanged by rotations about $z$. Then turning the state
+       and afterwards letting it evolve gives the same result as letting it evolve and afterwards turning it:
+       $R_z(\alpha)\,U=U\,R_z(\alpha)$ for every $\alpha$.
+    2. **A state of definite $m_s$.** This is an eigenvector of $J_z$. A rotation about $z$ multiplies all of its
+       components by the same phase $e^{-im_s\alpha}$, as in the figure above. The sizes of its components, and
+       the phases between them (for $m_s=\pm1$, $v_y=\pm i\,v_x$), do not change under the turn.
+    3. **Evolution keeps this property.** Let $v$ have definite $m_s$ and let $w=Uv$ be the evolved state. Then
+       $R_z w=R_zUv=UR_zv=U\,(e^{-im_s\alpha}v)=e^{-im_s\alpha}\,w$. The evolved state is multiplied by the same
+       phase, so all of its components again turn together and it has the same $m_s$.
+    4. **Conservation.** The value of $m_s$, the component of angular momentum along $z$, therefore does not change,
+       whatever the details of the interaction: **a state of definite $m_s$ keeps that value of $m_s$ for all
+       time.**[^translations]
+
+    If the symmetry is broken, step 1 fails and the rest does not follow. With a field pointing along $x$, for
+    example, turning and then evolving differs from evolving and then turning. The evolved state is then a mixture
+    of different values of $m_s$, so its components no longer turn together under $R_z$: angular momentum along
+    $z$ has been exchanged with the source of the field, as in the classical precession above.
+
+    The figure shows this for the state with $m_s=+1$. The state is turned through an angle about $z$, which
+    respects the symmetry, or about $x$, which does not (a turn about $x$ stands in for the effect of a field
+    along $x$). Under the turn about $z$ the $x$ and $y$ arrows keep turning together. Under the turn about $x$
+    they do not, and the probabilities of finding each value of $m_s$, shown beneath the figure, spread out from
+    $m_s=+1$.
 
     [^translations]: The same argument applied to shifts of position and of time gives the conservation of
         momentum and of energy; see section 5 of the companion notebook
         `../plane_waves/plane_waves_and_packets.py`. In the language of matrices, the statement is that the
         operation of letting a state evolve commutes with the rotation matrices, which is the commutation of
         $\hat H$ with $J$ mentioned in section 1.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    evolve_axis = mo.ui.radio(
+        options={
+            "about z (the symmetry is respected)": (0, 0, 1),
+            "about x (the symmetry is broken)": (1, 0, 0),
+        },
+        value="about z (the symmetry is respected)",
+        label="turn",
+    )
+    evolve_angle = mo.ui.slider(0, 360, step=5, value=60, label="angle of the turn (degrees)", full_width=True)
+    mo.vstack([evolve_axis, evolve_angle])
+    return evolve_angle, evolve_axis
+
+
+@app.cell
+def _(component_planes_figure, evolve_angle, evolve_axis, mo, np, plt, rotation_matrix_so3):
+    _s = 1 / np.sqrt(2)
+    _v0 = np.array([_s, 1j * _s, 0])
+    _w = rotation_matrix_so3(evolve_axis.value, np.radians(evolve_angle.value)) @ _v0
+    _eig = {"+1": np.array([_s, 1j * _s, 0]), "0": np.array([0, 0, 1]), "-1": np.array([_s, -1j * _s, 0])}
+    _p = {k: abs(np.vdot(e, _w)) ** 2 for k, e in _eig.items()}
+    _fig = component_planes_figure(_v0, evolve_angle.value, axis=evolve_axis.value)
+    _out = mo.vstack([
+        _fig,
+        mo.md(
+            "Probability of $m_s=+1$: " + f"**{_p['+1']:.2f}**" + ", of $m_s=0$: " + f"**{_p['0']:.2f}**"
+            + ", of $m_s=-1$: " + f"**{_p['-1']:.2f}**"
+        ),
+    ])
+    plt.close(_fig)
+    _out
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    **An example: light.** The electric field of a light wave is a vector, so light is a spin-1 system. Take a wave
+    travelling along $z$. At a fixed point in space its electric field is an arrow in the $xy$-plane. In
+    **circularly polarised** light this arrow turns at a steady rate, making one full turn per period of the wave.
+    There are two kinds, according to the sense of the turning. Write the arrow as the complex number
+    $E_x+iE_y$. For one sense it is $e^{i\omega t}$, and for the other it is $e^{-i\omega t}$.
+
+    Now rotate the whole setup through an angle $\alpha$ about $z$. The turning arrow is the same arrow at a different
+    moment of its cycle, so the amplitude is only multiplied by a phase, $e^{i\alpha}$ for one sense and $e^{-i\alpha}$
+    for the other. By the rule above, these are the states with $m_s=\mp1$: **the two senses of circular
+    polarisation are the states of definite $m_s=+1$ and $m_s=-1$.** After a rotation through $2\pi$ both phases
+    equal $1$, so the field returns to itself, as expected for an ordinary vector. Light has no state with $m_s=0$,
+    since that would be a field pointing along $z$, the direction of travel, and the field of a wave is always
+    perpendicular to it.[^photon0]
+
+    The figure follows a spin-1 state whose spin points along $+x$ (amplitudes $\tfrac12,\ \tfrac1{\sqrt2},\
+    \tfrac12$ on $m_s=+1,0,-1$). Left: the direction of the spin in the $xy$-plane. Right: the three amplitudes,
+    each drawn as an arrow in the complex plane.
+
+    [^photon0]: A system with spin 1 normally has all three levels $m_s=+1,0,-1$. Light is a special case because
+        it travels at the fastest possible speed; this is why it has only two.
     """)
     return
 
@@ -437,35 +811,97 @@ def _(np, plt, rotation, spin_matrices, theta_one):
 @app.cell
 def _(mo):
     mo.md(r"""
+    ### Definite spin refers to an axis
+
+    The values $m_s$ above are values of the spin component along $z$. A state with a definite value of the
+    component along $z$ does not in general have a definite value along another axis. The eigenvectors of $J_x$
+    follow in the same way as those of $J_z$, with $J_x=iK_x$ taken from the rotation about $x$:
+    $m_x=+1$ for $\tfrac1{\sqrt2}(0,1,i)$, $m_x=0$ for $\hat x$, and $m_x=-1$ for $\tfrac1{\sqrt2}(0,1,-i)$.
+
+    - The vector $\hat z$ has $m_z=0$ with certainty. Written with the eigenvectors of $J_x$ it is
+      $\hat z=\tfrac1{i\sqrt2}\left[\tfrac1{\sqrt2}(0,1,i)-\tfrac1{\sqrt2}(0,1,-i)\right]$, an equal combination of $m_x=+1$
+      and $m_x=-1$. A measurement of the component along $x$ gives $+1$ or $-1$, each with probability $\tfrac12$,
+      and never $0$.
+    - The state $e_{+1}=\tfrac1{\sqrt2}(1,i,0)$ has $m_z=+1$ with certainty. Along $x$ the probabilities of
+      $m_x=+1,0,-1$ are $\tfrac14,\tfrac12,\tfrac14$.
+    - The state in the last figure points along $+x$, so it has $m_x=+1$ with certainty. Along $z$ the
+      probabilities of $m_z=+1,0,-1$ are the squares of its amplitudes, $\tfrac14,\tfrac12,\tfrac14$.
+
+    The reason is the one found in section 1: rotations about different axes do not commute, so the matrices
+    $J_x$ and $J_z$ derived from them do not commute either. A state with a definite value of both would have to be
+    an eigenvector of both matrices, and no state of this system is.
+
+    "The spin points along $z$" therefore has a precise meaning: **the component along $z$ is definite**, and so is the
+    total spin. The components along $x$ and $y$ are then uncertain, with average $0$. It does not mean that the
+    three components $x$, $y$, $z$ all have definite values at once, as they would for an ordinary arrow. The one
+    exception is a system with spin $0$, for which every component is definitely $0$.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
     ---
     ## 4 Why this construction does not describe the electron, and why the electron matters
 
     Sections 2 and 3 started from the rotation of ordinary three-dimensional vectors and therefore produced a
-    system with three levels, $m_s=+1,0,-1$. The electron is not of this kind.
+    system with three levels, $m_s=+1,0,-1$. They also showed that a definite spin component along one axis leaves
+    the components along the other axes uncertain. The electron is not of this kind.
 
-    **Experiment.** In a Stern-Gerlach experiment, a beam of silver atoms (whose magnetic moment is that of a
-    single unpaired electron) passes through a non-uniform magnetic field, which deflects each atom according to
-    the value of its spin component along the field direction. For a spin-1 system three beams would emerge, one
-    for each of $m_s=+1,0,-1$. Experimentally **exactly two beams emerge**, for any orientation of the magnet. The
-    spin component of the electron along any axis takes only two values, so its state has two amplitudes.
+    **The device.** A Stern-Gerlach magnet has a non-uniform magnetic field along one axis. It deflects each atom
+    of a beam according to the value of its spin component along that axis, so it splits the beam into one beam
+    for each possible value. Silver atoms are used, because their magnetic moment is that of a single unpaired
+    electron.
 
+    **Experiment.** For a spin-1 system, a magnet along $z$ would produce three beams, one for each of
+    $m_z=+1,0,-1$. Experimentally **exactly two beams emerge**, for any orientation of the magnet. The spin
+    component of the electron along any axis takes only two values, so its state has two amplitudes.
+
+    **Magnets in sequence.** The figure shows three magnets in a row, along $z$, then $x$, then $z$. After each of
+    the first two, only the upper beam is kept; the blocked beams are marked ✗. Each label gives the fraction of the
+    beam entering a magnet that leaves in that beam. The sequence tests the previous section:
+
+    - A second magnet along $z$ directly after the first would send all of the kept beam into the same upper beam,
+      since $m_z$ is definite.
+    - The magnet along $x$ splits that beam into equal parts, since a definite $m_z$ leaves $m_x$ uncertain.
+    - The last magnet, along $z$, splits the $m_x=+\tfrac12$ beam into equal parts again. Making $m_x$ definite
+      destroyed the definite value of $m_z$ prepared by the first magnet.
+
+    The lower row shows the same sequence for spin 1, with three beams and the fractions $\tfrac14,\tfrac12,\tfrac14$
+    that were found in section 3. The electron behaves in the same way, except that it has two levels instead of
+    three, and a state with two levels needs two amplitudes.
+    """)
+    return
+
+
+@app.cell
+def _(mo, plt, stern_gerlach_figure):
+    _fig = stern_gerlach_figure()
+    _out = mo.vstack([_fig])
+    plt.close(_fig)
+    _out
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
     **Why it matters.** As the introduction noted, electrons are fermions. Three separate statements are
     involved, and only the first can be addressed with rotations:
 
     1. **Which spins can exist.** Rotation symmetry, together with the unobservability of the overall sign of a
-       state (section 5.1), allows $j=0,\tfrac12,1,\tfrac32,\dots$. Half-integer spin is *permitted*, but rotation
+       state (section 5.2), allows $j=0,\tfrac12,1,\tfrac32,\dots$. Half-integer spin is *permitted*, but rotation
        symmetry does not *require* nature to use it. Experiment does: the two beams above.
     2. **Half-integer spin implies a fermion.** This is the spin-statistics theorem (Pauli, 1940), proved in
        relativistic quantum field theory. It does not follow from rotation symmetry alone and is outside the scope
-       of this notebook. A heuristic argument: exchanging two particles resembles a half-turn of the pair, which
-       would contribute the sign $(-1)^{2j}$ found below for a $2\pi$ rotation. Rigorous proofs are considerably
-       more demanding.
+       of this notebook.
     3. **Consequences.** The exclusion principle produces atomic shells and chemistry.
 
     What rotations can show is what a two-level system requires of its rotation matrices, and that half-integer
     spin brings a sign change under a $2\pi$ rotation. That is the content of section 5.
 
-    A two-component state cannot be rotated by the $3\times3$ matrices of section 1, which act on
+    A state with two amplitudes, called a **spinor** (section 5.1), cannot be rotated by the $3\times3$ matrices of section 1, which act on
     three-component objects. What is required is a family of $2\times2$ matrices that combine under
     multiplication in the same way as the rotations do. The existence of such matrices is not guaranteed by the
     $3\times3$ case, and finding them is the content of section 5, which ends with $J$ obtained exactly as in
@@ -480,11 +916,54 @@ def _(mo):
     ---
     ## 5 Building the description of spin 1/2
 
-    The description is assembled in five steps: how amplitudes and probabilities treat a sign (5.1); a
-    minimal model with two amplitudes, which fixes $m_s=\pm\tfrac12$ (5.2); the resulting matrices and $J$
-    (5.3); the effect of a $2\pi$ rotation (5.4); and why two matrices describe each rotation (5.5).
+    The description is assembled in six steps: spinors, the states with two amplitudes, and what the matrices that
+    turn them must do (5.1); how amplitudes and probabilities treat a sign (5.2); a minimal model with two
+    amplitudes, which fixes $m_s=\pm\tfrac12$ and the direction of a spinor (5.3); the matrices for all three axes
+    and $J$ (5.4); the effect of a $2\pi$ rotation (5.5); and why two matrices describe each rotation (5.6).
 
-    ### 5.1 Amplitudes, probabilities and the sign of a state
+    ### 5.1 Spinors
+
+    The experiment of section 4 shows that the state of an electron has two amplitudes, one for each of the two
+    values of the spin component along $z$. A list of two complex numbers used in this way,
+
+    $$\psi=\begin{pmatrix}a_1\\ a_2\end{pmatrix},$$
+
+    is called a **spinor**. Here $a_1$ and $a_2$ are the amplitudes for $m_z=+\tfrac12$ and $m_z=-\tfrac12$, and
+    since the electron is found in one of the two beams, $|a_1|^2+|a_2|^2=1$. A spinor is not an arrow in space,
+    but it determines one: the direction in which the spin points, found from the two amplitudes in section 5.3.
+    The two kinds of object compare as follows.
+
+    - An **ordinary vector** has three real components $(x,y,z)$, and a rotation through $\alpha$ about an axis acts
+      on it with a real $3\times3$ matrix $R(\alpha)$ (section 1).
+    - A **spinor** has two complex components $(a_1,a_2)$, and the same rotation acts on it with a complex
+      $2\times2$ matrix $U(\alpha)$.
+
+    **What the matrices $U$ must do.** The matrix for a rotation through $\alpha$ about a given axis is required to
+    satisfy three conditions.
+
+    1. *It keeps the total probability.* The sum $|a_1|^2+|a_2|^2$ must remain $1$ after the rotation. A matrix
+       with this property is called **unitary**, and it plays the role that keeping lengths plays for $R$.
+    2. *It turns the spin direction like an ordinary vector.* If the spin of a spinor points along some direction,
+       the rotated spinor must point along the direction obtained by turning that direction with the matrix $R(\alpha)$
+       of section 1.
+    3. *It combines like rotations.* A rotation through $a$ followed by one through $b$ about the same axis is a
+       rotation through $a+b$, so $U(b)\,U(a)=U(a+b)$. More generally the matrix for two rotations in succession is
+       the product of their matrices, so the order matters for different axes, exactly as for the matrices $R$. The
+       one freedom allowed is an overall sign, which section 5.2 shows to be unobservable.
+
+    The sections that follow determine these matrices. Section 5.3 finds the direction of a spinor and the matrix
+    for rotations about $z$. Section 5.4 obtains the matrices for the other two axes from condition 3 and the
+    direction of a spinor, and gets $J$ as in section 2; the result is the set of Pauli matrices. Section 5.5 shows
+    what is new compared with vectors: a rotation through $2\pi$ reverses the sign of a spinor. Section 5.6 shows
+    why each rotation then corresponds to two matrices that differ by a sign.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    ### 5.2 Amplitudes, probabilities and the sign of a state
 
     A quantum state is described by a list of complex numbers called **amplitudes**. The probability of an
     outcome is the squared size of the corresponding amplitude,
@@ -517,7 +996,7 @@ def _(mo):
     The consequence for rotations is the following. **A rotation that multiplies the amplitudes of a state by
     $-1$ leaves every probability of that state unchanged, yet the change can be detected by interfering the
     rotated state with an unrotated copy.** Such a sign is therefore permitted in the rotation matrices of a
-    quantum system, and it is exactly what a rotation through $2\pi$ does to the electron (section 5.4). The
+    quantum system, and it is exactly what a rotation through $2\pi$ does to the electron (section 5.5). The
     slider below varies the phase of $a_2$.
     """)
     return
@@ -570,14 +1049,14 @@ def _(amp_phase, np, plt):
 @app.cell
 def _(mo):
     mo.md(r"""
-    ### 5.2 A model with two amplitudes
+    ### 5.3 A model with two amplitudes
 
     An electron has two levels, so the smallest model has two amplitudes of unit size, written as complex numbers
     with relative phase $\delta$ and common phase $\gamma$:
 
     $$a_1 = e^{i(\gamma - \delta/2)}, \qquad a_2 = e^{i(\gamma + \delta/2)}.$$
 
-    - **Probability.** Combining the two as in section 5.1 gives $P=\left|\tfrac{a_1+a_2}{2}\right|^2=\cos^2(\delta/2)$:
+    - **Probability.** Combining the two as in section 5.2 gives $P=\left|\tfrac{a_1+a_2}{2}\right|^2=\cos^2(\delta/2)$:
       equal to 1 at $\delta=0$, to 0 at $\delta=\pi$, and repeating with period $2\pi$ in $\delta$. The common phase
       $\gamma$ does not appear.
     - **A complete description requires both $(\gamma,\delta)$**, because $\gamma$ matters as soon as the state is
@@ -671,22 +1150,48 @@ def _(mo):
 @app.cell
 def _(mo):
     mo.md(r"""
-    ### 5.3 The matrices and $J$ for spin 1/2
+    ### 5.4 The matrices and $J$ for spin 1/2
 
-    With $m_s=\pm\tfrac12$ (section 5.2), a rotation through $\alpha$ about $z$ multiplies the two amplitudes by
+    With $m_s=\pm\tfrac12$ (section 5.3), a rotation through $\alpha$ about $z$ multiplies the two amplitudes by
     $e^{\mp i\alpha/2}$:
 
     $$U_z(\alpha)=\begin{pmatrix}e^{-i\alpha/2}&0\\0&e^{i\alpha/2}\end{pmatrix}.$$
 
-    The matrices for rotations about $x$ and $y$ are those $2\times2$ matrices that combine under
-    multiplication in the same way as the ordinary rotations of section 1:
+    **Rotations about $x$ and $y$.** Turning about the $x$ axis is the same as turning the $x$ axis into the $z$
+    axis, turning about $z$, and turning back. For ordinary vectors this is $R_x(\alpha)=Q\,R_z(\alpha)\,Q^{-1}$, where
+    $Q$ is any rotation that carries the $z$ axis to the $x$ axis, such as a quarter turn about $y$. Condition 3 of
+    section 5.1 requires the same relation for spinors,
 
-    $$U_x(\alpha)=\begin{pmatrix}\cos\frac\alpha2&-i\sin\frac\alpha2\\-i\sin\frac\alpha2&\cos\frac\alpha2\end{pmatrix},\qquad
-    U_y(\alpha)=\begin{pmatrix}\cos\frac\alpha2&-\sin\frac\alpha2\\\sin\frac\alpha2&\cos\frac\alpha2\end{pmatrix}.$$
+    $$U_x(\alpha)=Q\,U_z(\alpha)\,Q^{-1},$$
+
+    where $Q$ is now a $2\times2$ matrix that carries a spinor with spin along $z$ to a spinor with spin along $x$.
+    Section 5.3 gives these spinors: spin along $+z$ is $(1,0)$, spin along $-z$ is $(0,1)$, and spin along $\pm x$ is
+    $\tfrac1{\sqrt2}(1,\pm1)$, the relative phase being $\delta=0$ or $\pi$. The columns of $Q$ are the images of
+    $(1,0)$ and $(0,1)$, so
+
+    $$Q=\frac1{\sqrt2}\begin{pmatrix}1&-1\\1&1\end{pmatrix}.$$
+
+    The sign of the second column was chosen freely: multiplying either column by a phase multiplies $Q$ on the right
+    by a diagonal matrix, which commutes with the diagonal matrix $U_z$ and so leaves $U_x$ unchanged. Multiplying
+    out gives
+
+    $$U_x(\alpha)=\begin{pmatrix}\cos\frac\alpha2&-i\sin\frac\alpha2\\-i\sin\frac\alpha2&\cos\frac\alpha2\end{pmatrix}.$$
+
+    For the $y$ axis, spin along $\pm y$ has relative phase $\delta=\pm\tfrac\pi2$, that is $\tfrac1{\sqrt2}(1,\pm i)$,
+    so $Q=\tfrac1{\sqrt2}\begin{pmatrix}1&1\\i&-i\end{pmatrix}$ and
+
+    $$U_y(\alpha)=\begin{pmatrix}\cos\frac\alpha2&-\sin\frac\alpha2\\\sin\frac\alpha2&\cos\frac\alpha2\end{pmatrix}.$$
+
+    These are the matrices of the rotations about $x$ and $y$, obtained without any further assumption.[^pauli_comm]
 
     $J$ is now obtained exactly as in section 2: $K=dU/d\alpha$ at zero angle and $J=iK$. Select an axis
-    below. The cell also checks the requirement stated above: it computes the ordinary $3\times3$ rotation
-    implemented by $U$ and compares it with the matrix of section 1.[^convention]
+    below. The cell also checks condition 2 of section 5.1: it computes the ordinary $3\times3$ rotation
+    implemented by $U$ and compares it with the matrix of section 1. It also checks the construction above, by
+    multiplying out $Q\,U_z\,Q^{-1}$.[^convention]
+
+    [^pauli_comm]: The same matrices follow from the commutation relations $[J_x,J_y]=iJ_z$ (and its cyclic
+        permutations), which the $3\times3$ matrices $J$ of section 2 satisfy, together with $J_z=\mathrm{diag}(\tfrac12,-\tfrac12)$.
+        The derivation is in the companion notebook `archived_commutator_loop_and_ladder.py`.
 
     [^convention]: These matrices turn the state through $\alpha$. Some texts instead turn the coordinate axes
         through $\alpha$, which is the same as turning the state through $-\alpha$. Each matrix is then replaced
@@ -711,6 +1216,13 @@ def _(axis_choice_half, latex_matrix, mo, np, rotation, rotation_matrix_so3, su2
     _j = 1j * _k
     _ev = np.linalg.eigvalsh(_j)
     _err = np.abs(su2_to_so3(rotation(0.5, _axis, 0.7)) - rotation_matrix_so3(_axis, 0.7)).max()
+    _s = 1 / np.sqrt(2)
+    _q = {
+        "x": np.array([[_s, -_s], [_s, _s]]),
+        "y": np.array([[_s, _s], [1j * _s, -1j * _s]]),
+        "z": np.eye(2),
+    }[axis_choice_half.value]
+    _err_q = np.abs(_q @ rotation(0.5, (0, 0, 1), 0.7) @ _q.conj().T - rotation(0.5, _axis, 0.7)).max()
 
     mo.md(
         f"**Rotation about {axis_choice_half.value}, spin 1/2**\n\n"
@@ -718,6 +1230,7 @@ def _(axis_choice_half, latex_matrix, mo, np, rotation, rotation_matrix_so3, su2
         f"Eigenvalues of $J_{axis_choice_half.value}$: **{', '.join(f'{x:+.1f}' for x in _ev)}**\n\n"
         f"Largest difference between the rotation implemented by $U$ (at $\\alpha=0.7$) and the matrix of section 1: "
         f"{_err:.1e}.\n\n"
+        f"Largest difference between $Q\\,U_z\\,Q^{{-1}}$ and $U$ (at $\\alpha=0.7$): {_err_q:.1e}.\n\n"
         "The three matrices $J_x$, $J_y$, $J_z$ are the Pauli matrices divided by 2."
     )
     return
@@ -726,10 +1239,10 @@ def _(axis_choice_half, latex_matrix, mo, np, rotation, rotation_matrix_so3, su2
 @app.cell
 def _(mo):
     mo.md(r"""
-    ### 5.4 The effect of a $2\pi$ rotation
+    ### 5.5 The effect of a $2\pi$ rotation
 
     With $m_s=\pm\tfrac12$, a rotation through $2\pi$ multiplies both amplitudes by $e^{\mp i\pi}=-1$. For integer
-    $m_s$ it multiplies them by $1$. By section 5.1 the sign change alters no probability of the rotated state
+    $m_s$ it multiplies them by $1$. By section 5.2 the sign change alters no probability of the rotated state
     on its own; it can only be detected by interference with an unrotated copy.
 
     The slider runs from $0$ to $4\pi$. The panels show
@@ -861,9 +1374,9 @@ def _(
 @app.cell
 def _(mo):
     mo.md(r"""
-    ### 5.5 Two matrices for every rotation
+    ### 5.6 Two matrices for every rotation
 
-    By section 5.1, multiplying all amplitudes of a state by $-1$ changes no probability. A physical rotation
+    By section 5.2, multiplying all amplitudes of a state by $-1$ changes no probability. A physical rotation
     therefore cannot distinguish a matrix $U$ from $-U$: **every rotation has two valid $2\times2$ matrices.**
     The slider below runs $\alpha$ from $0$ to $4\pi$. Left: the two numbers
     $(a,b)=(\cos\frac\alpha2,\sin\frac\alpha2)$ from which the electron's matrix
@@ -936,7 +1449,7 @@ def _(mo):
     ---
     ## 6 The belt trick: a picture of the $4\pi$ rotation
 
-    Sections 5.4 and 5.5 show with formulas that a rotation through $2\pi$ reverses the sign of the spin-1/2
+    Sections 5.5 and 5.6 show with formulas that a rotation through $2\pi$ reverses the sign of the spin-1/2
     matrix and that $4\pi$ is needed to restore it. A physical model shows the same fact as a shape.
 
     **The model.** A belt joins a fixed wall to a plate, and the plate is turned about the vertical axis. At each
@@ -951,11 +1464,11 @@ def _(mo):
     are the two faces of the belt, and the pointer on the plate shows the plate's orientation.
 
     [^beltformula]: The orientations are written as unit quaternions, which are the $2\times2$ matrices of
-        section 5.3 in other notation: $U = w - i(x\sigma_x + y\sigma_y + z\sigma_z)$, where $\sigma_x,\sigma_y,\sigma_z$
+        section 5.4 in other notation: $U = w - i(x\sigma_x + y\sigma_y + z\sigma_z)$, where $\sigma_x,\sigma_y,\sigma_z$
         are twice the spin-1/2 $J$ matrices. The formula and its construction are in `dirac_belt.py`, and
         `test_dirac_belt.py` checks that the wall and plate conditions hold, that the belt changes continuously
         with $\alpha$, that it repeats after $4\pi$ but not after $2\pi$, that the belt at $2\pi$ is exactly one
-        full twist about its own axis, and that the quaternions agree with the matrices of section 5.3.
+        full twist about its own axis, and that the quaternions agree with the matrices of section 5.4.
 
     ### 6.1 Turning the plate
 
@@ -1005,7 +1518,7 @@ def _(mo):
       the one shown.
 
     **The same fact as the sign of the spinor.** Each orientation along the belt can be described by a
-    $2\times2$ matrix $U$ of section 5.3, and two matrices $\pm U$ describe each orientation (section 5.5).
+    $2\times2$ matrix $U$ of section 5.4, and two matrices $\pm U$ describe each orientation (section 5.6).
     Following the belt from the wall, where $U=1$, fixes a continuous choice of sign. At the plate this choice is
     the electron's matrix $U_z(\alpha)$, which is $-1$ at $\alpha=2\pi$ and $+1$ at $\alpha=4\pi$. A belt with
     one twist is the picture of the sign $-1$, and a belt that has untwisted is the picture of the sign $+1$.
@@ -1062,7 +1575,7 @@ def _(mo):
     path of rotations. The belt at a given $\alpha$ is a path from the identity to the plate's orientation, and as
     the plate turns through $4\pi$ these belts sweep out a surface bounded by the plate's path. The shrinking
     paths in the ball are the same surface cut the other way. Such a surface exists for $4\pi$ and cannot exist for
-    $2\pi$. In the language of section 5.5, the $4\pi$ path lifts to a closed path of matrices $U$ (it ends at
+    $2\pi$. In the language of section 5.6, the $4\pi$ path lifts to a closed path of matrices $U$ (it ends at
     $U=+1$) and can be shrunk, whereas the $2\pi$ path lifts to a path from $U=+1$ to $U=-1$, which is not closed.
     """)
     return
