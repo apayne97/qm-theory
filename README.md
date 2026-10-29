@@ -13,7 +13,7 @@ conda activate qm-theory
 
 ## Reading order, notation and colours
 
-Read the notebooks in this order: `plane_waves` → `oscillator` → `quantization` → `field_quanta`. `spinors` is independent of the wave notebooks and can be read at any point; `field_quanta` points forward to its exchange part.
+Read the notebooks in this order: `plane_waves` → `oscillator` → `quantization` → `field_quanta`. `spinors` is independent of the wave notebooks and can be read at any point; `field_quanta` points forward to its exchange part. `polarization` applies the rotation argument of `spinors` (sections 2 and 3) to light and refers to `plane_waves` only for $E=\hbar\omega$.
 
 **Notation (the same in every notebook, in the figures and in the knowledge-base chapter).**
 
@@ -53,6 +53,23 @@ python -m pytest -q
 marimo edit spinor_rotation.py
 ```
 
+
+## polarization/
+
+Light polarization and angular momentum, for readers who know the rotation argument of the spinor notebook: circular polarization as the states $m_s=\pm1$ along the beam, linear polarization as their combination (angle = half the relative phase), why light has only $m_s=\pm1$ (spin 1, transverse field) and not $0$ or larger, the angular momentum per photon and wave plates, twisted beams ($m_j=m_\ell+m_s$, any whole number), and the contrast with the electron (phase factors return after $2\pi$, not $4\pi$).
+
+| File | What it is |
+|---|---|
+| `light.py` | Jones vectors, rotation matrix and $J$, circular states $\mathbf e_\pm$ and helicity amplitudes, field and polarization ellipse, wave-plate retarder and torque, twisted-beam field, orbital $m_\ell$ by FFT round the axis |
+| `test_light.py` | pytest checks (eigenvectors of $J$, $R(\alpha)\mathbf e_\pm=e^{\mp i\alpha}\mathbf e_\pm$, linear light = equal mix with relative phase $2\alpha$, ellipse axes against the traced curve, half- and quarter-wave plates, $\langle m_\ell\rangle$ of single and superposed vortices, brightest-ring radius, $m_j$ takes every integer) |
+| `light_plots.py` | Matplotlib figures used by the notebook (colours from `qmstyle.py`: the $m_s=+1$ and $m_s=-1$ amplitudes are the two shades of the complex-amplitude colour) |
+| `light_polarization.py` | Marimo notebook: 1 what polarization is (Jones vector, ellipse), 2 turning the beam (eigenvectors of $J$), 3 linear light from two circular lights, 4 why only $m_s=\pm1$ (including why not $0$ or other integers), 5 angular momentum of light and wave plates, 6 twisted beams, 7 compared with the electron |
+
+```bash
+cd polarization
+python -m pytest -q
+marimo edit light_polarization.py
+```
 
 ## plane_waves/
 
