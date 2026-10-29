@@ -149,3 +149,31 @@ def stern_gerlach_sequence(j: float) -> tuple[np.ndarray, np.ndarray]:
     p_x = np.abs(vectors[0, :]) ** 2  # overlap of the m_z = +j state (first basis vector) with each
     p_z = np.abs(vectors[:, 0]) ** 2  # components of the m_x = +j state on the m_z basis
     return p_x, p_z
+
+
+def cycle_length(m) -> int:
+    """Number of quarter turns after which the phase factor exp(-i m alpha) of a state of definite m is 1 again.
+
+    One quarter turn multiplies the state by exp(-i m pi/2), and n of them by exp(-i m n pi/2), which is 1 for
+    the first time when n m / 4 is a whole number. m = 1 gives 4 (the cycle 1, -i, -1, i, which is the cycle of
+    i run backwards), m = 2 gives 2, m = 1/2 gives 8 and m = 0 gives 1.
+    """
+    from fractions import Fraction
+
+    m = Fraction(m).limit_denominator(1000)
+    for n in range(1, 4001):
+        if (n * m / 4).denominator == 1:
+            return n
+    raise ValueError(f"no cycle found for m = {m}")
+
+
+def loop_frames(eps: float) -> list[np.ndarray]:
+    """Orientations after each step of the loop R_x(eps) R_y(eps) R_x(-eps) R_y(-eps), right factor first.
+
+    The five matrices are: start, then after -eps about y, -eps about x, +eps about y, +eps about x. The last one
+    is the product of the four rotations, close to R_z(eps^2) for small eps.
+    """
+    frames = [np.eye(3)]
+    for axis, angle in [((0, 1, 0), -eps), ((1, 0, 0), -eps), ((0, 1, 0), eps), ((1, 0, 0), eps)]:
+        frames.append(rotation_matrix_so3(axis, angle) @ frames[-1])
+    return frames

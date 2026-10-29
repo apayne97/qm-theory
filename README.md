@@ -39,12 +39,13 @@ Mathematical foundations of bosons and fermions, for readers without linear alge
 
 | File | What it is |
 |---|---|
-| `spinors.py` | Spin matrices, `exp(-iθ n·J)`, Bloch vector, interference, SU(2)→SO(3), phasor toy model, commutator helpers |
+| `spinors.py` | Spin matrices, `exp(-iθ n·J)`, Bloch vector, interference, SU(2)→SO(3), phasor toy model, commutator helpers, length of the cycle of quarter turns for a given $m$, orientations along the loop of four small turns |
 | `test_spinors.py` | pytest checks of all of the above |
+| `cycle_plots.py` | Matplotlib figures for the cycle of quarter turns ($1\to i\to-1\to-i$, and the eight-step cycle of $m=\tfrac12$) and the loop of four small turns on the letter F |
 | `dirac_belt.py` | The belt (plate) trick: explicit smooth family of belt orientations (unit quaternions) that returns after 4π but not 2π; rotation-vector map to the ball of rotations; the shrinking family of 4π loops |
 | `test_dirac_belt.py` | pytest checks (wall/plate conditions, 4π periodicity, 2π belt is one twist about its axis, continuity, agreement with the 2×2 matrices, surface-crossing parity) |
 | `belt_plots.py` | Matplotlib figures for section 6: the belt with its plate, and the ball of rotations |
-| `spinor_rotation.py` | Main marimo notebook: 1 rotations and why they matter (symmetry and conservation, rotation matrices, order matters in 3D, classical precession test), 2 J matrices from rotation matrices, 3 spin number of ordinary vectors (spin 1), 4 why that fails for the electron and why the electron matters (Stern-Gerlach magnets in sequence, fermions), 5 building spin 1/2 (spinors and what their rotation matrices must do, amplitudes and sign, two-amplitude model, matrices for all three axes and J, the 2π rotation, double cover), 6 the belt trick (plate and belt with a slider from 0 to 4π; the space of rotations as a ball and shrinking the 4π path) |
+| `spinor_rotation.py` | Main marimo notebook: 1 rotations and why they matter (symmetry and conservation, rotation matrices, the cycle of quarter turns of $i$, order matters in 3D, the loop of four small turns, classical precession test), 2 J matrices from rotation matrices and the rule $[J_x,J_y]=iJ_z$, 3 spin number of ordinary vectors (spin 1), 4 why that fails for the electron and why the electron matters (Stern-Gerlach magnets in sequence, fermions), 5 building spin 1/2 (spinors and what their rotation matrices must do, amplitudes and sign, two-amplitude model, matrices for all three axes and J, the 2π rotation and the same thing as a cycle of 8 quarter turns, double cover), 6 the belt trick (plate and belt with a slider from 0 to 4π; the space of rotations as a ball and shrinking the 4π path) |
 | `archived_commutator_loop_and_ladder.py` | Technical material cut from the main notebook: small-rotation commutator loop, ladder-operator derivation, allowed values of m (spacing argument), Noether with commutators and the quantum precession demo, projective-representation remarks |
 
 ```bash

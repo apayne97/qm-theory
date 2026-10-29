@@ -4,8 +4,10 @@ import pytest
 from spinors import (
     bloch_vector,
     commutator_norms,
+    cycle_length,
     expectation_vs_time,
     interference_intensity,
+    loop_frames,
     phasor_pair,
     rotation_axis_angle,
     rotation,
@@ -180,3 +182,42 @@ def test_stern_gerlach_sequence_is_binomial(j):
     assert np.allclose(p_x, expected)
     assert np.allclose(p_z, expected)
     assert np.isclose(p_x.sum(), 1) and np.isclose(p_z.sum(), 1)
+
+
+@pytest.mark.parametrize("m,n", [(0, 1), (1, 4), (-1, 4), (2, 2), (0.5, 8), (-0.5, 8), (1.5, 8), (0.25, 16)])
+def test_cycle_length(m, n):
+    assert cycle_length(m) == n
+    assert np.isclose(np.exp(-1j * m * np.pi / 2) ** n, 1)
+    # and not before: no smaller number of quarter turns gives 1
+    assert all(not np.isclose(np.exp(-1j * m * np.pi / 2) ** k, 1) for k in range(1, n))
+
+
+def test_the_cycle_of_i_visits_four_numbers_without_repeating():
+    powers = [1j**k for k in range(4)]
+    assert np.allclose(powers, [1, 1j, -1, -1j])
+    assert np.isclose(1j**4, 1)
+    # m = -1 gives the factor exp(i pi/2) = i; m = +1 runs the same four numbers backwards
+    assert np.isclose(np.exp(-1j * (-1) * np.pi / 2), 1j)
+    assert {complex(np.round(np.exp(-1j * np.pi / 2) ** k, 9)) for k in range(4)} == {1, 1j, -1, -1j}
+
+
+def test_half_integer_m_needs_twice_as_many_quarter_turns_as_integer_m():
+    assert cycle_length(0.5) == 2 * cycle_length(1)
+    assert np.isclose(np.exp(-1j * 0.5 * np.pi / 2) ** 4, -1)   # four quarter turns = 2 pi: sign change
+
+
+@pytest.mark.parametrize("eps", [0.02, 0.05, 0.1])
+def test_loop_of_small_turns_is_a_turn_about_z_of_eps_squared(eps):
+    net = loop_frames(eps)[-1]
+    assert np.allclose(net, rotation_matrix_so3((1, 0, 0), eps) @ rotation_matrix_so3((0, 1, 0), eps)
+                       @ rotation_matrix_so3((1, 0, 0), -eps) @ rotation_matrix_so3((0, 1, 0), -eps))
+    axis, angle = rotation_axis_angle(net)
+    assert np.allclose(axis, (0, 0, 1), atol=2 * eps)
+    assert np.isclose(angle, eps**2, rtol=3 * eps)
+
+
+def test_loop_frames_start_at_identity_and_are_rotations():
+    frames = loop_frames(0.4)
+    assert len(frames) == 5 and np.allclose(frames[0], np.eye(3))
+    for f in frames:
+        assert np.allclose(f @ f.T, np.eye(3)) and np.isclose(np.linalg.det(f), 1)
