@@ -55,7 +55,7 @@ def _(mo):
     7. Dispersion: -V against D3(BJ)
     8. Settings that are not in the label: the grid
     9. Putting the two labels together
-    10. What I have not verified
+    10. What was checked, and what was not
 
     All numbers in the figures were computed with PySCF 2.14 (`compute_dft_data.py`, which writes the `data_*.json` files
     this notebook reads). Energies are in hartree (Ha), electronvolts (eV) or kcal/mol as stated.
@@ -79,7 +79,7 @@ def _(mo):
     | Basis set | def2-TZVPD | def2-TZVPPD |
     | Written as | ωB97M-V/def2-TZVPD | ωB97M-D3(BJ)/def2-TZVPPD |
 
-    (Both labels are as I remember them; see section 10.)
+    (The OMol25 label was checked against its paper and the SPICE II label against the dataset's published description; see section 10.)
 
     Three choices therefore define the "level of theory":
 
@@ -588,20 +588,33 @@ def _(mo):
 @app.cell
 def _(mo):
     mo.md(r"""
-    ## 10. What I have not verified
+    ## 10. What was checked, and what was not
 
-    These are from memory and should be checked against the papers before they go on a slide:
+    **Checked on 2026-11-05 against published sources:**
 
-    - the exact labels: ωB97M-V/def2-TZVPD for OMol25 and ωB97M-D3(BJ)/def2-TZVPPD for SPICE II;
-    - the sources for the functionals: Becke 1997 (B97), Chai and Head-Gordon 2008 (ωB97X), Mardirossian and Head-Gordon
-      2016 (ωB97M-V), Vydrov and Van Voorhis 2010 (VV10), Grimme and co-workers (D3), Najibi and Goerigk 2018 (the D3(BJ)
-      refit of ωB97M), Weigend and Ahlrichs 2005 (def2), Rappoport and Furche 2010 (diffuse def2);
-    - that the SPICE II dispersion-corrected functional has the same exact-exchange fractions and ω as ωB97M-V (I assumed
-      the same family, but did not check);
-    - PySCF has no ωB97M-D3(BJ) built in, so no D3(BJ) calculation appears here; the damping figure shows the shape only.
-    - program versions, convergence settings and grids used by the OMol25 and SPICE authors.
-    - the pieces of $F_{11}$ quoted in section 3 come from a one-off PySCF script that is not part of `compute_dft_data.py`, and
-      the statements about the cost of Hartree-Fock, DFT and CCSD(T) are general knowledge, not measured here.
+    - **OMol25** (the Open Molecules 2025 paper, arXiv 2505.08762): the level of theory is ωB97M-V/def2-TZVPD, run with
+      ORCA 6.0.0 using RI-J and COSX acceleration, ORCA's `DEFGRID3` grid (a pruned grid with 590 angular points for
+      exchange-correlation and 302 for the COSX grid; the radial count is not stated), tight convergence, and effective core
+      potentials for the heavy elements. Open-shell and charged systems are run with unrestricted Kohn-Sham. So the grid
+      of this notebook, (99, 590) in PySCF, is similar in spirit but not the same setting.
+    - **SPICE II:** the published dataset records give ωB97M-D3(BJ)/def2-TZVPPD, run in Psi4. I could not read the
+      SPICE II paper itself (the fetched PDF was unreadable), so the Psi4 version (1.8.x in the paper, against 1.4.1 in
+      another record) is not settled.
+    - **ωB97M-V:** Mardirossian and Head-Gordon, J. Chem. Phys. 144 (2016), with VV10 nonlocal correlation, as the label says.
+    - **ωB97M-D3(BJ) in Psi4** is described as "ωB97M-V with D3(BJ) instead of VV10", and Psi4 lists the same ω (0.3) and
+      the same short-range exact-exchange fraction (0.15) as for ωB97M-V.
+
+    **Still from memory:**
+
+    - whether the other fitted parameters of ωB97M-D3(BJ) were also refit when D3(BJ) replaced VV10, and the exact
+      citation of that functional (I believe Najibi and Goerigk, J. Chem. Theory Comput. 2018; the journal page could not
+      be fetched, so the title, volume and pages are unchecked);
+    - the other sources: Becke 1997 (B97), Chai and Head-Gordon 2008 (ωB97X), Vydrov and Van Voorhis 2010 (VV10), Grimme
+      and co-workers (D3), Weigend and Ahlrichs 2005 (def2), Rappoport and Furche 2010 (diffuse def2);
+    - the damping figure in section 7 shows the shape only: PySCF has no ωB97M-D3(BJ) built in, so no D3(BJ) calculation
+      appears here;
+    - the pieces of $F_{11}$ quoted in section 3 come from a one-off PySCF script that is not part of `compute_dft_data.py`,
+      and the statements about the cost of Hartree-Fock, DFT and CCSD(T) are general knowledge, not measured here.
 
     **Computed here** (not from memory): all numbers and figures in sections 2 to 8, from PySCF 2.14 on the rigid
     geometries in `compute_dft_data.py`.

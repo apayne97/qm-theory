@@ -598,12 +598,12 @@ def _(mo):
 
     **Computed in this notebook's data (PySCF 2.14, water, ωB97M-V/def2-TZVPD, grid (99, 590)):** the shapes, the six-term
     sum equal to $F$, the residual of $FC=SC\varepsilon$, orthonormality, diagonalisation of $F$ in the orbital basis,
-    the numpy solver, the hand-written loop and its convergence, the Hartree-Fock rebuild, and the changes of each term
+    the numpy solver, the hand-written loop and its convergence, the Hartree-Fock rebuild, the $J$ matrix rebuilt from the four-index integrals, the counts of pairs and integrals, and the changes of each term
     between the guess and the converged density. The two-function example is checked against a numerical solver.
 
     **Stated from the usual textbook form, not derived here:** that $V^{\text{xc}}$ for GGA and meta-GGA functionals contains
     gradient terms of the basis functions; the closed-shell factor $-\tfrac12$ on $K$ (the code's sum with the stated weights
-    reproduces $F$, which supports it but does not prove the physical argument); that the first ionisation energy is approximated by $-\varepsilon_{\text{HOMO}}$ (not tested here).
+    reproduces $F$, which supports it but does not prove the physical argument); that triple products of basis functions appear in density fitting and higher-order response properties (mentioned in the counting section); that the first ionisation energy is approximated by $-\varepsilon_{\text{HOMO}}$ (not tested here).
 
     **Settings not stated by the label:** the VV10 non-local term used PySCF's default coarser grid, (50, 194), not (99, 590).
     """)

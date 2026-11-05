@@ -108,6 +108,29 @@ def latitude_nodes(l, m):
     return np.sort(np.arccos(roots))
 
 
+def latitude_nodes_predicted(l, m):
+    """Polar angles (radians, increasing) of the circles of latitude, from the roots of a polynomial.
+
+    P_l^|m|(x) = (1 - x^2)^(|m|/2) times the |m|-th derivative of the Legendre polynomial P_l(x). The first factor
+    vanishes only at the poles, so the latitude nodes are the l - |m| roots of the derivative, with x = cos(theta).
+    This route uses numpy's polynomial roots, not the recursion or the sign scan of `latitude_nodes`."""
+    m = abs(m)
+    coef = np.zeros(l + 1)
+    coef[l] = 1.0
+    roots = np.polynomial.legendre.Legendre(coef).deriv(m).roots() if l > m else np.array([])
+    return np.sort(np.arccos(np.real(roots)))
+
+
+def azimuth_nodes(m, kind="cos"):
+    """Azimuths (radians, in [0, pi)) of the |m| planes through the z axis where the real harmonic vanishes.
+
+    cos(m phi) = 0 at phi = pi/(2m) + k pi/m; sin(m phi) = 0 at phi = k pi/m, with k = 0, ..., |m| - 1. Each plane
+    contains the two meridians phi and phi + pi, so the values repeat every pi."""
+    m = abs(m)
+    k = np.arange(m)
+    return (np.pi / (2 * m) if kind == "cos" else 0.0) + k * np.pi / m if m else np.array([])
+
+
 def count_sign_changes(values):
     """Number of sign changes in a sequence, ignoring exact zeros."""
     s = np.sign(np.asarray(values))
@@ -331,3 +354,150 @@ def sample_density(n, l, m, count, extent, seed=0):
         pts.append(c[keep])
         got += keep.sum()
     return np.concatenate(pts)[:count]
+
+
+# ---------------------------------------------------------------------------------------------------------------
+# The drumhead: a circular membrane with a fixed rim (radius 1), the two-dimensional counterpart of the atom
+
+
+def bessel_j(m, x, n_points=400):
+    """Bessel function J_m(x) of whole order m from its integral (1/pi) int_0^pi cos(m t - x sin t) dt, evaluated by
+    the trapezoid rule on a periodic integrand (exponentially accurate)."""
+    x = np.asarray(x, dtype=float)
+    t = (np.arange(n_points) + 0.5) * np.pi / n_points
+    return np.mean(np.cos(m * t - x[..., None] * np.sin(t)), axis=-1)
+
+
+def bessel_zeros(m, count):
+    """The first `count` positive zeros j_{m,1}, j_{m,2}, ... of J_m (scan for sign changes, then bisection)."""
+    zeros = []
+    x0, step = 0.5 + m * 0.5 if m > 0 else 0.5, 0.05
+    while len(zeros) < count:
+        a, b = x0, x0 + step
+        fa, fb = bessel_j(m, a), bessel_j(m, b)
+        if fa * fb < 0:
+            for _ in range(60):
+                c = 0.5 * (a + b)
+                if bessel_j(m, c) * fa > 0:
+                    a = c
+                else:
+                    b = c
+            zeros.append(0.5 * (a + b))
+        x0 += step
+    return np.array(zeros)
+
+
+def drum_mode(m, k, r, phi):
+    """Real drum mode J_m(j_{m,k} r) cos(m phi) on the unit disc (zero on the rim r = 1)."""
+    return bessel_j(m, bessel_zeros(m, k)[-1] * np.asarray(r, dtype=float)) * np.cos(m * np.asarray(phi, dtype=float))
+
+
+def drum_frequency(m, k):
+    """Frequency of the mode in units where the lowest (m = 0, k = 1) is 2.405: it equals j_{m,k}."""
+    return float(bessel_zeros(m, k)[-1])
+
+
+def drum_nodes(m, k):
+    """(radii of the nodal circles, angles in [0, pi) of the nodal diameters): k - 1 circles and m diameters.
+    The rim is held fixed and is not counted."""
+    z = bessel_zeros(m, k)
+    radii = z[:-1] / z[-1]
+    angles = (2 * np.arange(m) + 1) * np.pi / (2 * m) if m > 0 else np.array([])
+    return radii, angles
+
+
+# ---------------------------------------------------------------------------------------------------------------
+# Where the nodes of a hydrogen orbital are
+
+
+def node_geometry(n, l, m):
+    """Nodal surfaces of the real orbital (n, l, m): dict with
+    'spheres'  radii of the n - l - 1 spherical shells (zeros of R_nl),
+    'cones'    polar angles of the l - |m| cones (zeros of the Legendre function; pi/2 is the flat plane z = 0),
+    'planes'   azimuth angles in [0, pi) of the |m| planes through the z axis.
+    Together they are the n - 1 nodal surfaces."""
+    rmax = 2.5 * n * n + 10
+    r = np.linspace(1e-6, rmax, 400001)
+    f = radial_R(n, l, r)
+    idx = np.where(f[:-1] * f[1:] < 0)[0]
+    spheres = np.array([r[i] - f[i] * (r[i + 1] - r[i]) / (f[i + 1] - f[i]) for i in idx])
+    cones = latitude_nodes(l, m)
+    am = abs(m)
+    if am == 0:
+        planes = np.array([])
+    elif m > 0:
+        planes = (2 * np.arange(am) + 1) * np.pi / (2 * am)   # cos(m phi) = 0
+    else:
+        planes = np.arange(am) * np.pi / am                   # sin(|m| phi) = 0
+    return {"spheres": spheres, "cones": cones, "planes": planes}
+
+
+# ---------------------------------------------------------------------------------------------------------------
+# Fourier series on a circle, and the same idea on a sphere
+
+
+def circle_function(phi):
+    """A test shape on a circle: a square pulse centred at phi = pi (value 1 for |phi - pi| < 1, else 0)."""
+    phi = np.asarray(phi, dtype=float)
+    return (np.abs(phi - np.pi) < 1.0).astype(float)
+
+
+def circle_coefficients(f, m_max, n=4096):
+    """Real Fourier coefficients (a_m, b_m), m = 0 ... m_max, of f on the circle: the projections of f on cos(m phi)
+    and sin(m phi). f(phi) is approximately a_0 + sum a_m cos(m phi) + b_m sin(m phi)."""
+    phi = (np.arange(n) + 0.5) * 2 * np.pi / n
+    y = f(phi)
+    a = [np.mean(y)] + [2 * np.mean(y * np.cos(m * phi)) for m in range(1, m_max + 1)]
+    b = [0.0] + [2 * np.mean(y * np.sin(m * phi)) for m in range(1, m_max + 1)]
+    return np.array(a), np.array(b)
+
+
+def circle_reconstruct(a, b, phi, m_max):
+    """Sum of the first m_max harmonics."""
+    phi = np.asarray(phi, dtype=float)
+    out = a[0] * np.ones_like(phi)
+    for m in range(1, m_max + 1):
+        out = out + a[m] * np.cos(m * phi) + b[m] * np.sin(m * phi)
+    return out
+
+
+_BUMPS = [  # (polar angle, azimuth, sharpness, height): smooth bumps on the sphere, like a rough map of land
+    (1.0, 0.8, 6.0, 1.0),
+    (1.9, 3.6, 9.0, 0.8),
+    (2.5, 1.9, 14.0, -0.6),
+    (0.9, 4.9, 20.0, 0.7),
+]
+
+
+def sphere_function(theta, phi):
+    """A test shape on the sphere: a sum of smooth bumps exp(s (cos(angle to centre) - 1))."""
+    theta, phi = np.asarray(theta, dtype=float), np.asarray(phi, dtype=float)
+    out = np.zeros(np.broadcast(theta, phi).shape)
+    for t0, p0, s, h in _BUMPS:
+        cosang = np.cos(theta) * np.cos(t0) + np.sin(theta) * np.sin(t0) * np.cos(phi - p0)
+        out = out + h * np.exp(s * (cosang - 1.0))
+    return out
+
+
+@lru_cache(maxsize=None)
+def sphere_coefficients(l_max=20):
+    """Coefficients a_lm = integral of f * (real Y_lm) over the sphere, for l <= l_max: dict {(l, m): a_lm}."""
+    th, ph, w = sphere_quadrature(90, 180)
+    f = sphere_function(th, ph)
+    return {(l, m): float(np.sum(f * real_ylm(l, m, th, ph) * np.ones_like(th) * w))
+            for l in range(l_max + 1) for m in range(-l, l + 1)}
+
+
+def sphere_reconstruct(coeffs, l_max, theta, phi):
+    """Sum of a_lm Y_lm for l <= l_max."""
+    out = np.zeros(np.broadcast(np.asarray(theta), np.asarray(phi)).shape)
+    for (l, m), a in coeffs.items():
+        if l <= l_max:
+            out = out + a * real_ylm(l, m, theta, phi)
+    return out
+
+
+def sphere_power(coeffs):
+    """Sum of a_lm^2 over m for each l: how much of the shape lives at each 'frequency' l."""
+    l_max = max(l for l, _ in coeffs)
+    return np.array([sum(a * a for (l, m), a in coeffs.items() if l == ll) for ll in range(l_max + 1)])
