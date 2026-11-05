@@ -1,7 +1,7 @@
 import marimo
 
 __generated_with = "0.25.1"
-app = marimo.App(width="medium")
+app = marimo.App(width="medium", app_title="Rotations, Spin and the Belt Trick")
 
 
 @app.cell
@@ -12,6 +12,8 @@ def _():
 
     from spinors import (
         bloch_vector,
+        cycle_length,
+        loop_frames,
         interference_intensity,
         phasor_pair,
         rotation,
@@ -20,6 +22,7 @@ def _():
         spin_matrices,
         su2_to_so3,
     )
+    from cycle_plots import cycle_figure, small_loop_figure
     from belt_plots import belt_figure, double_turn_ball_figure, single_turn_ball_figure
     from dirac_belt import belt_frames
     from rotation_plots import (
@@ -47,6 +50,10 @@ def _():
 
     return (
         belt_figure,
+        cycle_figure,
+        cycle_length,
+        loop_frames,
+        small_loop_figure,
         component_planes_figure,
         belt_frames,
         bloch_vector,
@@ -98,11 +105,11 @@ def _(mo):
 
     **Part I: Rotations and spin**
 
-    1. Rotations and why they matter: symmetry and conservation laws, rotation matrices, and the fact that rotations about different axes do not commute.
-    2. The $J$ matrices obtained from rotation matrices.
+    1. Rotations and why they matter: symmetry and conservation laws, rotation matrices, quarter turns and the cycle of $i$, and the fact that rotations about different axes do not commute (with a loop of small turns that measures by how much).
+    2. The $J$ matrices obtained from rotation matrices, and the rule $[J_x,J_y]=iJ_z$ that they obey.
     3. The spin number of ordinary vectors (spin 1).
     4. Why this construction does not describe the electron, and why the electron matters.
-    5. Building the description of spin 1/2: amplitudes and sign, a two-amplitude model, the matrices, the $2\pi$ rotation, and the double cover.
+    5. Building the description of spin 1/2: amplitudes and sign, a two-amplitude model, the matrices, the $2\pi$ rotation (also as a cycle of quarter turns), and the double cover.
     6. The belt trick: the $2\pi$ and $4\pi$ rotations as a shape, and the space of rotations as a ball.
 
     Later parts will treat the exchange of identical particles and the link between exchange and spin.
@@ -123,6 +130,10 @@ def _(mo):
           vector $v$. When $J$ represents a measurement, its eigenvalues are the possible results.
         - **Boson** and **fermion**: the two classes of particle described in the introduction; bosons have
           integer spin and fermions half-integer spin.
+        - **Group**: a set of operations (such as rotations) in which doing two in succession gives another member, there
+          is a do-nothing member, and every member has an undo. A **cyclic group** consists of the powers of one member,
+          its **generator**.
+        - **Commutator** $[A,B]=AB-BA$: zero when the order in which $A$ and $B$ are applied does not matter.
         - **$J$** denotes angular momentum. **$m_s$** denotes the value of the component of spin along the $z$ axis.
         """)
     })
@@ -249,6 +260,50 @@ def _(angle_2d_c, component_planes_figure, latex_matrix, mo, np, plt, state_choi
 @app.cell
 def _(mo):
     mo.md(r"""
+    **Quarter turns and the cycle of $i$.** Complex numbers give a simple way to look at turning in the plane. Write a
+    point as the complex number $z=x+iy$. Multiplying by $i$ gives $iz=-y+ix$, which is $z$ turned counterclockwise
+    through a quarter of a turn ($90^\circ$) about the origin. Repeating the multiplication,
+
+    $$1\ \to\ i\ \to\ -1\ \to\ -i\ \to\ 1,\qquad\text{that is}\qquad i^0=1,\ \ i^1=i,\ \ i^2=-1,\ \ i^3=-i,\ \ i^4=1 .$$
+
+    Four quarter turns bring every point back to where it started, and on the way the cycle visits four different numbers
+    without repeating any. These four numbers form a **group**: the product of any two of them is again one of them, there
+    is a do-nothing element ($1$), and every element has an undo ($-i$ undoes $i$). Because each element is a power of one
+    element, $i$, the group is called a **cyclic group** (of order 4) and $i$ is its **generator**.
+
+    This cycle is the simplest case of what follows. A turn through any angle $\alpha$ multiplies $z$ by
+    $e^{i\alpha}=\cos\alpha+i\sin\alpha$, which is the same thing as the matrix $R(\alpha)$ above acting on $(x,y)$. The
+    quarter turns are the four points of this circle of rotations at $\alpha=0^\circ,90^\circ,180^\circ,270^\circ$, and $i$ is the
+    derivative of $e^{i\alpha}$ at $\alpha=0$. A rotation through a large angle is made of many small steps, which is the
+    construction of section 2. Step through the cycle below.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    cycle_i_k = mo.ui.slider(0, 8, step=1, value=0, label="number of quarter turns", full_width=True)
+    cycle_i_k
+    return (cycle_i_k,)
+
+
+@app.cell
+def _(cycle_figure, cycle_i_k, mo, plt):
+    _k = int(cycle_i_k.value)
+    _names = ["1", "i", "-1", "-i"]
+    _fig = cycle_figure(-1, _k, value_labels=True)
+    _text = f"After {_k} quarter turns the number is $i^{{{_k}}}={_names[_k % 4]}$."
+    if _k and _k % 4 == 0:
+        _text += " The cycle is back at its start."
+    _out = mo.vstack([_fig, mo.md(_text)])
+    plt.close(_fig)
+    _out
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
     Performing two rotations in succession corresponds to multiplying their matrices. In the plane, a rotation
     through $a$ followed by one through $b$ is a rotation through $a+b$, so the order is immaterial.
 
@@ -342,14 +397,53 @@ def _(alpha_deg, beta_deg, mo, np, plt, rotation_axis_angle, rotation_matrix_so3
 @app.cell
 def _(mo):
     mo.md(r"""
+    **How much does the order matter? A loop of four small turns.** The two orders in the figure end in different
+    orientations. To measure the difference, turn by a small angle $\epsilon$ in the following loop: $-\epsilon$ about $y$,
+    then $-\epsilon$ about $x$, then $+\epsilon$ about $y$, then $+\epsilon$ about $x$. If the order did not matter, each
+    turn would cancel its partner and the object would end where it started. It does not. The slider sets $\epsilon$,
+    and the last panel looks down the $z$ axis at the final orientation.
+
+    What is left over is a turn about the **third axis, $z$**, through an angle of about $\epsilon^2$ (the angle in radians,
+    squared). For small $\epsilon$ this is much smaller than $\epsilon$: it is the second-order effect of two turns that
+    do not commute. It is the geometric form of the rule $[J_x,J_y]=iJ_z$, which is derived at the end of section 2.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    loop_eps = mo.ui.slider(5, 60, step=5, value=30, label="size of each small turn, ε (degrees)", full_width=True)
+    loop_eps
+    return (loop_eps,)
+
+
+@app.cell
+def _(loop_eps, loop_frames, mo, np, plt, rotation_axis_angle, small_loop_figure):
+    _eps = np.radians(loop_eps.value)
+    _axis, _angle = rotation_axis_angle(loop_frames(_eps)[-1])
+    _fig = small_loop_figure(loop_eps.value)
+    _out = mo.vstack([
+        _fig,
+        mo.md(
+            f"The four turns leave a rotation through **{np.degrees(_angle):.1f}°** about the direction "
+            f"({_axis[0]:+.2f}, {_axis[1]:+.2f}, {_axis[2]:+.2f}). Compare $\\epsilon^2$ = **{np.degrees(_eps**2):.1f}°** "
+            f"(the ratio is {_angle / _eps**2:.2f}); the two agree better for smaller $\\epsilon$."
+        ),
+    ])
+    plt.close(_fig)
+    _out
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
     The only property of three-dimensional rotations required below is therefore that **rotations about
     different axes do not commute**.[^noncommute]
 
-    [^noncommute]: For small rotations the mismatch can be computed exactly: rotating by $\epsilon$ about $x$,
-        then $\epsilon$ about $y$, then back about $x$ and back about $y$ gives a rotation of approximately
-        $\epsilon^2$ about $z$. This is the group-level form of the commutation relation
-        $[J_x, J_y]=iJ_z$. The calculation, and a check that it holds for every spin, are in the companion
-        notebook `archived_commutator_loop_and_ladder.py`.
+    [^noncommute]: The loop of small turns above is the group-level form of the commutation relation
+        $[J_x, J_y]=iJ_z$. Section 2 turns it into that equation, and a check that it holds for every spin is in the
+        companion notebook `archived_commutator_loop_and_ladder.py`.
     """)
     return
 
@@ -467,6 +561,56 @@ def _(axis_choice, latex_matrix, mo, np, rotation_matrix_so3):
         f"Eigenvalues of $J_{axis_choice.value}$: **{', '.join(f'{x:+.0f}' for x in _ev)}**\n\n"
         "The eigenvalues, which are the possible measured values of spin along the chosen axis, are the same "
         "for every axis, as expected since no direction in space is special."
+    )
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    **The commutation rule.** Section 1 found that a loop of four small turns about $x$ and $y$ leaves a turn about $z$ of
+    about $\epsilon^2$. The $J$ matrices turn this into an equation. Write each small turn as
+    $R(\epsilon)=e^{-i\epsilon J}\approx 1-i\epsilon J-\tfrac12\epsilon^2J^2$ and multiply the four factors of the loop,
+    the right one acting first as in the figure:
+
+    $$R_x(\epsilon)\,R_y(\epsilon)\,R_x(-\epsilon)\,R_y(-\epsilon).$$
+
+    Collect the terms up to order $\epsilon^2$ (higher orders are left out). The terms with a single $J$ cancel in
+    pairs, and so do the terms with $J_x^2$ and $J_y^2$. What is left is
+
+    $$R_xR_yR_x^{-1}R_y^{-1}\approx 1-\epsilon^2\,(J_xJ_y-J_yJ_x).$$
+
+    The combination $J_xJ_y-J_yJ_x$ is the **commutator** of $J_x$ and $J_y$, written $[J_x,J_y]$. It is zero for numbers,
+    and for rotations in a plane, and it measures how much the order matters. Section 1 says that the same loop is a turn
+    about $z$ through $\epsilon^2$, $R_z(\epsilon^2)\approx1-i\epsilon^2J_z$. Comparing the two,
+
+    $$[J_x,J_y]=iJ_z,\qquad\text{and in the same way}\qquad[J_y,J_z]=iJ_x,\quad[J_z,J_x]=iJ_y .$$
+
+    The factor $i$ comes from the $-i$ in $R=e^{-i\epsilon J}$. The relation says nothing about the size of the
+    matrices: any three matrices, of any size, that obey it describe a way for a state to rotate. This is how section 5
+    finds the $2\times2$ matrices of spin 1/2. The cell below checks the relation for the $3\times3$ matrices of this
+    section, and for matrices of other sizes.
+    """)
+    return
+
+
+@app.cell
+def _(latex_matrix, mo, np, rotation_matrix_so3, spin_matrices):
+    _h = 1e-5
+    _js = [
+        1j * (rotation_matrix_so3(_a, _h) - rotation_matrix_so3(_a, -_h)) / (2 * _h)
+        for _a in [(1, 0, 0), (0, 1, 0), (0, 0, 1)]
+    ]
+    _comm = _js[0] @ _js[1] - _js[1] @ _js[0]
+    _rows = ["| size of $J$ | spin | distance between $[J_x,J_y]$ and $iJ_z$ |", "|---|---|---|"]
+    for _j in (0.5, 1, 1.5, 2):
+        _jx, _jy, _jz = spin_matrices(_j)
+        _n = int(round(2 * _j + 1))
+        _rows.append(f"| ${_n}\\times{_n}$ | ${_j:g}$ | {np.linalg.norm(_jx @ _jy - _jy @ _jx - 1j * _jz):.0e} |")
+    mo.md(
+        "For the $3\\times3$ matrices of this section, from the rotation matrices of section 1:\n\n"
+        "$$[J_x,J_y]=" + latex_matrix(_comm) + r"\qquad iJ_z=" + latex_matrix(1j * _js[2]) + "$$\n\n"
+        "For matrices of other sizes (built in section 5 and the archive):\n\n" + "\n".join(_rows)
     )
     return
 
@@ -1190,8 +1334,9 @@ def _(mo):
     multiplying out $Q\,U_z\,Q^{-1}$.[^convention]
 
     [^pauli_comm]: The same matrices follow from the commutation relations $[J_x,J_y]=iJ_z$ (and its cyclic
-        permutations), which the $3\times3$ matrices $J$ of section 2 satisfy, together with $J_z=\mathrm{diag}(\tfrac12,-\tfrac12)$.
-        The derivation is in the companion notebook `archived_commutator_loop_and_ladder.py`.
+        permutations), which the $3\times3$ matrices $J$ of section 2 satisfy (the end of section 2 derives the relation), together with
+        $J_z=\mathrm{diag}(\tfrac12,-\tfrac12)$. The ladder-operator derivation is in the companion notebook
+        `archived_commutator_loop_and_ladder.py`.
 
     [^convention]: These matrices turn the state through $\alpha$. Some texts instead turn the coordinate axes
         through $\alpha$, which is the same as turning the state through $-\alpha$. Each matrix is then replaced
@@ -1368,6 +1513,48 @@ def _(
 
     _fig.tight_layout()
     _fig
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    **The same rotation as a cycle.** Section 1 followed four quarter turns of the number $i$. A state of definite $m_s$ is
+    multiplied by $e^{-im_s\alpha}$ when it is turned through $\alpha$, so one quarter turn ($90^\circ$) multiplies it
+    by $e^{-im_s\pi/2}$. For $m_s=1$ this is $-i$: the cycle of section 1 run in the opposite direction,
+    $1\to-i\to-1\to i\to1$, again four steps. For $m_s=\tfrac12$ one quarter turn multiplies by $e^{-i\pi/4}$, an
+    eighth of a full circle, so the cycle takes **eight** quarter turns to come back to $1$, and four quarter turns
+    ($2\pi$) land on $-1$. The cycle for half-integer spin is twice as long: the $4\pi$ rotation of the belt trick
+    appears here as a cyclic group of order 8 instead of order 4. For $m_s=2$ the cycle has only two steps.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    cycle_m = mo.ui.dropdown(options={"m_s = 1": 1, "m_s = 2": 2, "m_s = 1/2": 0.5}, value="m_s = 1", label="spin component")
+    cycle_k = mo.ui.slider(0, 8, step=1, value=0, label="number of quarter turns", full_width=True)
+    mo.vstack([cycle_m, cycle_k])
+    return cycle_k, cycle_m
+
+
+@app.cell
+def _(cycle_figure, cycle_k, cycle_length, cycle_m, mo, np, plt):
+    _m, _k = cycle_m.value, int(cycle_k.value)
+    _n = cycle_length(_m)
+    _f = np.exp(-1j * _m * np.pi / 2 * _k)
+    _fig = cycle_figure(_m, _k)
+    _text = (
+        f"The cycle has length **{_n}**: the factor is back at $1$ after {_n} quarter turns. After {_k} quarter turns "
+        f"($\\alpha={90 * _k}^\\circ$) it is **{_f.real:+.2f}{_f.imag:+.2f}i**."
+    )
+    if _k and _k % _n == 0:
+        _text += " This is $+1$, back at the start."
+    elif _k and abs(_f + 1) < 1e-9:
+        _text += " This is $-1$: a sign change, not yet back at the start."
+    _out = mo.vstack([_fig, mo.md(_text)])
+    plt.close(_fig)
+    _out
     return
 
 

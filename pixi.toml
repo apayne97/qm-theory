@@ -1,0 +1,26 @@
+[workspace]
+name = "qm-theory"
+channels = ["conda-forge"]
+platforms = ["osx-arm64"]
+
+[dependencies]
+python = "3.12.*"
+numpy = "*"
+matplotlib = "*"
+marimo = "*"
+click = "*"
+pytest = "*"
+
+# `pixi run -e compute ...` adds PySCF, for dft/compute_dft_data.py (the notebooks only read its JSON output).
+[feature.compute.dependencies]
+pyscf = "*"
+
+[environments]
+compute = ["compute"]
+
+[tasks]
+test = "python -m pytest -q"
+# Read-only gallery of every notebook (code hidden), at http://localhost:4871 (4444 and 4455 are taken by other apps).
+notebooks = "marimo run --headless --no-token --port 4871 dft standing_waves quantization plane_waves oscillator spinors polarization field_quanta"
+# File browser for editing, like JupyterLab's file view: http://localhost:4872
+edit-all = "marimo edit --headless --no-token --port 4872 ."
