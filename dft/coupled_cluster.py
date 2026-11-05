@@ -106,7 +106,7 @@ def _(mo):
 
     $$
     \Psi_{\text{FCI}} = c_0\,\Phi_0 + \sum_{ia} c_i^a\,\Phi_i^a + \sum_{i<j,\,a<b} c_{ij}^{ab}\,\Phi_{ij}^{ab}
-    + \sum c_{ijk}^{abc}\,\Phi_{ijk}^{abc} + \cdots,
+    {}+ \sum c_{ijk}^{abc}\,\Phi_{ijk}^{abc} + \cdots,
     $$
 
     and finding the coefficients is called **full configuration interaction (FCI)**: write the Hamiltonian as a matrix
@@ -114,7 +114,8 @@ def _(mo):
     $E_{\text{corr}} = E_{\text{FCI}} - E_{\text{HF}}$, the energy that the single determinant misses.
 
     The cost is the problem. The number of determinants for $N_\alpha$ up-spin and $N_\beta$ down-spin electrons in $M$
-    spatial orbitals is $\binom{M}{N_\alpha}\binom{M}{N_\beta}$, which grows faster than any power of $M$. Below, the
+    spatial orbitals is $\binom{M}{N_\alpha}\binom{M}{N_\beta}$, which grows exponentially when the number of electrons grows with the
+    basis, as it does for a larger molecule in a larger basis. Below, the
     count for water ($N_\alpha=N_\beta=5$) in the basis sets used in this notebook.
     """)
     return
@@ -144,7 +145,7 @@ def _(cc_data, ci_solve, determinant_growth_figure, excitation_level_weights, fc
             f"The weights show what a good approximation must capture. The reference determinant carries "
             f"{100 * _w[0]:.1f}% of the wave function, the double excitations almost all of the remainder "
             f"({100 * _w[2]:.2f}%), and singles, triples and quadruples together about {100 * (_w[1] + _w[3] + _w[4]):.2f}%. "
-            f"(Singles are small because Hartree-Fock orbitals are already the best single-determinant ones; they do "
+            f"(Singles are small because of Brillouin's theorem: in a CI calculation a single excitation does not couple directly to the Hartree-Fock determinant. They do "
             f"matter once the doubles are present.) So most of the exact answer is *the reference plus pairs of electrons "
             f"moved together*. The question for the next two sections is how to keep the doubles and drop the rest "
             f"without breaking something else."
@@ -184,7 +185,7 @@ def _(mo):
 
 
 @app.cell
-def _(ci_solve, ccsd, combine_noninteracting, mo, mp2_energy, res_h2, sys_h2):
+def _(HA2KCAL, ci_solve, ccsd, combine_noninteracting, mo, mp2_energy, res_h2, sys_h2):
     pair = combine_noninteracting(sys_h2, sys_h2)
     _one_cisd = ci_solve(sys_h2, level=2)["e_corr"]
     _two_cisd = ci_solve(pair, level=2)["e_corr"]
@@ -203,7 +204,7 @@ def _(ci_solve, ccsd, combine_noninteracting, mo, mp2_energy, res_h2, sys_h2):
         "\n".join(_rows) + f"""
 
 **Checked here.** The Hartree-Fock energy of the pair is exactly twice that of one molecule. MP2, CCSD and FCI are additive. CISD
-is not: the pair comes out {1000 * (_two_cisd - 2 * _one_cisd):.2f} mHa too high ({(_two_cisd - 2 * _one_cisd) * 627.5:.2f} kcal/mol), an error
+is not: the pair comes out {1000 * (_two_cisd - 2 * _one_cisd):.2f} mHa too high ({(_two_cisd - 2 * _one_cisd) * HA2KCAL:.2f} kcal/mol), an error
 for molecules that do not touch. (For one H$_2$, which has two electrons, CISD is exact, so the one-molecule columns of CISD, CCSD and FCI agree.)
 CCSD, the method of the next section, is additive to $10^{{-9}}$ Ha and equals FCI for the pair.
 """
@@ -237,7 +238,7 @@ def _(mo):
     writes the wave function as an exponential of excitation operators.
 
     **Excitation operators.** Let $a_p^\dagger$ put an electron into the spin orbital $p$ and $a_p$ remove one from it.
-    The operator that makes all single excitations, each with its own number (an **amplitude**) $t_i^a$, is
+    Here $a_a^\dagger a_i$ removes an electron from $i$ and puts it into $a$. The operator that makes all single excitations, each with its own number (an **amplitude**) $t_i^a$, is
     $\hat T_1$, and the one for double excitations, with amplitudes $t_{ij}^{ab}$, is $\hat T_2$:
 
     $$
@@ -335,7 +336,7 @@ def _(mo):
 
     where $h_{pq}$ holds the kinetic energy of an electron and its attraction to the nuclei, and
     $\langle pq\vert rs\rangle=\iint\chi_p^*(1)\chi_q^*(2)\,r_{12}^{-1}\,\chi_r(1)\chi_s(2)\,d1\,d2$ is the repulsion between two
-    electrons (a pair in $p,q$ going to $r,s$). The combination $\langle pq\Vert rs\rangle$, called the **antisymmetrised
+    electrons (the pair in $r,s$ scattered into $p,q$). The combination $\langle pq\Vert rs\rangle$, called the **antisymmetrised
     integral**, builds the exchange term in at once. The Fock matrix is $f_{pq}=h_{pq}+\sum_k\langle pk\Vert qk\rangle$ (sum over
     occupied $k$). With Hartree-Fock orbitals $f$ is diagonal, $f_{pp}=\varepsilon_p$ (the orbital energies), and
     $f_{ia}=0$.
@@ -373,7 +374,7 @@ def _(mo):
     since there are no triples amplitudes to fix.
 
     These projected equations do not minimise the energy, so unlike CISD the coupled cluster energy is not an upper
-    bound to the exact energy (*from memory*; section 8 shows an example where it goes below the exact value).
+    bound to the exact energy (*from memory*; section 8 shows CCSD(T) going below the exact value for stretched water, which a non-variational method is allowed to do).
     That choice is what keeps the equations finite, as the next step shows.
 
     ### Step 4. Expand $\bar H$: the series stops
@@ -382,8 +383,8 @@ def _(mo):
 
     $$
     \bar H = \hat H + [\hat H,\hat T] + \frac1{2!}\bigl[[\hat H,\hat T],\hat T\bigr]
-    + \frac1{3!}\Bigl[\bigl[[\hat H,\hat T],\hat T\bigr],\hat T\Bigr]
-    + \frac1{4!}\Bigl[\Bigl[\bigl[[\hat H,\hat T],\hat T\bigr],\hat T\Bigr],\hat T\Bigr] .
+    {}+ \frac1{3!}\Bigl[\bigl[[\hat H,\hat T],\hat T\bigr],\hat T\Bigr]
+    {}+ \frac1{4!}\Bigl[\Bigl[\bigl[[\hat H,\hat T],\hat T\bigr],\hat T\Bigr],\hat T\Bigr] .
     $$
 
     The general series would go on forever, but here it **ends after the fourth commutator** (*from memory*). A commutator
@@ -401,8 +402,8 @@ def _(mo):
     E_{\text{CC}} = E_{\text{HF}} + E_{\text{corr}},
     \qquad
     E_{\text{corr}} = \sum_{ia} f_{ia}\,\textcolor{#6B913C}{t_i^a}
-    + \frac14\sum_{ijab}\langle ij\Vert ab\rangle\,\textcolor{#F14124}{t_{ij}^{ab}}
-    + \frac12\sum_{ijab}\langle ij\Vert ab\rangle\,\textcolor{#6B913C}{t_i^a}\textcolor{#6B913C}{t_j^b} .
+    {}+ \frac14\sum_{ijab}\langle ij\Vert ab\rangle\,\textcolor{#F14124}{t_{ij}^{ab}}
+    {}+ \frac12\sum_{ijab}\langle ij\Vert ab\rangle\,\textcolor{#6B913C}{t_i^a}\textcolor{#6B913C}{t_j^b} .
     $$
 
     The first sum is zero for Hartree-Fock orbitals. Knowing the amplitudes gives the energy directly; all the work is in the
@@ -423,13 +424,13 @@ def _(mo):
     \begin{aligned}
     \bigl(\varepsilon_i+\varepsilon_j-\varepsilon_a-\varepsilon_b\bigr)\,t_{ij}^{ab}
     &= \langle ij\Vert ab\rangle
-    + \tfrac12\sum_{cd}\langle ab\Vert cd\rangle\,t_{ij}^{cd}
-    + \tfrac12\sum_{kl}\langle kl\Vert ij\rangle\,t_{kl}^{ab}
-    + P(ij)P(ab)\sum_{kc}\langle kb\Vert cj\rangle\,t_{ik}^{ac}\\
+    {}+ \tfrac12\sum_{cd}\langle ab\Vert cd\rangle\,t_{ij}^{cd}
+    {}+ \tfrac12\sum_{kl}\langle kl\Vert ij\rangle\,t_{kl}^{ab}
+    {}+ P(ij)P(ab)\sum_{kc}\langle kb\Vert cj\rangle\,t_{ik}^{ac}\\
     &\quad + \tfrac14\sum_{klcd}\langle kl\Vert cd\rangle\,t_{ij}^{cd}\,t_{kl}^{ab}
-    - \tfrac12\,P(ab)\sum_{klcd}\langle kl\Vert cd\rangle\,t_{ij}^{ac}\,t_{kl}^{bd}\\
+    {}- \tfrac12\,P(ab)\sum_{klcd}\langle kl\Vert cd\rangle\,t_{ij}^{ac}\,t_{kl}^{bd}\\
     &\quad - \tfrac12\,P(ij)\sum_{klcd}\langle kl\Vert cd\rangle\,t_{ik}^{ab}\,t_{jl}^{cd}
-    - \tfrac12\,P(ij)P(ab)\sum_{klcd}\langle kl\Vert cd\rangle\,t_{ik}^{ac}\,t_{jl}^{db} .
+    {}- \tfrac12\,P(ij)P(ab)\sum_{klcd}\langle kl\Vert cd\rangle\,t_{ik}^{ac}\,t_{jl}^{db} .
     \end{aligned}
     $$
 
@@ -462,14 +463,14 @@ def _(mo):
     $$
     \begin{aligned}
     F_{ae} &= (1-\delta_{ae})f_{ae} - \tfrac12\sum_m f_{me}t_m^a + \sum_{mf}t_m^f\langle ma\Vert fe\rangle
-      - \tfrac12\sum_{mnf}\tilde\tau_{mn}^{af}\langle mn\Vert ef\rangle ,\\
+      {}- \tfrac12\sum_{mnf}\tilde\tau_{mn}^{af}\langle mn\Vert ef\rangle ,\\
     F_{mi} &= (1-\delta_{mi})f_{mi} + \tfrac12\sum_e t_i^e f_{me} + \sum_{ne}t_n^e\langle mn\Vert ie\rangle
-      + \tfrac12\sum_{nef}\tilde\tau_{in}^{ef}\langle mn\Vert ef\rangle ,\\
+      {}+ \tfrac12\sum_{nef}\tilde\tau_{in}^{ef}\langle mn\Vert ef\rangle ,\\
     F_{me} &= f_{me} + \sum_{nf}t_n^f\langle mn\Vert ef\rangle ,\\
     W_{mnij} &= \langle mn\Vert ij\rangle + P(ij)\sum_e t_j^e\langle mn\Vert ie\rangle + \tfrac14\sum_{ef}\tau_{ij}^{ef}\langle mn\Vert ef\rangle ,\\
     W_{abef} &= \langle ab\Vert ef\rangle - P(ab)\sum_m t_m^b\langle am\Vert ef\rangle + \tfrac14\sum_{mn}\tau_{mn}^{ab}\langle mn\Vert ef\rangle ,\\
     W_{mbej} &= \langle mb\Vert ej\rangle + \sum_f t_j^f\langle mb\Vert ef\rangle - \sum_n t_n^b\langle mn\Vert ej\rangle
-      - \sum_{nf}\bigl(\tfrac12 t_{jn}^{fb}+t_j^ft_n^b\bigr)\langle mn\Vert ef\rangle .
+      {}- \sum_{nf}\bigl(\tfrac12 t_{jn}^{fb}+t_j^ft_n^b\bigr)\langle mn\Vert ef\rangle .
     \end{aligned}
     $$
 
@@ -478,13 +479,13 @@ def _(mo):
     $$
     \begin{aligned}
     D_i^a\,\textcolor{#6B913C}{t_i^a} &= f_{ia} + \sum_e t_i^eF_{ae} - \sum_m t_m^aF_{mi} + \sum_{me}t_{im}^{ae}F_{me}
-      - \sum_{nf}t_n^f\langle na\Vert if\rangle - \tfrac12\sum_{mef}t_{im}^{ef}\langle ma\Vert ef\rangle
-      - \tfrac12\sum_{men}t_{mn}^{ae}\langle nm\Vert ei\rangle ,\\[4pt]
+      {}- \sum_{nf}t_n^f\langle na\Vert if\rangle - \tfrac12\sum_{mef}t_{im}^{ef}\langle ma\Vert ef\rangle
+      {}- \tfrac12\sum_{men}t_{mn}^{ae}\langle nm\Vert ei\rangle ,\\[4pt]
     D_{ij}^{ab}\,\textcolor{#F14124}{t_{ij}^{ab}} &= \langle ij\Vert ab\rangle
-      + P(ab)\sum_e t_{ij}^{ae}\bigl(F_{be}-\tfrac12\sum_m t_m^bF_{me}\bigr)
-      - P(ij)\sum_m t_{im}^{ab}\bigl(F_{mj}+\tfrac12\sum_e t_j^eF_{me}\bigr)\\
+      {}+ P(ab)\sum_e t_{ij}^{ae}\bigl(F_{be}-\tfrac12\sum_m t_m^bF_{me}\bigr)
+      {}- P(ij)\sum_m t_{im}^{ab}\bigl(F_{mj}+\tfrac12\sum_e t_j^eF_{me}\bigr)\\
     &\quad + \tfrac12\sum_{mn}\tau_{mn}^{ab}W_{mnij} + \tfrac12\sum_{ef}\tau_{ij}^{ef}W_{abef}
-      + P(ij)P(ab)\sum_{me}\bigl(t_{im}^{ae}W_{mbej} - t_i^et_m^a\langle mb\Vert ej\rangle\bigr)\\
+      {}+ P(ij)P(ab)\sum_{me}\bigl(t_{im}^{ae}W_{mbej} - t_i^et_m^a\langle mb\Vert ej\rangle\bigr)\\
     &\quad + P(ij)\sum_e t_i^e\langle ab\Vert ej\rangle - P(ab)\sum_m t_m^a\langle mb\Vert ij\rangle .
     \end{aligned}
     $$
@@ -500,7 +501,7 @@ def _(mo):
 
     1. Start from $t_i^a=0$ and the MP2 amplitudes $t_{ij}^{ab}=\langle ij\Vert ab\rangle/D_{ij}^{ab}$.
     2. Evaluate the right-hand side with the current amplitudes (the intermediates first, then the two equations) and divide by $D$. These are the new amplitudes.
-    3. Compute $E_{\text{corr}}$ from step 5; stop when it changes by less than $10^{-10}$ Ha, otherwise go back to 2.
+    3. Compute $E_{\text{corr}}$ from step 5; stop when it changes by less than $10^{-10}$ Ha and the amplitudes have also stopped changing (the code requires the change in the amplitudes to be below $10^{-7}$), otherwise go back to 2.
 
     The first energy of the iteration is the MP2 energy, so the iteration can be read as MP2 improved until the pairs
     are consistent with each other. Mixing the last few iterates with a least-squares weighting (DIIS, *from memory*
@@ -538,7 +539,8 @@ def _(HA2KCAL, cc_data, convergence_figure, mo, res_h2, res_w1, res_w2, res_w2_p
             f"**Checked here.** For water in 6-31G the numpy CCSD correlation energy is {res_w2['e_corr']:.8f} Ha "
             f"({res_w2['e_corr'] * HA2KCAL:.2f} kcal/mol) and agrees with PySCF's CCSD to {abs(res_w2['e_corr'] - cc_data['systems']['water_631g']['e_ccsd_corr']):.0e} Ha; "
             f"the tests require $10^{{-8}}$ Ha for all three systems. The agreement tests the intermediates and every term of the equations "
-            f"in the singles and doubles, since one wrong sign would move the energy by far more than that. The plain iteration takes "
+            f"that is non-zero for Hartree-Fock orbitals, since one wrong sign there would move the energy by far more than that. The terms containing "
+            f"$f_{{ia}}$ or the off-diagonal Fock elements vanish for these orbitals and are therefore not tested. The plain iteration takes "
             f"{res_w2_plain['iterations']} steps and the DIIS-mixed one {res_w2['iterations']}, with the same energy."
         ),
         convergence_figure(res_w2["history"], res_w2_plain["history"]),
@@ -552,7 +554,7 @@ def _(mo):
     ## 6. The (T) correction
 
     CCSD contains triple excitations only as products of singles and doubles (section 3). The *connected* triples, the
-    ones that need their own amplitudes $t_{ijk}^{abc}$, are missing, and they are the largest correction left at
+    ones that need their own amplitudes $t_{ijk}^{abc}$, are missing, and they are (*from memory*) the largest correction left at
     the usual single-reference level. Solving for them properly (CCSDT) is much more expensive, so the standard
     compromise is **CCSD(T)**: solve CCSD first, then estimate the connected triples by perturbation theory *once*, from the
     converged $t_i^a$ and $t_{ij}^{ab}$ (*from memory*: the "T" in parentheses means "perturbative").
@@ -570,7 +572,7 @@ def _(mo):
     $$
 
     In words: a triple excitation is reached from a double by adding one more excited electron through the integrals
-    (the two terms of the connected part: one virtual orbital replaced by two, or one occupied replaced by two); the energy
+    (the two terms of the connected part: a double excitation, with one more electron excited through $\langle bc\Vert di\rangle$ or $\langle la\Vert jk\rangle$); the energy
     is the square of that amplitude weighted by the denominator, the usual second-order form, plus a cross term with the
     disconnected piece. The factor $\tfrac1{36}=\bigl(\tfrac1{3!}\bigr)^2$ undoes the over-counting of orderings of $ijk$ and $abc$.
     The correction is computed once at the end, and not iterated, so it is called *non-iterative*.
@@ -613,24 +615,24 @@ def _(mo, np, scaling_figure, cc_data):
         ## 7. What it costs
 
         The number of operations for a method is set by the number of orbital labels in its most expensive sum. With $o$ occupied
-        and $v$ virtual orbitals, and $N=o+v$ the number of basis functions (for a molecule in a fixed type of basis, $o$ and $v$ grow in
+        and $v$ virtual orbitals, and $N=o+v$ the number of basis functions (in this section $N$ is not the number of electrons of section 1) (for a molecule in a fixed type of basis, $o$ and $v$ grow in
         proportion to $N$):
 
         | Method | Most expensive step | Cost as a function of $N$ | Source of the exponent |
         |---|---|---|---|
         | HF | two-electron integrals, Fock build | formally $N^4$, less with screening | memory |
         | DFT (hybrid) | same plus the grid | about $N^3$ to $N^4$ | memory |
-        | MP2 | transform integrals, then $o^2v^2$ amplitudes | $N^5$ | memory |
+        | MP2 | transform the integrals to the orbital basis (the amplitudes themselves cost only $o^2v^2$) | $N^5$ | memory |
         | CCSD | $\tfrac12\sum_{ef}\tau_{ij}^{ef}W_{abef}$ ($o^2v^4$), per iteration | $N^6$ | checked: counted from the sums above |
         | CCSD(T) | $t_{ijk}^{abc}$: $o^3v^3$ elements, each a sum over $v$ or $o$ terms ($o^3v^4$), once | $N^7$ | checked: counted from the sums above |
-        | FCI | all determinants | factorial: $\binom{M}{N_\alpha}\binom{M}{N_\beta}$ | checked: section 1 |
+        | FCI | all determinants | exponential: $\binom{M}{N_\alpha}\binom{M}{N_\beta}$ | checked: section 1 |
 
         So doubling the system size multiplies the cost of CCSD by about $2^6=64$ and of CCSD(T) by about $2^7=128$,
         against 8 to 16 for DFT. Memory matters as much as time: CCSD stores arrays with four virtual indices
         ($v^4$ numbers, *from memory* the usual bottleneck).
 
-        Left: the counts $o^2v^3$, $o^2v^4$ and $o^3v^4$ for a molecule that grows with $v=4o$ (water in a double-zeta basis has
-        $o=5$, $v=19$); FCI, whose count is in section 1, would lie far above them. Right: wall-clock time of one iteration of *this notebook's*
+        Left: the counts $oN^4$ (MP2 integral transformation), $o^2v^4$ and $o^3v^4$ for a molecule that grows with $v=4o$ (water in the double-zeta basis cc-pVDZ has
+        $o=5$, $v=19$ spatial orbitals, so $v=4o$ is a rough idealisation; the 6-31G basis used above has $v=8$); FCI, whose count is in section 1, would lie far above them. Right: wall-clock time of one iteration of *this notebook's*
         numpy code, and of the (T) evaluation, for eight occupied spin orbitals and a growing number of virtual ones.
         """),
         scaling_figure(cc_data["timing"]),
@@ -726,9 +728,10 @@ def _(disp_data, interaction_figure, ladder_data, mo):
             f"is the correlated motion of electrons in the two molecules, which a single determinant cannot describe. CCSD(T) gives "
             f"{disp_data['ccsdt']['cp']:+.2f} kcal/mol, attractive. The difference between a functional with a dispersion term and without, "
             f"in the DFT notebook section 7, is the density-functional counterpart of what the doubles amplitudes of this notebook "
-            f"capture: the pair of electrons on one molecule and the pair on the other moving in step. In the amplitude "
-            f"language of section 4 it is the *double excitations on the two molecules at the same time*, which appear in CCSD "
-            f"through the products of section 3."
+            f"capture: an electron on one molecule and an electron on the other moving in step. In the amplitude "
+            f"language of section 4 it is a *connected double excitation with one electron excited on each molecule*, which is already "
+            f"present in the MP2 amplitudes. (The product of a double on each molecule, the quadruple of section 3, is the disconnected term "
+            f"that makes the method size consistent; it does not contribute to the interaction energy.)"
         ),
     ])
     return
@@ -744,7 +747,7 @@ def _(ladder_summary, mo):
     - **From memory, not tested here:** the cost exponents of HF, DFT and MP2 ($N^4$, $N^3$ to $N^4$, $N^5$), that DIIS is the
       usual acceleration, that the equations end at fourth order (the argument is given in section 4, but the full
       term-by-term expansion was not redone; only the *result* is tested, by the agreement with PySCF), that the memory
-      is dominated by arrays with four virtual indices, and the statement that CCSD(T) reaches a fraction of a kcal/mol for
+      is dominated by arrays with four virtual indices, and the statement that the connected triples are the largest correction left after CCSD, and the statement that CCSD(T) reaches a fraction of a kcal/mol for
       interaction energies in large basis sets.
     - **Small cases only:** the accuracy ladder is for one molecule (water) in the 6-31G basis, and the size-consistency
       demonstration is for H$_2$ pairs, where the exact answer is available. Neither says how large the errors are for
@@ -761,10 +764,10 @@ def _(ladder_summary, mo):
 
     ### Four lines for a slide
 
-    1. Hartree-Fock misses the correlation energy; the exact answer needs every excitation from $\\Phi_0$ and costs a factorial number of determinants.
+    1. Hartree-Fock misses the correlation energy; the exact answer needs every excitation from $\\Phi_0$ and costs a number of determinants that grows exponentially.
     2. Truncating the excitations (CISD) is not size consistent; writing the wave function as $e^{{\\hat T}}\\Phi_0$ with $\\hat T=\\hat T_1+\\hat T_2$ is.
     3. The amplitudes follow from projecting $e^{{-\\hat T}}\\hat H e^{{\\hat T}}\\Phi_0=E\\Phi_0$; the series ends at fourth order, and the cost is $N^6$ for CCSD and $N^7$ with the perturbative triples (T).
-    4. In water, 6-31G, CCSD(T) recovers {ladder_summary['ccsdt']:.1f}% of the exact correlation energy (MP2 {ladder_summary['mp2']:.0f}%), which is why it is the reference for the dimers, where dispersion is a correlation effect that Hartree-Fock cannot give.
+    4. In water, 6-31G, CCSD(T) recovers {ladder_summary['ccsdt']:.1f}% of the exact correlation energy (MP2 {ladder_summary['mp2']:.0f}%), one reason it is the reference for the dimers (in the large basis sets used there the case rests on accuracy that is *from memory*), where dispersion is a correlation effect that Hartree-Fock cannot give.
     """)
     return
 

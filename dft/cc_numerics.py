@@ -418,12 +418,12 @@ def fci_dimension(n_orbitals, n_alpha, n_beta):
 def operation_counts(n_occ, n_virt):
     """Leading-term operation counts (up to a constant factor) per method, for n_occ occupied and n_virt virtual orbitals.
 
-    mp2   : o^2 v^3, the correlation step alone (the integral transformation, one power of N more, is not included)
+    mp2   : o N^4 with N = o + v, the integral transformation that dominates MP2 (the correlation step itself is o^2 v^2)
     ccsd  : o^2 v^4 per iteration (the particle-particle ladder term)
     ccsd(t): o^3 v^4, once (the (T) correction)
     """
     o, v = n_occ, n_virt
-    return {"mp2": o**2 * v**3, "ccsd": o**2 * v**4, "ccsd(t)": o**3 * v**4}
+    return {"mp2": o * (o + v)**4, "ccsd": o**2 * v**4, "ccsd(t)": o**3 * v**4}
 
 
 # --------------------------------------------------------------------------------------------------------------

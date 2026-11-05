@@ -67,3 +67,25 @@ def test_computed_numbers_are_consistent():
     # density at the oxygen nucleus is the largest value on the line
     line = scf["line"]
     assert max(line["rho"]) == pytest.approx(line["rho"][int(np.argmin(np.abs(np.array(line["s_bohr"]))))], rel=0.3)
+
+
+@pytest.mark.skipif(not (HERE / "data_opls5.json").exists(), reason="run compute_dft_data.py opls5 first")
+def test_opls5_numbers():
+    d = load("opls5")
+    # exchange parameters of the family (Chai/Head-Gordon, Lin et al.) as reported by libxc
+    assert d["rsh"]["wB97X-D3"]["omega"] == pytest.approx(0.25)
+    assert d["rsh"]["wB97X-D3"]["short_range"] == pytest.approx(0.195728, abs=1e-6)
+    assert d["rsh"]["wB97X-D"]["omega"] == pytest.approx(0.2)
+    assert all(v["long_range"] == pytest.approx(1.0) for v in d["rsh"].values())
+    # probe charge reproduces Table 1 of the OPLS5 preprint (printed to 0.1 kcal/mol)
+    for z, ref in d["probe"]["paper_QM"].items():
+        assert d["probe"]["computed"][z] == pytest.approx(ref, abs=0.05)
+    # removing f shells from benzene takes out 7 functions per carbon
+    bz = d["benzene"]
+    assert bz["def2-TZVPD"]["n_basis"] - bz["def2-TZVPD(-f)"]["n_basis"] == 6 * 7
+    # Pople counts for benzene: 6-31+G* = 6*18 + 6*2, 6-311++G** = 6*22 + 6*7 (spherical d)
+    assert bz["6-31+G*"]["n_basis"] == 6 * 18 + 6 * 2
+    assert bz["6-311++G**"]["n_basis"] == 6 * 22 + 6 * 7
+    # both Pt ECPs replace 60 of Pt's 78 electrons
+    for v in d["pt_complex"].values():
+        assert v["n_electrons_all"] - v["n_electrons"] == 60

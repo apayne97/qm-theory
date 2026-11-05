@@ -107,7 +107,7 @@ def convergence_figure(history_diis, history_plain):
         ax.semilogy(np.arange(len(err)), err, style, color=colour, ms=4, label=label)
     ax.set_xlabel("iteration (0 = MP2 amplitudes)")
     ax.set_ylabel("|E − E(final)| (hartree)")
-    ax.set_title("Water (6-31G): the amplitude iteration converges in a few steps", fontsize=10)
+    ax.set_title("Water (6-31G): the amplitude iteration converges in about 13 steps (24 without DIIS)", fontsize=10)
     ax.legend()
     ax.grid(alpha=0.3)
     fig.tight_layout()
@@ -119,7 +119,7 @@ def scaling_figure(timing):
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(9.6, 3.6))
     o = np.arange(2, 40)
     v = 4 * o
-    ax1.loglog(o, o**2 * v**3.0, color=METHOD_COLORS["MP2"], label=r"MP2: $o^2v^3\propto o^5$")
+    ax1.loglog(o, o * (o + v)**4.0, color=METHOD_COLORS["MP2"], label=r"MP2, integral transformation: $oN^4\propto o^5$")
     ax1.loglog(o, o**2 * v**4.0, color=METHOD_COLORS["CCSD"], label=r"CCSD per iteration: $o^2v^4\propto o^6$")
     ax1.loglog(o, o**3 * v**4.0, color=METHOD_COLORS["CCSD(T)"], label=r"CCSD(T), once: $o^3v^4\propto o^7$")
     ax1.set_xticks([2, 5, 10, 20, 40], ["2", "5", "10", "20", "40"])
