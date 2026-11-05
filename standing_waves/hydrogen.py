@@ -388,21 +388,31 @@ def bessel_zeros(m, count):
 
 
 def drum_mode(m, k, r, phi):
-    """Real drum mode J_m(j_{m,k} r) cos(m phi) on the unit disc (zero on the rim r = 1)."""
-    return bessel_j(m, bessel_zeros(m, k)[-1] * np.asarray(r, dtype=float)) * np.cos(m * np.asarray(phi, dtype=float))
+    """Real drum mode J_|m|(j_{|m|,k} r) cos(|m| phi) for m >= 0 and J_|m|(j_{|m|,k} r) sin(|m| phi) for m < 0, on the
+    unit disc (zero on the rim r = 1). The two signs are the same shape turned by a quarter of the period 2 pi/|m|."""
+    a = abs(m)
+    trig = np.cos if m >= 0 else np.sin
+    return bessel_j(a, bessel_zeros(a, k)[-1] * np.asarray(r, dtype=float)) * trig(a * np.asarray(phi, dtype=float))
 
 
 def drum_frequency(m, k):
-    """Frequency of the mode in units where the lowest (m = 0, k = 1) is 2.405: it equals j_{m,k}."""
-    return float(bessel_zeros(m, k)[-1])
+    """Frequency of the mode in units where the lowest (m = 0, k = 1) is 2.405: it equals j_{|m|,k}."""
+    return float(bessel_zeros(abs(m), k)[-1])
 
 
 def drum_nodes(m, k):
-    """(radii of the nodal circles, angles in [0, pi) of the nodal diameters): k - 1 circles and m diameters.
-    The rim is held fixed and is not counted."""
-    z = bessel_zeros(m, k)
+    """(radii of the nodal circles, angles in [0, pi) of the nodal diameters): k - 1 circles and |m| diameters.
+    For m > 0 the diameters sit at the zeros of cos(m phi), for m < 0 at those of sin(|m| phi) (a quarter period
+    earlier). The rim is held fixed and is not counted."""
+    a = abs(m)
+    z = bessel_zeros(a, k)
     radii = z[:-1] / z[-1]
-    angles = (2 * np.arange(m) + 1) * np.pi / (2 * m) if m > 0 else np.array([])
+    if a == 0:
+        angles = np.array([])
+    elif m > 0:
+        angles = (2 * np.arange(a) + 1) * np.pi / (2 * a)
+    else:
+        angles = np.arange(a) * np.pi / a
     return radii, angles
 
 

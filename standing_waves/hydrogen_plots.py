@@ -486,25 +486,28 @@ def drum_figure(m, k):
     ax.set_title(f"drum, seen from above\n(blue up, red down; rim fixed)", fontsize=9)
     ax = fig.add_subplot(1, 3, 2)
     r = np.linspace(0, 1, 500)
-    ax.plot(r, bessel_j(m, j * r), color=H_COLOR, lw=2.4)
+    ax.plot(r, bessel_j(abs(m), j * r), color=H_COLOR, lw=2.4)
     ax.axhline(0, color="black", lw=0.7)
     radii, angles = drum_nodes(m, k)
+    a = abs(m)
     ax.plot(radii, np.zeros_like(radii), "o", color=RADIAL_NODE, ms=8, zorder=5)
     ax.set_xlabel(r"distance from centre $r$ (rim at 1)")
     ax.set_title(f"along a radius: {k - 1} nodal circle{'s' if k != 2 else ''}\n(like the string, $k$ half-waves)", fontsize=9)
     ax.set_yticks([])
     ax = fig.add_subplot(1, 3, 3)
     ph = np.linspace(0, 2 * np.pi, 500)
-    ax.plot(np.degrees(ph), np.cos(m * ph), color=H_COLOR, lw=2.4)
+    ax.plot(np.degrees(ph), (np.cos if m >= 0 else np.sin)(a * ph), color=H_COLOR, lw=2.4)
     ax.axhline(0, color="black", lw=0.7)
-    allang = np.sort(np.concatenate([angles, angles + np.pi])) if m > 0 else np.array([])
+    allang = np.sort(np.concatenate([angles, angles + np.pi])) if a > 0 else np.array([])
     ax.plot(np.degrees(allang), np.zeros_like(allang), "o", color=AZIMUTH_NODE, ms=8, zorder=5)
     ax.set_xticks([0, 90, 180, 270, 360])
     ax.set_xlabel(r"azimuth $\varphi$ (degrees)")
     ax.set_yticks([])
-    ax.set_title(f"around the centre: {m} nodal diameter{'s' if m != 1 else ''}\n(like the ring, $m_\\ell={m}$ periods)", fontsize=9)
-    fig.suptitle(rf"$m_\ell={m},\ k={k}$: {k - 1} circle{'s' if k != 2 else ''} + {m} diameter{'s' if m != 1 else ''};  "
-                 rf"frequency $\propto j_{{{m},{k}}}={j:.3f}$", fontsize=10, y=1.02)
+    form = r"\cos" if m >= 0 else r"\sin"
+    ax.set_title(f"around the centre: {a} nodal diameter{'s' if a != 1 else ''}\n"
+                 rf"(like the ring: ${form}({a}\varphi)$, {a} period{'s' if a != 1 else ''})", fontsize=9)
+    fig.suptitle(rf"$m_\ell={m},\ k={k}$: {k - 1} circle{'s' if k != 2 else ''} + {a} diameter{'s' if a != 1 else ''};  "
+                 rf"frequency $\propto j_{{{a},{k}}}={j:.3f}$", fontsize=10, y=1.02)
     fig.tight_layout()
     return fig
 

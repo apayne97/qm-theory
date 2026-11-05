@@ -3,3 +3,5 @@ __pycache__/
 __marimo__/
 .DS_Store
 .build/
+
+standing_waves/gifs/

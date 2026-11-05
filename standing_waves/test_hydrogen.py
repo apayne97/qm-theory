@@ -337,7 +337,7 @@ def test_bessel_zeros_known_values():
     assert bessel_zeros(2, 1) == pytest.approx([5.135622], abs=1e-5)
 
 
-@pytest.mark.parametrize("m,k", [(0, 1), (0, 3), (1, 2), (2, 2), (3, 1)])
+@pytest.mark.parametrize("m,k", [(0, 1), (0, 3), (1, 2), (2, 2), (3, 1), (-1, 2), (-3, 1), (-6, 1)])
 def test_drum_mode_solves_the_wave_equation_and_vanishes_on_the_rim(m, k):
     j = drum_frequency(m, k)
     h = 1e-3
@@ -358,6 +358,20 @@ def test_drum_node_counts(m, k):
     ring = drum_mode(m, k, 0.5 * (1 + (radii[-1] if len(radii) else 0)) * 0.9, phi) * np.ones_like(phi)
     if m > 0:
         assert count_sign_changes(np.append(ring, ring[0])) == 2 * m  # m diameters cut the ring 2m times
+
+
+@pytest.mark.parametrize("m,k", [(-1, 1), (-2, 3), (-5, 2)])
+def test_drum_negative_m_is_the_sine_version_with_the_same_counts_and_frequency(m, k):
+    a = -m
+    radii, angles = drum_nodes(m, k)
+    assert len(radii) == k - 1 and len(angles) == a
+    assert drum_frequency(m, k) == pytest.approx(drum_frequency(a, k))
+    for ang in angles:  # nodal diameters at the zeros of sin(a phi): phi = j pi / a
+        assert abs(drum_mode(m, k, 0.4, ang)) < 1e-9
+        assert abs(drum_mode(m, k, 0.4, ang + np.pi)) < 1e-9
+    # the same shape turned by a quarter of the period 2 pi / a
+    phi = np.linspace(0, 2 * np.pi, 37)
+    assert drum_mode(m, k, 0.6, phi + np.pi / (2 * a)) == pytest.approx(drum_mode(a, k, 0.6, phi), abs=1e-9)
 
 
 def test_drum_has_nodes_where_stated_and_frequencies_are_not_whole_numbers():

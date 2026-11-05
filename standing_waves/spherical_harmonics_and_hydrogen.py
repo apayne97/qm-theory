@@ -208,28 +208,33 @@ def _(mo):
     vibration modes are products of a wave in $r$ and a wave in $\varphi$,
 
     $$
-    \psi_{m_\ell k}(r,\varphi) = J_{m_\ell}\!\big(j_{m_\ell k}\,r\big)\,\cos(m_\ell\varphi),
-    \qquad m_\ell=0,1,2,\dots,\quad k=1,2,3,\dots
+    \psi_{m_\ell k}(r,\varphi) = J_{\lvert m_\ell\rvert}\!\big(j_{\lvert m_\ell\rvert k}\,r\big)\times
+    \begin{cases}\cos(m_\ell\varphi), & m_\ell\ge 0,\\[2pt] \sin(\lvert m_\ell\rvert\varphi), & m_\ell<0,\end{cases}
+    \qquad m_\ell=0,\pm1,\pm2,\dots,\quad k=1,2,3,\dots
     $$
 
-    where $J_{m_\ell}$ is a Bessel function (a wave in $r$ whose swings shrink toward the rim, like ripples spreading
-    on water), and $j_{m_\ell k}$ is its $k$-th zero, chosen so that the rim, $r=1$, is a node that is held fixed. We do
+    where $J_{\lvert m_\ell\rvert}$ is a Bessel function (a wave in $r$ whose swings shrink toward the rim, like ripples
+    spreading on water), and $j_{\lvert m_\ell\rvert k}$ is its $k$-th zero, chosen so that the rim, $r=1$, is a node that is held fixed. We do
     not need the formula for $J$; the figure shows what it does. The angular factor is the ring wave of
-    `../quantization`: it returns to itself after one turn only if $m_\ell$ is a whole number.
+    `../quantization`: it returns to itself after one turn only if $m_\ell$ is a whole number. The two signs of
+    $m_\ell$ are the two real waves of the ring: $m_\ell>0$ is the cosine, and $m_\ell<0$ is the sine, the same shape
+    turned by a quarter of the period $2\pi/\lvert m_\ell\rvert$. They have the same frequency, and
+    $m_\ell=0$ is the same in every direction (a rotation-symmetric drum).
 
     The two factors give two **different kinds of node line**, and each cuts across a different direction:
 
     - $k-1$ **circles** around the centre. They cut across $r$, and they are the string's nodes, bent into circles.
       (The fixed rim is not counted.)
-    - $m_\ell$ **diameters** through the centre. They cut across $\varphi$: they come from the zeros of
-      $\cos(m_\ell\varphi)$, which has $2m_\ell$ zeros around a full turn, and two opposite zeros make one diameter.
+    - $\lvert m_\ell\rvert$ **diameters** through the centre. They cut across $\varphi$: they come from the zeros of
+      $\cos(m_\ell\varphi)$ or $\sin(\lvert m_\ell\rvert\varphi)$, which have $2\lvert m_\ell\rvert$ zeros around a
+      full turn, and two opposite zeros make one diameter.
     """)
     return
 
 
 @app.cell
 def _(mo):
-    m_drum = mo.ui.slider(0, 4, step=1, value=2, label=r"$m_\ell$ (diameters)", show_value=True)
+    m_drum = mo.ui.slider(-6, 6, step=1, value=2, label=r"$m_\ell$ ($\lvert m_\ell\rvert$ diameters)", show_value=True)
     k_drum = mo.ui.slider(1, 4, step=1, value=3, label=r"$k$ (circles $+$ 1)", show_value=True)
     return k_drum, m_drum
 
