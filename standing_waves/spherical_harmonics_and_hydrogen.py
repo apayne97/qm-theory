@@ -502,8 +502,8 @@ def _(mo):
     l_pl = mo.ui.slider(0, 8, step=1, value=4, label=r"$\ell$", show_value=True)
     m_pl = mo.ui.slider(0, 8, step=1, value=1, label=r"$\lvert m_\ell\rvert$", show_value=True)
     kind_pl = mo.ui.radio(
-        options={"cos (real, $m_\\ell>0$)": "cos", "sin (real, $m_\\ell<0$)": "sin"},
-        value="cos (real, $m_\\ell>0$)",
+        options={"cos (real, mℓ > 0)": "cos", "sin (real, mℓ < 0)": "sin"},
+        value="cos (real, mℓ > 0)",
         label="real form",
         inline=True,
     )
