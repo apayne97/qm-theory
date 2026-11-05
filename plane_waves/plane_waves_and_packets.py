@@ -1,7 +1,7 @@
 import marimo
 
 __generated_with = "0.25.1"
-app = marimo.App(width="medium")
+app = marimo.App(width="medium", app_title="Plane Waves and Wave Packets")
 
 
 @app.cell
@@ -1023,7 +1023,7 @@ def _(md):
     turned, while the probability density does not move. (The term could not be dropped if the rest energy
     itself changed, as in a decay, because then the difference of $E_0$ before and after is a physical energy.)
 
-    [^symmetry]: The companion notebook `../spinors/spinor_rotation.py` shows that a state which a rotation
+    [^symmetry]: The companion notebook `../spinors/rotations_spin_and_the_belt_trick.py` shows that a state which a rotation
         only multiplies by a phase $e^{-im\theta}$ keeps its value of $m$, the component of angular momentum,
         for all time. Shifts of position and of time give momentum and energy in the same way. Conservation of
         momentum corresponds to the sameness of space from place to place, conservation of energy to the

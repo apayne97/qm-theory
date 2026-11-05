@@ -1,7 +1,7 @@
 import marimo
 
 __generated_with = "0.25.1"
-app = marimo.App(width="medium")
+app = marimo.App(width="medium", app_title="Archive: Commutator Loop and Ladder Operators")
 
 
 @app.cell
@@ -41,7 +41,7 @@ def _(mo):
     mo.md(r"""
     # Archived: the technical version
 
-    Material cut from `spinor_rotation.py` to keep that notebook readable without advanced linear algebra,
+    Material cut from `rotations_spin_and_the_belt_trick.py` to keep that notebook readable without advanced linear algebra,
     group theory or quantum mechanics. It is all correct and tested; it just assumes more background.
 
     Contents:
@@ -277,7 +277,7 @@ def _(mo):
     ---
     # The allowed values of $m$ (cut from the main notebook)
 
-    Section numbers below refer to `spinor_rotation.py`. The ladder-operator derivation further down makes the
+    Section numbers below refer to `rotations_spin_and_the_belt_trick.py`. The ladder-operator derivation further down makes the
     neighbouring-level argument rigorous.
 
     A rotation about $z$ cannot change the probabilities of the outcomes along $z$, so it acts on each

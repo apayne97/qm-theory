@@ -5,10 +5,16 @@ fundamentals (theory, as opposed to `../qm-calculations`, which runs real DFT).
 
 ## Setup
 
+Uses [pixi](https://pixi.sh) (`brew install pixi`); `pixi.lock` pins the exact versions.
+
 ```bash
 cd ~/science/qm-theory
-conda env create -f environment.yaml   # creates the `qm-theory` env
-conda activate qm-theory
+pixi install              # default environment: numpy, matplotlib, marimo, click, pytest
+pixi run notebooks     # read-only gallery of every notebook at http://localhost:4871 (code hidden)
+pixi run edit-all       # file browser for editing, like JupyterLab's file view, at http://localhost:4872
+pixi run marimo edit dft/reading_a_dft_label.py   # one notebook
+pixi run test             # all pytest checks
+pixi install -e compute   # adds PySCF, only needed to rerun dft/compute_dft_data.py
 ```
 
 ## Reading order, notation and colours
@@ -45,13 +51,13 @@ Mathematical foundations of bosons and fermions, for readers without linear alge
 | `dirac_belt.py` | The belt (plate) trick: explicit smooth family of belt orientations (unit quaternions) that returns after 4π but not 2π; rotation-vector map to the ball of rotations; the shrinking family of 4π loops |
 | `test_dirac_belt.py` | pytest checks (wall/plate conditions, 4π periodicity, 2π belt is one twist about its axis, continuity, agreement with the 2×2 matrices, surface-crossing parity) |
 | `belt_plots.py` | Matplotlib figures for section 6: the belt with its plate, and the ball of rotations |
-| `spinor_rotation.py` | Main marimo notebook: 1 rotations and why they matter (symmetry and conservation, rotation matrices, the cycle of quarter turns of $i$, order matters in 3D, the loop of four small turns, classical precession test), 2 J matrices from rotation matrices and the rule $[J_x,J_y]=iJ_z$, 3 spin number of ordinary vectors (spin 1), 4 why that fails for the electron and why the electron matters (Stern-Gerlach magnets in sequence, fermions), 5 building spin 1/2 (spinors and what their rotation matrices must do, amplitudes and sign, two-amplitude model, matrices for all three axes and J, the 2π rotation and the same thing as a cycle of 8 quarter turns, double cover), 6 the belt trick (plate and belt with a slider from 0 to 4π; the space of rotations as a ball and shrinking the 4π path) |
+| `rotations_spin_and_the_belt_trick.py` | Main marimo notebook: 1 rotations and why they matter (symmetry and conservation, rotation matrices, the cycle of quarter turns of $i$, order matters in 3D, the loop of four small turns, classical precession test), 2 J matrices from rotation matrices and the rule $[J_x,J_y]=iJ_z$, 3 spin number of ordinary vectors (spin 1), 4 why that fails for the electron and why the electron matters (Stern-Gerlach magnets in sequence, fermions), 5 building spin 1/2 (spinors and what their rotation matrices must do, amplitudes and sign, two-amplitude model, matrices for all three axes and J, the 2π rotation and the same thing as a cycle of 8 quarter turns, double cover), 6 the belt trick (plate and belt with a slider from 0 to 4π; the space of rotations as a ball and shrinking the 4π path) |
 | `archived_commutator_loop_and_ladder.py` | Technical material cut from the main notebook: small-rotation commutator loop, ladder-operator derivation, allowed values of m (spacing argument), Noether with commutators and the quantum precession demo, projective-representation remarks |
 
 ```bash
 cd spinors
 python -m pytest -q
-marimo edit spinor_rotation.py
+marimo edit rotations_spin_and_the_belt_trick.py
 ```
 
 
@@ -173,12 +179,12 @@ Where whole numbers come from, for readers of the plane-wave and oscillator note
 | `quantization.py` | Free wave and energy, ring wave and seam mismatch $2|\sin\pi q|$, box states and energies (units and eV/nm), hydrogen levels and the $(\ell,m)$ count |
 | `test_quantization.py` | pytest checks (free wave solves the Schrödinger equation for any $k$, overall phase leaves the density unchanged, seam matches only for whole $q$, box ends vanish at $kL=n\pi$, normalisation and orthogonality, $n^2$ degeneracy) |
 | `quantization_plots.py` | Matplotlib figures (free wave, ring, box, box levels against length, ring/box/oscillator comparison, hydrogen levels); imports `hermite_function` from `../oscillator` |
-| `why_whole_numbers.py` | Marimo notebook: 1 free wave, 2 ring, 3 box, 4 same pattern in the oscillator, 5 hydrogen set-up |
+| `where_whole_numbers_come_from.py` | Marimo notebook: 1 free wave, 2 ring, 3 box, 4 same pattern in the oscillator, 5 hydrogen set-up |
 
 ```bash
 cd quantization
 python -m pytest -q
-marimo edit why_whole_numbers.py
+marimo edit where_whole_numbers_come_from.py
 ```
 
 ## field_quanta/
@@ -196,4 +202,48 @@ Why every quantum of a field is the same, for readers of the oscillator and quan
 cd field_quanta
 python -m pytest -q
 marimo edit what_makes_quanta_identical.py
+```
+
+## dft/
+
+How to read a DFT label such as ωB97M-V/def2-TZVPD (OMol25) or ωB97M-D3(BJ)/def2-TZVPPD (SPICE II), one piece at a time, with PySCF calculations on water, the water dimer and the methane dimer behind each piece.
+
+| File | What it is |
+|---|---|
+| `reading_a_dft_label.py` | Marimo notebook: 1 the three parts of a label, 2 Hartree-Fock (Slater determinant, exchange, what HF misses), 3 Kohn-Sham DFT, the SCF loop and what is in the F matrix, 4 basis sets (def2, TZ, P, D, counterpoise), 5 Jacob's ladder, B97 and meta, 6 exact exchange and range separation (ω), 7 dispersion (-V against D3(BJ)), 8 the integration grid, 9 both labels decoded, 10 what is not verified |
+| `compute_dft_data.py` | PySCF script that writes `data_scf.json`, `data_basis.json`, `data_ladder.json`, `data_dispersion.json` (about 5 to 20 min each); needs `pixi run -e compute` |
+| `dft_data.py`, `dft_plots.py` | Loader and analytic helpers; figures |
+| `kohn_sham_matrix.py` | Supplementary marimo notebook: where $FC=SC\varepsilon$ comes from, the symbols, a two-function example, the terms of the Kohn-Sham matrix $F$ ($T$, $V$, $J$, $V^{xc}$, VV10, exact exchange), the SCF loop, and numerical checks on water |
+| `compute_ks_matrix.py`, `ks_plots.py`, `test_ks.py` | PySCF script writing `data_ks.json` (`pixi run -e compute python dft/compute_ks_matrix.py`, about 15 s); figures; pytest checks |
+| `test_dft.py` | pytest checks of the helpers and of the computed numbers |
+| `coupled_cluster.py` | Marimo notebook: 1 the problem (excited determinants, full CI and its cost), 2 CISD and size consistency (two H$_2$), 3 the coupled cluster idea ($e^{\hat T}\Phi_0$, what the exponential contains), 4 deriving the working equations (similarity-transformed Hamiltonian, projection, the series ending at fourth order, CCD and CCSD equations in spin-orbital form, the iteration), 5 a numpy CCSD checked against PySCF, 6 the (T) correction, 7 cost, 8 accuracy ladder (water, stretched water, the dimers of the DFT notebook), 9 what is not verified and four takeaway lines |
+| `cc_numerics.py` | Pure-numpy spin-orbital toolkit: integrals to spin orbitals, MP2, CCSD/CCD iteration (with DIIS), the expanded CCD equation, (T), a determinant-based CI (full or truncated), non-interacting fragment pairs, counting |
+| `compute_cc_data.py`, `cc_plots.py`, `test_cc.py` | PySCF script (click CLI, `--part` one of all, small, dimer, series, timing, about 1 min) writing `data_cc.json` and `data_cc_integrals.npz`; figures; pytest checks (CCSD, (T), MP2, FCI, CISD against PySCF to $10^{-8}$ Ha, two-electron CCSD = FCI, additivity of CCSD and non-additivity of CISD, quadruple coefficient = product of doubles) |
+
+```bash
+pixi run marimo edit dft/reading_a_dft_label.py
+pixi run marimo edit dft/coupled_cluster.py
+pixi run python -m pytest -q dft
+pixi run -e compute python dft/compute_cc_data.py   # regenerates data_cc*.json / .npz
+```
+
+## standing_waves/
+
+Standing waves of a particle in a box in one, two and three dimensions, and why confinement gives energy levels. First of two notebooks leading to hydrogen orbitals; the second (spherical harmonics and hydrogen) follows below the table. Atomic units in the second notebook.
+
+| File | What it is |
+|---|---|
+| `standing_waves_in_boxes.py` | Marimo notebook: 1 one dimension (whole numbers of half-wavelengths), 2 two dimensions (product waves, node lines), 3 the allowed waves as a lattice in $(k_x,k_y)$ with energy as squared distance, 4 degeneracy and what breaks it (side-ratio fan), 5 three dimensions (slices, cube levels), 6 counting states in 1D/2D/3D, 7 from a box to an atom |
+| `standing_waves.py` | Box waves, energies, level and degeneracy enumeration |
+| `standing_waves_plots.py` | Matplotlib figures |
+| `test_standing_waves.py` | pytest checks (zero on walls, orthonormality, Schrödinger equation by finite differences, square and cube degeneracies, state counts) |
+| `spherical_harmonics_and_hydrogen.py` | Marimo notebook B: 1 from a box to an atom (spherical coordinates, $\psi=R\,Y$), 2 standing waves on a sphere (why $m_\ell$ and $\ell$ are whole numbers, $\ell(\ell+1)$, degeneracy $2\ell+1$, node counts, gallery of real harmonics with sliders), 3 the radial part (effective potential, finite-difference solution against $-1/(2n^2)$, $n^2$ states per level), 4 hydrogen orbitals (gallery; sliders for $n$, $\ell$, $m_\ell$), 5 bridge to molecules (many electrons, Born-Oppenheimer, LCAO) and takeaways |
+| `hydrogen.py` | numpy only (no scipy): associated Legendre functions and $Y_{\ell m}$ (complex and real), finite-difference angular operator, polar-axis shooting, exact radial functions (Laguerre recursion), finite-difference radial solver, orbitals, density sampling |
+| `hydrogen_plots.py` | Matplotlib figures (coordinates, harmonic shape and map, gallery, polar-axis shooting, effective potential, radial states, level check, orbital views, orbital gallery) |
+| `test_hydrogen.py` | pytest checks (orthonormality of $Y_{\ell m}$ and of whole orbitals, eigenvalue $\ell(\ell+1)$ by finite differences, node counts, finite on the axis only for whole $\ell$, radial equation, energies against $-1/(2n^2)$, normalisation, degeneracy $n^2$, $\langle r\rangle$, density sampling) |
+
+```bash
+pixi run marimo edit standing_waves/standing_waves_in_boxes.py
+pixi run marimo edit standing_waves/spherical_harmonics_and_hydrogen.py
+pixi run python -m pytest -q standing_waves
 ```
