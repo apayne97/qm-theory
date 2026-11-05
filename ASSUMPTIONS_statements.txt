@@ -1,0 +1,36 @@
+A1. Non-relativistic: Schrödinger equation, not Dirac
+A2. Hamiltonian is time-independent
+A3. Any state is a superposition of stationary states (complete set)
+A4. Box with infinitely hard walls (ψ = 0 at the boundary)
+A5. Rectangular box: 2D/3D wave is a product of 1D waves
+A6. Potential depends only on the distance r from the nucleus
+A7. Point nucleus of infinite mass
+A8. Hydrogen levels from the Coulomb attraction only (no fine structure, Lamb shift or hyperfine)
+A9. Born-Oppenheimer: nuclei fixed, electrons solved at each geometry
+A10. Label energy is one geometry, ground state, no vibrations, no temperature
+A11. Orbital approximation: one orbital per electron
+A12. Wavefunction antisymmetric under electron exchange (Pauli)
+A13. LCAO: orbitals are combinations of atom-centred functions
+A14. Only N fixed basis functions instead of a complete set
+A15. Basis functions are non-orthogonal (overlap matrix S)
+A16. Gaussians replace Slater functions (contracted, e.g. STO-nG)
+A17. Shells with fixed angular parts; add zeta, polarization (P) and diffuse (D) functions
+A18. Hartree-Fock: one Slater determinant, mean field
+A19. Self-consistent field (SCF) loop solved to a threshold
+A20. Kohn-Sham: the energy is a functional of the density
+A21. Finite basis set (def2-TZVPD for OMol25, def2-TZVPPD for SPICE II)
+A22. Exchange-correlation approximated (ωB97M-V: meta-GGA range-separated hybrid)
+A23. Range separation: ω = 0.3 bohr⁻¹, 15% short-range and 100% long-range exact exchange
+A24. Dispersion added separately: VV10 (OMol25) or D3(BJ) (SPICE II)
+A25. Finite integration grid (OMol25: DEFGRID3)
+A26. RI-J and COSX speed-ups (OMol25, ORCA 6.0.0)
+A27. Unrestricted Kohn-Sham for open-shell and charged systems
+A28. Protein-ligand interaction energy = E(ligand+pocket) − E(ligand) − E(pocket)
+A29. The DFT label is treated as truth when training ML potentials or force fields
+A30. Effective core potential replaces the core electrons of heavy atoms
+A31. Different levels of theory for different jobs (OPLS5)
+A32. ωB97X, ωB97X-D and ωB97X-D3 are different refitted functionals
+A33. CBS: extrapolate to the complete basis set limit
+A34. Classical force field with fitted parameters replaces the quantum calculation
+A35. Single reference: one determinant dominates the wavefunction
+A36. CCSD truncated at doubles, triples added perturbatively (T)
