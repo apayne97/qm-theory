@@ -15,18 +15,28 @@ def _():
         degeneracy,
         hydrogen_energy,
         hydrogen_energy_ev,
+        node_geometry,
         numerical_levels,
         quantum_numbers,
     )
     from hydrogen_plots import (
         coordinates_figure,
+        drum_figure,
+        drum_gallery_figure,
+        drum_gif,
+        fourier_circle_figure,
+        fourier_sphere_figure,
         harmonic_figure,
         harmonic_gallery_figure,
         level_check_figure,
+        node_anatomy_figure,
+        node_placement_figure,
         orbital_figure,
         orbital_gallery_figure,
         pole_figure,
         radial_state_figure,
+        string_figure,
+        string_gif,
         veff_figure,
     )
 
@@ -34,12 +44,20 @@ def _():
         HARTREE_EV,
         coordinates_figure,
         degeneracy,
+        drum_figure,
+        drum_gallery_figure,
+        drum_gif,
+        fourier_circle_figure,
+        fourier_sphere_figure,
         harmonic_figure,
         harmonic_gallery_figure,
         hydrogen_energy,
         hydrogen_energy_ev,
         level_check_figure,
         mo,
+        node_anatomy_figure,
+        node_geometry,
+        node_placement_figure,
         np,
         numerical_levels,
         orbital_figure,
@@ -48,6 +66,8 @@ def _():
         pole_figure,
         quantum_numbers,
         radial_state_figure,
+        string_figure,
+        string_gif,
         veff_figure,
     )
 
@@ -63,20 +83,26 @@ def _(mo):
     a sphere (the **spherical harmonics**), then the waves along the distance from the nucleus, and then it puts them
     together into the orbitals that chemists draw.
 
+    One idea runs through the whole notebook: **the shape of a standing wave is set by where its nodes are and which
+    way they point.** A string has nodes that are points. A drumhead has nodes that are lines, of two kinds: circles
+    around the centre and diameters through it. An atom has nodes that are surfaces, of three kinds: spheres, cones and
+    planes. By section 5 the shape of every orbital can be read off by counting nodes of each kind.
+
     **Read first:** `standing_waves_in_boxes.py` (this folder), and `../quantization`, section 5, which states the hydrogen
     quantum numbers without deriving them. This notebook supplies the reasons.
 
     **Contents**
 
     1. From a box to an atom: new coordinates
-    2. Standing waves on a sphere: the spherical harmonics
-    3. The radial part: effective potential and energy levels
-    4. Hydrogen orbitals
-    5. A short bridge to molecules
+    2. Nodes and their direction: string, drumhead, atom
+    3. Standing waves on a sphere: the spherical harmonics
+    4. The radial part: effective potential and energy levels
+    5. Hydrogen orbitals, and reading an orbital from its nodes
+    6. A short bridge to molecules
 
     **How much is derived.** The full separation of the Schrödinger equation is not repeated here. The equations
     that come out of it are stated, and each statement is checked numerically in `test_hydrogen.py` (the list is at
-    the end of section 5). Units are atomic units: lengths in bohr ($a_0 = 0.0529$ nm), energies in hartree
+    the end of section 6). Units are atomic units: lengths in bohr ($a_0 = 0.0529$ nm), energies in hartree
     (1 hartree $=27.2$ eV), $\hbar=m_e=1$.
     """)
     return
@@ -91,8 +117,10 @@ def _(mo):
         - **Spherical harmonic** $Y_{\ell m_\ell}(\vartheta,\varphi)$: a standing wave on the surface of a sphere.
         - **Orbital**: the wave function of one electron, $\psi_{n\ell m_\ell}$. Its square $\lvert\psi\rvert^2$ is the
           probability density.
+        - **Node**: a point, line or surface where the wave is zero. The wave changes sign across it.
         - **Nodal line**: a line on the sphere where the harmonic is zero.
         - **Radial node**: a sphere around the nucleus on which $\psi$ is zero.
+        - **Drumhead mode**: a standing wave of a circular membrane held fixed at its rim.
         - **Hartree**: the atomic unit of energy, $27.211$ eV; hydrogen's lowest level is $-\tfrac12$ hartree.
         - We write $m_\ell$ for the whole number that counts turns around the axis, because the plain letter $m$ is
           used for mass.
@@ -123,9 +151,10 @@ def _(mo):
     wave contributes an energy that depends on how much it curves over the sphere; we will see that this number is
     $\ell(\ell+1)$, and it enters the radial equation as a repulsive term. So the plan is:
 
-    1. Find all the waves on a sphere and the number $\ell(\ell+1)$ that goes with each (section 2).
-    2. Put that number into the radial equation and find its allowed energies (section 3).
-    3. Multiply the two parts (section 4).
+    1. Look at the nodes of a string and of a drumhead, to learn what a node is and which way it can point (section 2).
+    2. Find all the waves on a sphere and the number $\ell(\ell+1)$ that goes with each (section 3).
+    3. Put that number into the radial equation and find its allowed energies (section 4).
+    4. Multiply the two parts and read the shapes (section 5).
     """)
     return
 
@@ -141,7 +170,129 @@ def _(coordinates_figure, plt):
 @app.cell
 def _(mo):
     mo.md(r"""
-    ## 2 Standing waves on a sphere: the spherical harmonics
+    ## 2 Nodes and their direction: string, drumhead, atom
+
+    A **node** is a place where the wave is zero, and the wave changes sign when you cross it. A standing wave is
+    pictured most simply by its nodes: they cut the region into pieces, and the wave is positive in one piece, negative
+    in the next. Two facts about a node are worth keeping track of: **how many** there are, and **which direction
+    the node cuts across**. We follow both from a string to a drumhead to an atom.
+
+    **One dimension: a string.** A string has one direction, along its length $x$. A node is a point on the string, and
+    it cuts across $x$. A wave with $n$ half-wavelengths has $n-1$ nodes inside the string. More nodes, more energy.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    n_str = mo.ui.slider(1, 8, step=1, value=4, label=r"$n$", show_value=True)
+    return (n_str,)
+
+
+@app.cell
+def _(mo, n_str, plt, string_figure, string_gif):
+    _fig = string_figure(n_str.value)
+    _out = mo.vstack([n_str, _fig, mo.md("Moving, for one full period (the nodes stay fixed):"),
+                      mo.image(src=string_gif(n_str.value))])
+    plt.close(_fig)
+    _out
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    **Two dimensions: a drumhead.** The previous notebook used a rectangular box for two dimensions. A drum is a
+    better model for what follows, because a round membrane has the same coordinates as an atom seen from above: a
+    distance $r$ from the centre and an angle $\varphi$ around it. The membrane is held fixed at its rim, and its
+    vibration modes are products of a wave in $r$ and a wave in $\varphi$,
+
+    $$
+    \psi_{m_\ell k}(r,\varphi) = J_{m_\ell}\!\big(j_{m_\ell k}\,r\big)\,\cos(m_\ell\varphi),
+    \qquad m_\ell=0,1,2,\dots,\quad k=1,2,3,\dots
+    $$
+
+    where $J_{m_\ell}$ is a Bessel function (a wave in $r$ whose swings shrink toward the rim, like ripples spreading
+    on water), and $j_{m_\ell k}$ is its $k$-th zero, chosen so that the rim, $r=1$, is a node that is held fixed. We do
+    not need the formula for $J$; the figure shows what it does. The angular factor is the ring wave of
+    `../quantization`: it returns to itself after one turn only if $m_\ell$ is a whole number.
+
+    The two factors give two **different kinds of node line**, and each cuts across a different direction:
+
+    - $k-1$ **circles** around the centre. They cut across $r$, and they are the string's nodes, bent into circles.
+      (The fixed rim is not counted.)
+    - $m_\ell$ **diameters** through the centre. They cut across $\varphi$: they come from the zeros of
+      $\cos(m_\ell\varphi)$, which has $2m_\ell$ zeros around a full turn, and two opposite zeros make one diameter.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    m_drum = mo.ui.slider(0, 4, step=1, value=2, label=r"$m_\ell$ (diameters)", show_value=True)
+    k_drum = mo.ui.slider(1, 4, step=1, value=3, label=r"$k$ (circles $+$ 1)", show_value=True)
+    return k_drum, m_drum
+
+
+@app.cell
+def _(drum_figure, drum_gif, k_drum, m_drum, mo, plt):
+    _fig = drum_figure(m_drum.value, k_drum.value)
+    _out = mo.vstack([mo.hstack([m_drum, k_drum], justify="start"), _fig,
+                      mo.md("The same mode vibrating (colour is the sign of the mode, so the nodal circles and "
+                            "diameters show as white seams that never move):"),
+                      mo.image(src=drum_gif(m_drum.value, k_drum.value))])
+    plt.close(_fig)
+    _out
+    return
+
+
+@app.cell
+def _(drum_gallery_figure, mo, plt):
+    _fig = drum_gallery_figure(3, 3)
+    _out = mo.vstack([
+        mo.md("All the drum modes with up to $2$ circles and $3$ diameters. Each column has one number of diameters, "
+              "each row one number of circles; the shape is the product of the two."),
+        _fig,
+    ])
+    plt.close(_fig)
+    _out
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    Two differences from the string are worth noting. The drum's frequencies are proportional to the zeros
+    $j_{m_\ell k}$, which are not equally spaced, so they are not whole-number multiples of the lowest one; and the rim
+    is a fixed boundary, whereas the atom's "rim" is infinity, where the wave simply dies away. What stays the same is
+    the counting: **each coordinate has its own family of nodes and its own whole number.**
+
+    **Three dimensions: an atom.** The atom has one more direction, the polar angle $\vartheta$, and so one more
+    family of nodes. In three dimensions a node is a surface, and the three kinds are the three-dimensional versions
+    of what we have seen:
+
+    | Direction the node cuts across | String | Drumhead | Atom | Whole number |
+    |---|---|---|---|---|
+    | distance ($x$ or $r$) | $n-1$ points | $k-1$ circles | $n-\ell-1$ **spheres** | $n$ (radial) |
+    | polar angle $\vartheta$ | none | none | $\ell-\lvert m_\ell\rvert$ **cones** (a flat plane through the centre counts as a cone) | $\ell$ |
+    | azimuth $\varphi$ | none | $\lvert m_\ell\rvert$ diameters | $\lvert m_\ell\rvert$ **planes** through the $z$ axis | $m_\ell$ |
+    | **total** | $n-1$ | $k-1+\lvert m_\ell\rvert$ | $n-1$ | |
+
+    The azimuth row is the same on the drum and in the atom: the diameters of the drum are the traces, in a
+    horizontal slice, of the atom's planes through the axis. The distance row is the same for the string, the drum and
+    the atom. The polar-angle row is new, and the next section is about it: the nodes that cut across the polar angle
+    and the azimuth together number $\ell$, and the part of them that cuts across the azimuth is $\lvert m_\ell\rvert$.
+
+    **The rest of the notebook applies this table.** Given $(n,\ell,m_\ell)$, draw that many spheres, cones and
+    planes, and the wave is positive and negative in the pieces between them. That is the shape of the orbital.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    ## 3 Standing waves on a sphere: the spherical harmonics
 
     The surface of a sphere has no walls, so the condition that fixes the allowed waves is different from the box.
     A wave on the sphere must have one definite value at every point and stay finite everywhere. Two places need
@@ -223,13 +374,17 @@ def _(mo):
     part, and it is a consequence of the symmetry of the sphere, as in the square box of the previous notebook.
 
     **Nodal lines.** A standing wave is described by where it vanishes. The harmonic $Y_{\ell m_\ell}$ has exactly
-    $\ell$ nodal lines on the sphere in total. They are of two kinds:
+    $\ell$ nodal lines on the sphere in total. They are of two kinds, and each cuts across a different direction, as in
+    the table of section 2:
 
-    | Kind of nodal line | How many | Where it comes from |
-    |---|---|---|
-    | circles through both poles (meridians) | $\lvert m_\ell\rvert$ | $\cos(m_\ell\varphi)$ or $\sin(m_\ell\varphi)$ |
-    | circles of constant latitude | $\ell-\lvert m_\ell\rvert$ | zeros of the Legendre function in $\cos\vartheta$ |
-    | **total** | $\ell$ | |
+    | Kind of nodal line | Cuts across | How many | Where it comes from |
+    |---|---|---|---|
+    | circles through both poles (meridians) | azimuth $\varphi$ | $\lvert m_\ell\rvert$ | $\cos(m_\ell\varphi)$ or $\sin(m_\ell\varphi)$ |
+    | circles of constant latitude | polar angle $\vartheta$ | $\ell-\lvert m_\ell\rvert$ | zeros of the Legendre function in $\cos\vartheta$ |
+    | **total** | | $\ell$ | |
+
+    Reaching out from the centre, a meridian becomes a plane through the axis and a circle of latitude becomes a cone
+    (the equator becomes the flat plane $z=0$).
 
     A harmonic with $m_\ell=\pm\ell$ has no circles of latitude (all nodal lines are meridians, a "sectoral" shape),
     and a harmonic with $m_\ell=0$ has no meridians (only circles of latitude, a "zonal" shape). More nodal lines
@@ -313,7 +468,190 @@ def _(mo):
 @app.cell
 def _(mo):
     mo.md(r"""
-    ## 3 The radial part: effective potential and energy levels
+    ### Where the nodal lines sit
+
+    The count is $\ell$ in total. The next question is where they go. There is one rule for each kind of line.
+
+    **Meridians (cut across the azimuth).** The azimuth dependence of a real harmonic is $\cos(m_\ell\varphi)$ or
+    $\sin(m_\ell\varphi)$. Each vanishes at $2\lvert m_\ell\rvert$ values of $\varphi$ in one turn, which are the
+    $\lvert m_\ell\rvert$ planes through the $z$ axis (each plane holds two opposite meridians). The planes are equally
+    spaced, $\pi/\lvert m_\ell\rvert$ apart in $\varphi$:
+
+    $$
+    \cos(m_\ell\varphi)=0\ \text{ at }\ \varphi=\frac{\pi}{2\lvert m_\ell\rvert}+k\,\frac{\pi}{\lvert m_\ell\rvert},\qquad
+    \sin(\lvert m_\ell\rvert\varphi)=0\ \text{ at }\ \varphi=k\,\frac{\pi}{\lvert m_\ell\rvert},
+    $$
+
+    with $k=0,1,\dots,\lvert m_\ell\rvert-1$ (the same planes again for $k$ beyond that).
+
+    **Circles of latitude (cut across the polar angle).** The polar dependence is the Legendre function
+    $P_\ell^{\lvert m_\ell\rvert}(\cos\vartheta)$. It has exactly $\ell-\lvert m_\ell\rvert$ zeros strictly between the
+    poles. They are **not** equally spaced in $\cos\vartheta$, and they are mirror-symmetric about the equator
+    (so one zero sits on the equator exactly when $\ell-\lvert m_\ell\rvert$ is odd). For large $\ell$ they come close
+    to equal spacing in the angle $\vartheta$ itself, a wavelength of about $2\pi/\ell$ on the sphere.
+
+    Try it. The dashed lines in the middle map are the predicted positions, computed from the rules (the
+    azimuths from the formula above, the latitudes as the roots of a polynomial). The white curves are found from the wave
+    itself. Where they agree you see a dashed line sitting on a white one.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    l_pl = mo.ui.slider(0, 8, step=1, value=4, label=r"$\ell$", show_value=True)
+    m_pl = mo.ui.slider(0, 8, step=1, value=1, label=r"$\lvert m_\ell\rvert$", show_value=True)
+    kind_pl = mo.ui.radio(
+        options={"cos (real, $m_\\ell>0$)": "cos", "sin (real, $m_\\ell<0$)": "sin"},
+        value="cos (real, $m_\\ell>0$)",
+        label="real form",
+        inline=True,
+    )
+    return kind_pl, l_pl, m_pl
+
+
+@app.cell
+def _(kind_pl, l_pl, m_pl, mo, node_placement_figure, plt):
+    _l = l_pl.value
+    _m = min(m_pl.value, _l)
+    _note = (
+        mo.md(rf"The value of $\lvert m_\ell\rvert$ is limited to $\le\ell$, so $\lvert m_\ell\rvert={_m}$ is shown.")
+        if _m != m_pl.value
+        else mo.md("")
+    )
+    _fig = node_placement_figure(_l, _m, kind_pl.value)
+    _out = mo.vstack([mo.hstack([l_pl, m_pl, kind_pl], justify="start"), _note, _fig])
+    plt.close(_fig)
+    _out
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    Orange marks the circles of latitude (cut across $\vartheta$), green the planes through the axis (cut across
+    $\varphi$), as in the table of section 2. The right panel is the polar part alone: each time the curve crosses zero is
+    one circle of latitude. The switch only turns the planes by half their spacing, $\pi/(2\lvert m_\ell\rvert)$,
+    about the axis ($\cos$ to $\sin$); the nodes keep the same number and the same spacing.
+
+    **Worked example, $\ell=4$, $\lvert m_\ell\rvert=1$.** One plane and three circles of latitude, four in total. The
+    polar function is proportional to $\sin\vartheta\,(7\cos^3\vartheta-3\cos\vartheta)=\sin\vartheta\,\cos\vartheta\,
+    (7\cos^2\vartheta-3)$. Its zeros between the poles are
+
+    $$
+    \cos\vartheta=0,\ \ \cos\vartheta=\pm\sqrt{3/7}\quad\Longrightarrow\quad
+    \vartheta=90^\circ,\ \ 49.1^\circ,\ \ 130.9^\circ .
+    $$
+
+    (The factor $\sin\vartheta$ vanishes only at the poles, which are not nodal lines.) The figure shows these three
+    angles on the right, and the tests check them.
+
+    **Three more things to notice.**
+
+    - *Complex harmonics have fewer visible nodes.* The complex $Y_{\ell m_\ell}$ contains $e^{im_\ell\varphi}$, whose size is
+      $1$ everywhere: it never vanishes, it only winds its phase $m_\ell$ times round the axis. So the complex harmonic
+      vanishes only on the $\ell-\lvert m_\ell\rvert$ circles of latitude. The $\lvert m_\ell\rvert$ planes appear when
+      two of them ($\pm m_\ell$) are combined into the real $\cos$ or $\sin$ form, which is the form used in the figures.
+    - *The $z$ axis is a choice.* The $2\ell+1$ harmonics of one $\ell$ have the same energy, so any combination of them
+      is an equally good standing wave, and so is the same pattern turned to point along another axis. What is fixed is
+      the total: always $\ell$ nodal surfaces, split differently. At one extreme ($m_\ell=0$) all of them are circles of
+      latitude; at the other ($\lvert m_\ell\rvert=\ell$) all are planes through the axis, equally spaced.
+    - *Why the count is $\ell$.* The usual explanation is the same as for the box: the harmonics are the standing waves of
+      the sphere with the value $\ell(\ell+1)$ for the curvature, and a wave with more nodes wiggles more, so it has a
+      larger value. Whole numbers of nodes fit in the way whole numbers of half wavelengths fit on a string. What the
+      numerics confirm is the count and the positions (below), not a proof that the number of zeros of $P_\ell^{\lvert m_\ell\rvert}$ is
+      $\ell-\lvert m_\ell\rvert$: that is a known property of the Legendre functions, here verified for all
+      $\ell\le8$.
+
+    **Checked in the tests:** for every $\ell\le8$ and $0\le\lvert m_\ell\rvert\le\ell$, the polar function changes sign
+    $\ell-\lvert m_\ell\rvert$ times; its zeros agree with the roots of the polynomial prediction, and the real harmonic
+    vanishes there at every azimuth; the zeros are mirror-symmetric about the equator, with one on it exactly when
+    $\ell-\lvert m_\ell\rvert$ is odd; the azimuth planes are at the stated angles, $\pi/\lvert m_\ell\rvert$ apart, with
+    $2\lvert m_\ell\rvert$ sign changes round the axis; the total is $\ell$ for both real forms; the example above gives
+    $49.1^\circ$, $90^\circ$, $130.9^\circ$; and the complex harmonic has the same size at every azimuth with its phase winding
+    $m_\ell$ times.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    ### The same idea as a Fourier series
+
+    The harmonics have a second job besides describing electrons: they are the natural building blocks for **any**
+    shape on a circle or a sphere, in the same way that sines are the building blocks for any shape along a line.
+
+    - **On a line** (the string), any shape that is zero at the ends is a sum of the standing waves
+      $\sin(n\pi x/L)$. That is a Fourier series.
+    - **Around a circle**, any shape is a sum of the ring waves $\cos(m_\ell\varphi)$ and $\sin(m_\ell\varphi)$. That is
+      the Fourier series on a circle, and it is the angular factor of the drum.
+    - **On a sphere**, any shape is a sum of spherical harmonics, $f(\vartheta,\varphi)=\sum a_{\ell m_\ell}Y_{\ell m_\ell}$.
+      It is the Fourier series for a sphere.
+
+    In each case the number of nodes plays the part of frequency: $m_\ell$ counts the periods round the circle, and
+    $\ell$ counts the nodal lines on the sphere. A smooth shape needs only a few low harmonics; a sharp feature needs many
+    high ones. The weight of each harmonic is found by **projection**: multiply the shape by that harmonic and add up the
+    result over the whole circle or sphere,
+
+    $$
+    a_{\ell m_\ell}=\int f(\vartheta,\varphi)\,Y_{\ell m_\ell}(\vartheta,\varphi)\,d\Omega ,
+    $$
+
+    which works because different harmonics are orthogonal (the orthonormality listed above). Cutting the sum off at some
+    $\ell$ keeps all the detail down to a size of about $180^\circ/\ell$ and smooths out everything finer, which is why the
+    same harmonics appear in weather models, in maps of the sky and in the angular part of an atom. The sliders show it.
+    First a square pulse on a circle, where the overshoot at the jumps is the familiar ringing of a Fourier series, and
+    then a map of bumps on a sphere.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    m_four = mo.ui.slider(1, 20, step=1, value=3, label=r"harmonics kept, up to $m_\ell$", show_value=True)
+    return (m_four,)
+
+
+@app.cell
+def _(fourier_circle_figure, m_four, mo, plt):
+    _fig = fourier_circle_figure(m_four.value)
+    _out = mo.vstack([m_four, _fig])
+    plt.close(_fig)
+    _out
+    return
+
+
+@app.cell
+def _(mo):
+    l_four = mo.ui.slider(0, 16, step=1, value=3, label=r"harmonics kept, up to $\ell$", show_value=True)
+    return (l_four,)
+
+
+@app.cell
+def _(fourier_sphere_figure, l_four, mo, plt):
+    _fig = fourier_sphere_figure(l_four.value)
+    _out = mo.vstack([l_four, _fig])
+    plt.close(_fig)
+    _out
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    **Checked in the tests:** the Fourier coefficients of $\cos 3\varphi$ and $\sin 5\varphi$ are non-zero only at
+    $3$ and $5$; the circle and sphere series converge as more harmonics are kept, and the total strength of the
+    coefficients equals the strength of the shape (Parseval's relation); a shape built from two harmonics is
+    projected back onto exactly those two.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    ## 4 The radial part: effective potential and energy levels
 
     The angular number $\ell(\ell+1)$ goes into the equation for the distance. Writing $u(r)=rR(r)$ (a convenient
     form, because then the equation looks like one for a wave along a line), the radial equation in atomic units is
@@ -463,12 +801,12 @@ def _(degeneracy, mo, quantum_numbers):
 @app.cell
 def _(mo):
     mo.md(r"""
-    ## 4 Hydrogen orbitals
+    ## 5 Hydrogen orbitals
 
     Multiplying the two parts gives the orbital, $\psi_{n\ell m_\ell}=R_{n\ell}(r)\,Y_{\ell m_\ell}(\vartheta,\varphi)$. Its
-    square gives the probability density. Two kinds of node combine: $n-\ell-1$ spherical shells from the radial part, and $\ell$
-    nodal surfaces from the angular part (each nodal line of the sphere extends outward as a surface through the
-    nucleus: a plane for a meridian, a cone for a circle of latitude). The total is $n-1$ nodal surfaces. The names are
+    square gives the probability density. Three kinds of node combine, as in the table of section 2: $n-\ell-1$ spheres from the radial part, and
+    from the angular part $\ell-\lvert m_\ell\rvert$ cones and $\lvert m_\ell\rvert$ planes through the axis (each
+    nodal line of the sphere extends outward as a surface through the nucleus). The total is $n-1$ nodal surfaces. The names are
     1s, 2s, 2p, 3s, 3p, 3d: the number is $n$ and the letter is $\ell$.
 
     The first figure shows the six lowest distinct orbitals in a plane through the axis (top) and as the probability of
@@ -538,7 +876,92 @@ def _(mo):
 @app.cell
 def _(mo):
     mo.md(r"""
-    ## 5 A short bridge to molecules
+    ### Reading an orbital from its nodes
+
+    The sliders below draw the nodes of any orbital, by kind: spheres (pink, cut across $r$), cones (orange, cut across
+    $\vartheta$) and planes through the axis (green, cut across $\varphi$). The left panel is a plane through the $z$
+    axis. A sphere appears as a circle, a cone as two straight lines through the centre, and a plane through the axis
+    as the axis itself. The right panel is a horizontal slice seen from above, like the drum: spheres appear as circles
+    and planes through the axis as diameters. If the slice at $z=0$ would itself be a node (a flat plane is one of the
+    cones), the slice is taken a little above it, where the cones show up as circles.
+
+    The wave changes sign across every node and nowhere else, so the signs of the pieces follow from the nodes alone.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    n_nod = mo.ui.slider(1, 4, step=1, value=3, label=r"$n$", show_value=True)
+    l_nod = mo.ui.slider(0, 3, step=1, value=2, label=r"$\ell$", show_value=True)
+    m_nod = mo.ui.slider(-3, 3, step=1, value=-2, label=r"$m_\ell$", show_value=True)
+    return l_nod, m_nod, n_nod
+
+
+@app.cell
+def _(l_nod, m_nod, mo, n_nod, node_anatomy_figure, plt):
+    _n = n_nod.value
+    _l = min(l_nod.value, _n - 1)
+    _m = max(-_l, min(_l, m_nod.value))
+    _note = (
+        mo.md(rf"The sliders are limited to $\ell\le n-1$ and $\lvert m_\ell\rvert\le\ell$, so $\ell={_l}$, $m_\ell={_m}$ is shown.")
+        if (_l, _m) != (l_nod.value, m_nod.value)
+        else mo.md("")
+    )
+    _fig = node_anatomy_figure(_n, _l, _m)
+    _out = mo.vstack([mo.hstack([n_nod, l_nod, m_nod], justify="start"), _note, _fig])
+    plt.close(_fig)
+    _out
+    return
+
+
+@app.cell
+def _(mo, node_geometry):
+    _cases = [
+        (1, 0, 0, "1s", "no node: one blob"),
+        (2, 0, 0, "2s", "a sphere: a core and a shell of opposite sign"),
+        (2, 1, 0, "2p$_z$", "one flat plane across $z$: two lobes, up and down"),
+        (2, 1, 1, "2p$_x$", "one plane through the axis: two lobes, left and right"),
+        (3, 0, 0, "3s", "two spheres: a core and two shells"),
+        (3, 1, 0, "3p$_z$", "a sphere and a flat plane"),
+        (3, 2, 0, "3d$_{z^2}$", "two cones: two lobes along $z$ and a ring round the waist"),
+        (3, 2, -2, "3d$_{xy}$", "two planes through the axis: four lobes in a cloverleaf"),
+        (3, 2, 1, "3d$_{xz}$", "one plane through the axis and one flat plane: four lobes"),
+        (4, 3, 0, "4f$_{z^3}$", "three cones (one flat): lobes stacked along $z$"),
+    ]
+    _rows = [
+        "| Orbital | $n$ | $\\ell$ | $m_\\ell$ | spheres | cones | planes | total $n-1$ | what the nodes make |",
+        "|---|---|---|---|---|---|---|---|---|",
+    ]
+    for _n, _l, _m, _name, _what in _cases:
+        _g = node_geometry(_n, _l, _m)
+        _a, _b, _c = len(_g["spheres"]), len(_g["cones"]), len(_g["planes"])
+        assert _a + _b + _c == _n - 1
+        _rows.append(f"| {_name} | {_n} | {_l} | {_m} | {_a} | {_b} | {_c} | {_a + _b + _c} | {_what} |")
+    mo.vstack([
+        mo.md("**Reading the table.** The three numbers of nodes are $n-\\ell-1$, $\\ell-\\lvert m_\\ell\\rvert$ and "
+              "$\\lvert m_\\ell\\rvert$, computed here from the actual zeros of the wave function:"),
+        mo.md("\n".join(_rows)),
+        mo.md(r"""
+        So the shape of an orbital is a statement about nodes. $\ell$ says how many of the nodes cut across
+        an angle (cones and planes together), $m_\ell$ says how many of those are planes through the axis, and $n$ says how many
+        more there are, as spheres. The cones and planes decide the direction in which the lobes point; the spheres decide
+        how many shells there are. The real orbitals $p_x$, $p_y$, $p_z$ differ only in the direction of their one node.
+
+        **Checked in the tests:** for fourteen orbitals, the numbers of spheres, cones and planes are
+        $n-\ell-1$, $\ell-\lvert m_\ell\rvert$ and $\lvert m_\ell\rvert$ (total $n-1$), and the wave function is zero (to
+        one part in $10^5$ of its largest value) at random points on each of the stated surfaces. The drumhead modes are
+        tested in the same way: the circles and diameters are where the wave vanishes, $-\nabla^2\psi=j^2\psi$ holds, and the
+        zeros of the Bessel functions agree with the standard values.
+        """),
+    ])
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    ## 6 A short bridge to molecules
 
     Hydrogen is one of the very few problems in chemistry that can be solved exactly. What goes wrong with anything
     larger, and what is done about it?
@@ -557,7 +980,7 @@ def _(mo):
     - **More than one centre.** In a molecule the potential no longer has spherical symmetry, so the orbitals cannot be
       found by separating variables. The practical method, **LCAO** (linear combination of atomic-like orbitals), builds each
       molecular orbital as a sum of functions centred on the atoms. Each of these basis functions has the form
-      (radial function) $\times$ (real spherical harmonic), as in section 4. The radial function is replaced by a sum of
+      (radial function) $\times$ (real spherical harmonic), as in section 5. The radial function is replaced by a sum of
       Gaussians, which makes the integrals fast, and the sum is made large enough to be accurate. Mixing s and p functions on
       carbon gives the $sp^3$ hybrids that point to the corners of a tetrahedron in methane.
 
@@ -568,16 +991,19 @@ def _(mo):
 
     **Takeaways for a slide**
 
-    1. A wave on a sphere has to be single-valued and finite, which gives whole numbers $m_\ell$ and $\ell$; the harmonic
-       $Y_{\ell m_\ell}$ has $\ell$ nodal lines, and $2\ell+1$ of them share the same angular energy $\ell(\ell+1)$.
-    2. The radial wave sees the pull $-1/r$ plus a push $\ell(\ell+1)/2r^2$ away from the centre, and has $n-\ell-1$ nodes.
-    3. The energy $-13.6\ \text{eV}/n^2$ depends on $n$ only, so each level holds $n^2$ orbitals ($2n^2$ with spin).
+    1. Each direction has its own family of nodes: spheres across $r$ ($n-\ell-1$), cones across $\vartheta$
+       ($\ell-\lvert m_\ell\rvert$), planes through the axis across $\varphi$ ($\lvert m_\ell\rvert$); in total $n-1$. The shape of an orbital is the
+       pattern of these nodes.
+    2. A wave on a sphere has to be single-valued and finite, which makes $m_\ell$ and $\ell$ whole numbers; the $2\ell+1$
+       harmonics of one $\ell$ share the angular energy $\ell(\ell+1)$.
+    3. The radial wave sees the pull $-1/r$ plus a push away from the centre; the energy $-13.6\ \text{eV}/n^2$ depends
+       on $n$ only, so each level holds $n^2$ orbitals ($2n^2$ with spin).
     4. Atoms and molecules reuse these shapes: many electrons need orbitals in an average field, fixed nuclei, and
        atom-centred basis functions.
 
     **What was checked, and what was not.** All the numerical statements marked above are tested in `test_hydrogen.py`.
     The restriction $\lvert m_\ell\rvert\le\ell$, the full separation of the Schrödinger equation and the whole of
-    section 5 are stated without derivation or calculation here.
+    section 6 are stated without derivation or calculation here.
     """)
     return
 

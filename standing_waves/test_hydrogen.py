@@ -2,6 +2,23 @@ import numpy as np
 import pytest
 
 from hydrogen import (
+    azimuth_nodes,
+    latitude_nodes,
+    latitude_nodes_predicted,
+    count_sign_changes,
+    circle_coefficients,
+    circle_function,
+    circle_reconstruct,
+    sphere_coefficients,
+    sphere_function,
+    sphere_power,
+    sphere_reconstruct,
+    bessel_j,
+    bessel_zeros,
+    drum_frequency,
+    drum_mode,
+    drum_nodes,
+    node_geometry,
     HARTREE_EV,
     angular_degeneracy,
     angular_operator_fd,
@@ -298,3 +315,245 @@ def test_polar_solution_is_a_legendre_polynomial_at_whole_l():
         else:
             expected = p / (-(legendre_assoc(ell, 0, h) - legendre_assoc(ell, 0, -h)) / (2 * h))
         assert y == pytest.approx(expected, abs=1e-4)
+
+
+# ---------------------------------------------------------------------------------------------------------------
+# drumhead
+
+
+def test_bessel_known_values_and_recurrence():
+    assert bessel_j(0, 0.0) == pytest.approx(1.0)
+    assert bessel_j(1, 0.0) == pytest.approx(0.0, abs=1e-12)
+    assert bessel_j(0, 1.0) == pytest.approx(0.7651976866, abs=1e-9)
+    assert bessel_j(1, 2.0) == pytest.approx(0.5767248078, abs=1e-9)
+    x = np.linspace(0.5, 9, 7)
+    for m in (1, 2, 3):
+        assert 2 * m / x * bessel_j(m, x) == pytest.approx(bessel_j(m - 1, x) + bessel_j(m + 1, x), abs=1e-10)
+
+
+def test_bessel_zeros_known_values():
+    assert bessel_zeros(0, 3) == pytest.approx([2.404826, 5.520078, 8.653728], abs=1e-5)
+    assert bessel_zeros(1, 2) == pytest.approx([3.831706, 7.015587], abs=1e-5)
+    assert bessel_zeros(2, 1) == pytest.approx([5.135622], abs=1e-5)
+
+
+@pytest.mark.parametrize("m,k", [(0, 1), (0, 3), (1, 2), (2, 2), (3, 1)])
+def test_drum_mode_solves_the_wave_equation_and_vanishes_on_the_rim(m, k):
+    j = drum_frequency(m, k)
+    h = 1e-3
+    x, y = 0.31, 0.22
+    f = lambda a, b: drum_mode(m, k, np.hypot(a, b), np.arctan2(b, a))  # noqa: E731
+    lap = (f(x + h, y) + f(x - h, y) + f(x, y + h) + f(x, y - h) - 4 * f(x, y)) / h**2
+    assert -lap == pytest.approx(j**2 * f(x, y), abs=1e-3)
+    assert abs(drum_mode(m, k, 1.0, 0.4)) < 1e-9
+
+
+@pytest.mark.parametrize("m,k", [(0, 1), (0, 3), (1, 2), (2, 3), (3, 2), (4, 1)])
+def test_drum_node_counts(m, k):
+    radii, angles = drum_nodes(m, k)
+    assert len(radii) == k - 1 and len(angles) == m
+    r = np.linspace(1e-3, 1 - 1e-6, 20001)
+    assert count_sign_changes(bessel_j(m, drum_frequency(m, k) * r)) == k - 1
+    phi = np.linspace(0, 2 * np.pi, 4001)[:-1] + 1e-5
+    ring = drum_mode(m, k, 0.5 * (1 + (radii[-1] if len(radii) else 0)) * 0.9, phi) * np.ones_like(phi)
+    if m > 0:
+        assert count_sign_changes(np.append(ring, ring[0])) == 2 * m  # m diameters cut the ring 2m times
+
+
+def test_drum_has_nodes_where_stated_and_frequencies_are_not_whole_numbers():
+    for m, k in [(1, 3), (2, 2), (3, 2)]:
+        radii, angles = drum_nodes(m, k)
+        for rad in radii:
+            assert abs(drum_mode(m, k, rad, 0.37)) < 1e-9
+        for a in angles:
+            assert abs(drum_mode(m, k, 0.4, a)) < 1e-9
+            assert abs(drum_mode(m, k, 0.4, a + np.pi)) < 1e-9
+    ratios = [drum_frequency(0, k) / drum_frequency(0, 1) for k in (1, 2, 3)]
+    assert ratios[1] != pytest.approx(2.0, abs=0.1)  # a string would give 1, 2, 3
+
+
+# ---------------------------------------------------------------------------------------------------------------
+# node geometry of orbitals
+
+
+ORBITALS = [(1, 0, 0), (2, 0, 0), (2, 1, 0), (2, 1, 1), (2, 1, -1), (3, 0, 0), (3, 1, 0), (3, 2, 0), (3, 2, 2),
+            (3, 2, -2), (3, 2, 1), (4, 3, 2), (4, 2, -1), (4, 3, 0)]
+
+
+@pytest.mark.parametrize("n,l,m", ORBITALS)
+def test_orbital_has_n_minus_one_nodal_surfaces_of_three_kinds(n, l, m):
+    g = node_geometry(n, l, m)
+    assert len(g["spheres"]) == n - l - 1
+    assert len(g["cones"]) == l - abs(m)
+    assert len(g["planes"]) == abs(m)
+    assert sum(len(v) for v in g.values()) == n - 1
+
+
+@pytest.mark.parametrize("n,l,m", ORBITALS)
+def test_orbital_vanishes_on_the_stated_nodal_surfaces(n, l, m):
+    g = node_geometry(n, l, m)
+    rng = np.random.default_rng(0)
+    top = np.abs(psi_real(n, l, m, *rng.normal(size=(3, 4000)) * 2.0 * n)).max()
+    for rad in g["spheres"]:
+        d = rng.normal(size=(3, 20))
+        d /= np.linalg.norm(d, axis=0)
+        assert np.abs(psi_real(n, l, m, *(rad * d))).max() < 1e-5 * top
+    for th in g["cones"]:
+        rr, ph = rng.uniform(0.5, 3 * n, 20), rng.uniform(0, 2 * np.pi, 20)
+        pts = (rr * np.sin(th) * np.cos(ph), rr * np.sin(th) * np.sin(ph), rr * np.cos(th))
+        assert np.abs(psi_real(n, l, m, *pts)).max() < 1e-5 * top
+    for az in g["planes"]:
+        rho, z = rng.uniform(-3 * n, 3 * n, 20), rng.uniform(-3 * n, 3 * n, 20)
+        assert np.abs(psi_real(n, l, m, rho * np.cos(az), rho * np.sin(az), z)).max() < 1e-5 * top
+
+
+def test_named_orbitals_and_their_nodes():
+    # 2p_z: one flat plane (the equator); 2p_x: one plane through the axis; 3d_z2: two cones; 3d_xy: two planes
+    assert node_geometry(2, 1, 0)["cones"] == pytest.approx([np.pi / 2])
+    assert node_geometry(2, 1, 1)["planes"] == pytest.approx([np.pi / 2])
+    assert len(node_geometry(3, 2, 0)["cones"]) == 2
+    assert len(node_geometry(3, 2, -2)["planes"]) == 2
+    assert len(node_geometry(3, 0, 0)["spheres"]) == 2
+
+
+def test_animations_are_looping_gifs_with_one_period():
+    import io
+
+    from PIL import Image
+
+    from hydrogen_plots import drum_gif, string_gif
+
+    for data, frames in ((string_gif(3, n_frames=12, dpi=40), 12), (drum_gif(1, 2, n_frames=8, dpi=40), 8)):
+        im = Image.open(io.BytesIO(data))
+        assert im.format == "GIF" and im.n_frames == frames and im.info.get("loop") == 0
+        first = np.asarray(im.convert("RGB")).astype(int)
+        im.seek(frames // 2)  # half a period later the wave is upside down: the frames differ
+        assert np.abs(np.asarray(im.convert("RGB")).astype(int) - first).sum() > 0
+
+
+# ---------------------------------------------------------------------------------------------------------------
+# Fourier series on a circle and on a sphere
+
+
+def test_circle_fourier_picks_out_a_single_harmonic():
+    a, b = circle_coefficients(lambda p: 0.5 + 2 * np.cos(3 * p) - 1.5 * np.sin(5 * p), 8)
+    assert a[0] == pytest.approx(0.5, abs=1e-9)
+    assert a[3] == pytest.approx(2.0, abs=1e-9) and b[5] == pytest.approx(-1.5, abs=1e-9)
+    others = [a[m] for m in range(1, 9) if m != 3] + [b[m] for m in range(1, 9) if m != 5]
+    assert np.abs(others).max() < 1e-9
+
+
+def test_circle_series_converges_and_obeys_parseval():
+    phi = np.linspace(0, 2 * np.pi, 4000, endpoint=False)
+    a, b = circle_coefficients(circle_function, 60)
+    errs = [np.mean((circle_reconstruct(a, b, phi, M) - circle_function(phi)) ** 2) for M in (1, 3, 10, 30, 60)]
+    assert all(e2 < e1 for e1, e2 in zip(errs, errs[1:]))
+    power = a[0] ** 2 + 0.5 * np.sum(a[1:] ** 2 + b[1:] ** 2)
+    assert power == pytest.approx(np.mean(circle_function(phi) ** 2), rel=0.02)
+
+
+def test_sphere_expansion_recovers_a_known_combination():
+    th, ph, w = sphere_quadrature(90, 180)
+    f = 2.0 * real_ylm(2, 1, th, ph) - 0.5 * real_ylm(3, -2, th, ph)
+    got = {(l, m): float(np.sum(f * real_ylm(l, m, th, ph) * w)) for l in range(5) for m in range(-l, l + 1)}
+    assert got[(2, 1)] == pytest.approx(2.0, abs=1e-9) and got[(3, -2)] == pytest.approx(-0.5, abs=1e-9)
+    assert max(abs(v) for k, v in got.items() if k not in {(2, 1), (3, -2)}) < 1e-9
+
+
+def test_sphere_series_converges_and_obeys_parseval():
+    co = sphere_coefficients(20)
+    th, ph, w = sphere_quadrature(60, 120)
+    f = sphere_function(th, ph)
+    errs = [np.sum((sphere_reconstruct(co, L, th, ph) - f) ** 2 * w) for L in (0, 2, 5, 10, 20)]
+    assert all(e2 < e1 for e1, e2 in zip(errs, errs[1:]))
+    assert errs[-1] < 1e-3 * errs[0]
+    total = np.sum(f**2 * w)
+    assert sphere_power(co).sum() == pytest.approx(total, rel=1e-3)
+    assert sphere_power(co).sum() + errs[-1] == pytest.approx(total, rel=1e-3)
+
+
+# ---------------------------------------------------------------------------------------------------------------
+# Where the nodes of a spherical harmonic sit
+
+
+LM_PAIRS = [(l, m) for l in range(0, 9) for m in range(0, l + 1)]
+
+
+@pytest.mark.parametrize("l,m", LM_PAIRS)
+def test_polar_sign_changes_equal_l_minus_m(l, m):
+    theta = np.linspace(1e-4, np.pi - 1e-4, 4001)  # odd count would hit x=0 exactly; sign changes ignore zeros anyway
+    p = legendre_assoc(l, m, np.cos(theta))
+    assert count_sign_changes(p) == l - m
+
+
+@pytest.mark.parametrize("l,m", LM_PAIRS)
+def test_predicted_latitudes_match_zeros_of_wave(l, m):
+    pred = latitude_nodes_predicted(l, m)
+    assert len(pred) == l - m
+    assert np.allclose(pred, latitude_nodes(l, m), atol=1e-4)
+    # the real harmonic really vanishes there, at any azimuth
+    for t0 in pred:
+        for ph in (0.3, 1.1, 2.9):
+            assert abs(real_ylm(l, m, t0, ph)) < 1e-9
+        if m:
+            assert abs(real_ylm(l, -m, t0, 0.7)) < 1e-9
+
+
+@pytest.mark.parametrize("l,m", LM_PAIRS)
+def test_latitudes_symmetric_about_equator(l, m):
+    pred = latitude_nodes_predicted(l, m)
+    assert np.allclose(np.sort(np.pi - pred), pred, atol=1e-9)
+    on_equator = np.sum(np.abs(pred - np.pi / 2) < 1e-9)
+    assert on_equator == (l - m) % 2
+
+
+def test_worked_example_l4_m1():
+    deg = np.degrees(latitude_nodes_predicted(4, 1))
+    expected = [np.degrees(np.arccos(np.sqrt(3 / 7))), 90.0, 180 - np.degrees(np.arccos(np.sqrt(3 / 7)))]
+    assert np.allclose(deg, expected, atol=1e-6)
+    assert np.allclose(deg, [49.1, 90.0, 130.9], atol=0.05)
+    # P_4^1 is proportional to sin(theta) (7 cos^3 theta - 3 cos theta)
+    t = np.linspace(0.2, 2.9, 7)
+    ratio = legendre_assoc(4, 1, np.cos(t)) / (np.sin(t) * (7 * np.cos(t) ** 3 - 3 * np.cos(t)))
+    assert np.allclose(ratio, ratio[0])
+
+
+@pytest.mark.parametrize("m", range(1, 9))
+@pytest.mark.parametrize("kind", ["cos", "sin"])
+def test_azimuth_planes_where_stated(m, kind):
+    phi0 = azimuth_nodes(m, kind)
+    assert len(phi0) == m
+    assert np.allclose(np.diff(phi0), np.pi / m)  # equally spaced, pi/m apart
+    assert phi0[0] == pytest.approx(np.pi / (2 * m) if kind == "cos" else 0.0)
+    trig = np.cos if kind == "cos" else np.sin
+    for p0 in phi0:
+        for q in (p0, p0 + np.pi):
+            assert abs(trig(m * q)) < 1e-12
+    # and there are no other zeros of the real wave in [0, 2 pi): 2m of them
+    phi = np.linspace(0, 2 * np.pi, 20001)[:-1] + 0.123
+    v = trig(m * phi)
+    assert count_sign_changes(np.r_[v, v[0]]) == 2 * m  # closed loop round the axis
+
+
+@pytest.mark.parametrize("l,m", LM_PAIRS)
+def test_total_nodal_surfaces_is_l_for_both_real_forms(l, m):
+    for sign in (1, -1):
+        mm = sign * m
+        if m == 0 and sign == -1:
+            continue
+        kind = "cos" if mm >= 0 else "sin"
+        assert len(azimuth_nodes(m, kind)) + len(latitude_nodes_predicted(l, m)) == l
+
+
+def test_complex_harmonic_has_only_latitude_nodes():
+    from hydrogen import ylm
+
+    for l, m in [(3, 2), (4, 1), (5, 5)]:
+        theta = np.linspace(0.05, np.pi - 0.05, 400)[:, None]
+        phi = np.linspace(0, 2 * np.pi, 400)[None, :]
+        mag = np.abs(ylm(l, m, theta, phi))
+        # the magnitude is independent of phi, so it vanishes only on circles of latitude
+        assert np.allclose(mag, mag[:, :1], atol=1e-12)
+        # the phase winds m times round the axis
+        ph = np.unwrap(np.angle(ylm(l, m, np.pi / 2 + 0.3, np.linspace(0, 2 * np.pi, 2000))))
+        assert (ph[-1] - ph[0]) / (2 * np.pi) == pytest.approx(m, abs=0.01)
