@@ -59,3 +59,8 @@ def test_toy_two_function_example():
 def test_energy_parts_add_up_to_total():
     ks, *_ = arrays()
     assert abs(sum(ks["energy_parts_Ha"].values()) - ks["e_tot_Ha"]) < 1e-8
+
+
+def test_coulomb_matrix_from_four_index_integrals():
+    ks, *_ = arrays()
+    assert ks["coulomb_check"]["max_diff"] < 1e-10

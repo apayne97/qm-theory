@@ -96,7 +96,16 @@ def main():
     D_hf = hf.make_rdm1()
     f_hf_rebuilt = hf.get_hcore() + hf.get_j(mol, D_hf) - 0.5 * hf.get_k(mol, D_hf)
 
+    # Check J against the four-index integrals (mu nu|lambda sigma), and a few of them as examples.
+    eri = mol.intor("int2e")
+    j_from_eri = np.einsum("mnls,ls->mn", eri, D)
+    coulomb_check = {
+        "max_diff": float(np.abs(j_from_eri - pieces["J"]).max()),
+        "eri_0000": float(eri[0, 0, 0, 0]), "eri_0101": float(eri[0, 1, 0, 1]), "eri_0011": float(eri[0, 0, 1, 1]),
+    }
+
     data = {
+        "coulomb_check": coulomb_check,
         "hf": {"e_tot_Ha": float(hf.e_tot), "rebuild_max_diff": float(np.abs(hf.get_fock() - f_hf_rebuilt).max())},
         "e_tot_Ha": float(mf.e_tot), "n_basis": mol.nao, "n_occ": nocc,
         "ao_labels": [" ".join(x.split()) for x in mol.ao_labels()],

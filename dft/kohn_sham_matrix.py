@@ -152,6 +152,58 @@ def _(mo):
 @app.cell
 def _(mo):
     mo.md(r"""
+    **Basis functions and orbitals are different things.** The two sets of indices in the table keep them apart.
+
+    | | basis functions $\phi_\mu$ | orbitals $\psi_i$ |
+    |---|---|---|
+    | index | $\mu,\nu,\lambda,\sigma$ | $i,j$ |
+    | where they come from | chosen before the calculation (here def2-TZVPD) | the *result* of solving $FC=SC\varepsilon$ |
+    | shape | fixed Gaussian-type functions, each centred on one atom | sums of many basis functions, spread over the molecule |
+
+    The coefficients $C_{\mu i}$ connect the two: $\psi_i=\sum_\mu C_{\mu i}\phi_\mu$. The index $\mu$ runs down the rows of $C$
+    (which basis function) and $i$ along its columns (which orbital). The basis functions are fixed ingredients and each orbital is a
+    recipe that mixes them. Which matrix carries which index:
+
+    - **Basis-function indices ($\mu\nu$):** $F$, $S$, $T$, $V$, $J$, $K$, $P$ and $D$. Each is built from integrals between two basis
+      functions, for example $S_{\mu\nu}=\int\phi_\mu\phi_\nu\,d\mathbf r$.
+    - **Orbital indices ($i$, $j$):** the energies $\varepsilon_i$ and the orbital orthonormality $\int\psi_i\psi_j\,d\mathbf r=\delta_{ij}$.
+    - **Both:** $C_{\mu i}$. In $P_{\mu\nu}=\sum_i^{\text{occ}}C_{\mu i}C_{\nu i}$ the sum runs over orbitals, but the result is labelled by basis
+      functions: the occupied orbitals are used to say which combinations of basis functions hold the electrons.
+
+    Two things make the sets easy to confuse. First, $N$ basis functions give exactly $N$ orbitals, so both indices run over 58 values for
+    water. Second, basis functions are often called *atomic orbitals* and the $\psi_i$ *molecular orbitals*, and the program labels the
+    basis functions `O 1s`, `O 2px` and so on; such a label only says what shape the function has, and it is not the true atomic orbital.
+
+    The orbitals cannot simply be taken as the basis, because they are not known in advance. If the $\phi_\mu$ were the true
+    orbitals, $S$ would be the identity matrix and $F$ would be diagonal, and there would be nothing to solve. The basis is a fixed,
+    flexible set from which the orbitals are built, and solving $FC=SC\varepsilon$ finds the recipe $C$. The two meet in $C^TFC=\varepsilon$:
+    in the basis of the orbitals $F$ is diagonal, while in the basis of the $\phi_\mu$ it is the full $58\times58$ matrix.
+    """)
+    return
+
+
+@app.cell
+def _(mo, np, C, eps, labels):
+    def _recipe(i, name):
+        _order = np.argsort(-np.abs(C[:, i]))[:3]
+        _terms = " ".join(f"{C[m, i]:+.2f}\\,\\phi_{{\\text{{{labels[m]}}}}}" for m in _order)
+        _small = int((np.abs(C[:, i]) > 0.01).sum()) - 3
+        return (f"- **{name}** ($\\varepsilon={eps[i]:.3f}$ Ha): $\\psi={_terms}$, plus {_small} smaller contributions "
+                f"(coefficients above 0.01 in size).")
+    mo.md(
+        "**Two orbitals of water as recipes.** The three largest coefficients $C_{\\mu i}$ of orbital 1 (the oxygen 1s core orbital) and "
+        "orbital 5 (the highest occupied):\n\n"
+        + _recipe(0, "Orbital 1") + "\n" + _recipe(4, "Orbital 5")
+        + "\n\nThe core orbital is not simply the basis function called `O 1s`: the basis holds several s-type functions with different "
+        "spreads, and the orbital mixes them. The highest occupied orbital is mostly oxygen $p_x$ functions, with small contributions from the "
+        "hydrogens."
+    )
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
     ## 3. A two-function example, solved by hand
 
     The equation $FC=SC\varepsilon$ is called a *generalized eigenproblem*. If $S$ were the identity matrix it would
@@ -277,6 +329,78 @@ def _(mo):
     **$V^{\text{nlc}}$, the VV10 non-local term.** A correlation correction that mimics dispersion (the "V" in ωB97M-V). It
     is evaluated on its own, coarser grid and is numerically small.
     """)
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    ### A closer look at $J$: why a product of two basis functions?
+
+    $J$ is the repulsion between an electron and the total electron density. The steps from that statement to the formula
+    above are these.
+
+    - **(a) The physical statement.** The density $\rho(\mathbf r)$ is the electron charge per unit volume at $\mathbf r$. An electron at
+      $\mathbf r_1$ is repelled by all the charge elsewhere, and the potential energy it feels is
+      $v_J(\mathbf r_1)=\int\rho(\mathbf r_2)\,\lvert\mathbf r_1-\mathbf r_2\rvert^{-1}\,d\mathbf r_2$: the sum, over all small volumes $d\mathbf r_2$,
+      of the charge in the volume divided by its distance from the electron (atomic units). This is the repulsion part of $v_{\text{eff}}$.
+    - **(b) The density is made of products.** The density is the square of the orbitals, and each orbital is a sum of basis functions.
+      The square of a sum is a double sum, and moving the sum over the orbitals $i$ inside collects the weights into $D$:
+
+    $$
+    \rho(\mathbf r)=2\sum_i^{\text{occ}}\Big(\sum_\lambda C_{\lambda i}\phi_\lambda\Big)\Big(\sum_\sigma C_{\sigma i}\phi_\sigma\Big)
+    =\sum_{\lambda\sigma}D_{\lambda\sigma}\,\phi_\lambda(\mathbf r)\,\phi_\sigma(\mathbf r).
+    $$
+
+    So a product $\phi_\lambda\phi_\sigma$ is not itself a charge; it is one building block of the density, and $D_{\lambda\sigma}$ is its weight.
+
+    - **(c) The matrix element has the usual form** $J_{\mu\nu}=\int\phi_\mu(\mathbf r_1)\,v_J(\mathbf r_1)\,\phi_\nu(\mathbf r_1)\,d\mathbf r_1$. Inserting (a) and (b) gives
+      $J_{\mu\nu}=\sum_{\lambda\sigma}D_{\lambda\sigma}\,(\mu\nu|\lambda\sigma)$, where the product $\phi_\mu\phi_\nu$ at point 1 appears for the same reason
+      as the product $\phi_\lambda\phi_\sigma$ at point 2.
+    - **(d) Why "charge distribution".** $(\mu\nu|\lambda\sigma)$ has the shape of the classical repulsion energy between two charge clouds,
+      $\iint q_1(\mathbf r_1)\,q_2(\mathbf r_2)\,\lvert\mathbf r_1-\mathbf r_2\rvert^{-1}\,d\mathbf r_1\,d\mathbf r_2$, with $q_1=\phi_\mu\phi_\nu$ and $q_2=\phi_\lambda\phi_\sigma$.
+      For $\mu=\nu$ the product $\phi_\mu^2$ is positive everywhere and is a genuine density. For $\mu\neq\nu$ it is an *overlap density*: it is
+      large only where both functions are non-zero, it can be negative, and its total is $\int\phi_\mu\phi_\nu\,d\mathbf r=S_{\mu\nu}$.
+    """)
+    return
+
+
+@app.cell
+def _(mo, ks, S):
+    _c = ks["coulomb_check"]
+    mo.md(
+        f"**Checked on water.** Summing $\\sum_{{\\lambda\\sigma}}D_{{\\lambda\\sigma}}(\\mu\\nu|\\lambda\\sigma)$ with PySCF's four-index integrals reproduces the "
+        f"stored $J$ matrix to {_c['max_diff']:.0e}. Examples of the integrals (hartree): the cloud $\\phi_0^2$ repelling itself, "
+        f"$(00|00)={_c['eri_0000']:.3f}$ (large, because that function is very compact); the overlap cloud $\\phi_0\\phi_1$ repelling itself, "
+        f"$(01|01)={_c['eri_0101']:.3f}$; $\\phi_0^2$ repelling $\\phi_1^2$, $(00|11)={_c['eri_0011']:.3f}$. The total charge of the "
+        f"overlap cloud $\\phi_0\\phi_1$ is $S_{{01}}={S[0, 1]:.3f}$."
+    )
+    return
+
+
+@app.cell
+def _(mo, np, S):
+    _n = S.shape[0]
+    _pairs = _n * (_n + 1) // 2
+    _w = np.linalg.eigvalsh(S)
+    mo.md(
+        "### How many orbitals, and why only pairs?\n\n"
+        f"**The number of orbitals is $N$, not $N^2/2$.** An orbital is a column of $N$ coefficients, and $FC=SC\\varepsilon$ is an eigenproblem for an "
+        f"$N\\times N$ matrix, which has $N$ independent solutions. With $N={_n}$ basis functions there are exactly {_n} orbitals. This is the same "
+        f"statement as: the orbitals are the {_n} independent directions in the space spanned by the basis functions. If two basis functions were "
+        f"almost identical, $S$ would have an eigenvalue close to zero and a program drops a combination; for water the smallest eigenvalue of $S$ is "
+        f"{_w.min():.4f}, so all {_n} are used.\n\n"
+        f"**The number $\\sim N^2/2$ is the number of pairs**, i.e. of different products $\\phi_\\mu\\phi_\\nu$: $N(N+1)/2={_pairs}$ for water. "
+        f"It counts the density clouds, not the orbitals. The density matrix $D$ also has about this many independent entries, since it is symmetric. "
+        f"The four-index integrals $(\\mu\\nu|\\lambda\\sigma)$ pair up two such clouds, so there are about $N^4/8$ of them "
+        f"({_pairs * (_pairs + 1) // 2:,} distinct ones here, against $N^4={_n ** 4:,}$ in the full array).\n\n"
+        "**Why pairs are enough.** The density is quadratic in the orbitals, so each term of it is a product of two basis functions "
+        "(step (b) above). The electron-electron interaction $\\lvert\\mathbf r_1-\\mathbf r_2\\rvert^{-1}$ couples two electrons at a time, and each electron "
+        "contributes one pair, so $J$ and $K$ need integrals over two pairs, four functions in all. A product of three basis functions "
+        "does not arise from the density or from the Coulomb interaction. (From memory, not checked here: triple products do appear "
+        "in other places, for example as three-index integrals $(\\mu\\nu|P)$ in density fitting, where one auxiliary function $P$ replaces a pair, "
+        "and in response properties of higher order.)"
+    )
     return
 
 
