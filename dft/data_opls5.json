@@ -1,0 +1,75 @@
+{
+ "rsh": {
+  "wB97X": {
+   "omega": 0.3,
+   "long_range": 1.0,
+   "short_range": 0.157706
+  },
+  "wB97X-D": {
+   "omega": 0.2,
+   "long_range": 1.0,
+   "short_range": 0.222036
+  },
+  "wB97X-D3": {
+   "omega": 0.25,
+   "long_range": 1.0,
+   "short_range": 0.195728
+  },
+  "wB97M-V": {
+   "omega": 0.3,
+   "long_range": 1.0,
+   "short_range": 0.15000000000000002
+  }
+ },
+ "probe": {
+  "n_basis": 174,
+  "paper_QM": {
+   "3.5": -13.6,
+   "4.0": -9.5
+  },
+  "computed": {
+   "3.5": -13.612744512938944,
+   "4.0": -9.516764885431376
+  }
+ },
+ "benzene": {
+  "6-31+G*": {
+   "n_basis": 120,
+   "n_electrons": 42,
+   "n_electrons_all": 42
+  },
+  "6-311++G**": {
+   "n_basis": 174,
+   "n_electrons": 42,
+   "n_electrons_all": 42
+  },
+  "def2-TZVPD": {
+   "n_basis": 276,
+   "n_electrons": 42,
+   "n_electrons_all": 42
+  },
+  "def2-TZVPD(-f)": {
+   "n_basis": 234,
+   "n_electrons": 42,
+   "n_electrons_all": 42
+  }
+ },
+ "pt_complex": {
+  "LANL2DZ on Pt, 6-31+G* elsewhere (ECP)": {
+   "n_basis": 114,
+   "n_electrons": 72,
+   "n_electrons_all": 132
+  },
+  "def2-TZVPD with def2 ECP on Pt": {
+   "n_basis": 263,
+   "n_electrons": 72,
+   "n_electrons_all": 132
+  },
+  "def2-TZVPD(-f) with def2 ECP on Pt": {
+   "n_basis": 235,
+   "n_electrons": 72,
+   "n_electrons_all": 132
+  }
+ },
+ "seconds": 24.27698588371277
+}

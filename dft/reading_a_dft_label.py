@@ -28,7 +28,8 @@ def _():
     basis_data = load("basis")
     ladder_data = load("ladder")
     disp_data = load("dispersion")
-    return (mo, plt, np, load, shell_label, basis_figure, bsse_figure, damping_figure, dispersion_figure, eint_figure, grid_figure, homo_figure, line_fields_figure, scf_figure, split_figure, scf_data, basis_data, ladder_data, disp_data,)
+    opls5_data = load("opls5")
+    return (mo, plt, np, load, shell_label, basis_figure, bsse_figure, damping_figure, dispersion_figure, eint_figure, grid_figure, homo_figure, line_fields_figure, scf_figure, split_figure, scf_data, basis_data, ladder_data, disp_data, opls5_data,)
 
 
 @app.cell
@@ -54,7 +55,7 @@ def _(mo):
     6. Exact exchange and range separation: ω
     7. Dispersion: -V against D3(BJ)
     8. Settings that are not in the label: the grid
-    9. Putting the two labels together
+    9. Putting the two labels together (and a third source, the labels in the OPLS5 paper)
     10. What was checked, and what was not
 
     All numbers in the figures were computed with PySCF 2.14 (`compute_dft_data.py`, which writes the `data_*.json` files
@@ -588,6 +589,203 @@ def _(mo):
 @app.cell
 def _(mo):
     mo.md(r"""
+    ### A third source: the labels in the OPLS5 paper
+
+    The two datasets above are large collections of DFT energies. A third, smaller example comes from a force-field paper:
+    Damm et al., *OPLS5: Addition of Polarizability and Improved Treatment of Metals* (ChemRxiv 2024, doi
+    10.26434/chemrxiv-2024-2svr7, a preprint, not peer reviewed). A force field is a cheap formula for the energy of
+    a molecule, with parameters fitted to reference calculations. This paper uses **four different levels of theory**, one for each job:
+
+    | Job in the paper | Label as printed |
+    |---|---|
+    | (a) optimise the geometries of about 500 metal complexes; electrostatic potential (ESP) with and without a uniform electric field of $0.02$ a.u. | ωB97x-D3/lacvp+* |
+    | (b) energy scans of the metal-ligand distance and of ligand rotations | ωB97x-D3/def2-tzvpd(-f) |
+    | (c) energy of a $+1$ point charge held $3.5$ Å and $4.0$ Å above the centre of a benzene ring | ωB97X-D/6-311++G** |
+    | (d) reference interaction energies of charged groups (acetate, guanidine, ammonium ions) | CCSD(T)/CBS |
+
+    The new pieces are the functional ωB97X-D3, the basis `lacvp+*` with an effective core potential, the suffix
+    `(-f)`, the Pople basis `6-311++G**`, and `CBS`, which is not a basis set at all. They are taken in turn.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    #### ωB97X-D3 and ωB97X-D against ωB97M-V
+
+    - **X against M-V.** ωB97X is a range-separated hybrid on the B97 form of section 5 but it has *no* kinetic energy
+      density $\tau$, so it is a hybrid built on a GGA, without the meta ingredient of ωB97M. It also has no built-in
+      nonlocal term (no -V). Everything it knows about dispersion has to be added from outside, which is the role of the suffix.
+    - **-D against -D3.** Both add an empirical atom-pair term $-\sum C_6/R^6+\dots$ after the electronic calculation, as
+      D3(BJ) did in section 7. The original **-D** uses one fixed set of $C_6$ coefficients per pair of elements; **-D3** is
+      Grimme's later scheme, in which $C_6$ also depends on how many neighbours an atom has. In both, the functional's own
+      coefficients are refitted together with the correction, so **ωB97X, ωB97X-D and ωB97X-D3 are three different functionals**.
+    - **Range separation.** The same two exchange fractions as in section 6, now with different values for each member of the family:
+    """)
+    return
+
+
+@app.cell
+def _(mo, opls5_data):
+    _rows = ["| Functional | $\\omega$ (bohr⁻¹) | exact exchange, short range | exact exchange, long range |", "|---|---|---|---|"]
+    for _name, _v in opls5_data["rsh"].items():
+        _rows.append(f"| {_name} | {_v['omega']:.2f} | {_v['short_range']:.1%} | {_v['long_range']:.0%} |")
+    mo.vstack([
+        mo.md("\n".join(_rows)),
+        mo.md("These are the values PySCF (through the libxc library) reports for the functional part of each. The dispersion terms "
+              "are not in these numbers. The $\\omega=0.25$ and $19.6\\%$ of ωB97X-D3 are what I remembered, and the calculation agrees."),
+    ])
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    #### lacvp+*: a Pople basis with a core potential
+
+    Jaguar, Schrödinger's quantum chemistry program, names its basis sets with letters. According to the Jaguar manual,
+    **LACVP** means: *LA* for the Los Alamos effective core potentials of Hay and Wadt, *CV* for core and valence, and *P* for the Pople
+    6-31G set on the other atoms. In the manual's table, the atoms from hydrogen to argon use 6-31G, and an effective
+    core potential (ECP) is used for the heavier elements: potassium to copper, rubidium to silver, caesium to lanthanum, and hafnium to gold (so both
+    iridium and platinum, the metals of the paper). The remaining symbols have their usual Pople meaning:
+
+    - **\*** adds one set of $d$ polarization functions to the atoms heavier than hydrogen (`**` would add $p$ on hydrogen as well),
+    - **+** adds one set of diffuse functions on the heavy atoms (`++` would add one on hydrogen too).
+
+    So for carbon, nitrogen or chlorine `lacvp+*` is the basis `6-31+G*`, and the metal is described by an ECP with its own valence basis.
+    (The manual lists the symbols `*`, `**`, `+` and `++` for LACVP but does not define them; the definitions above are the standard Pople ones.)
+
+    **What an ECP is.** A heavy atom such as platinum has 78 electrons. The 60 innermost are bound tightly, take no part in
+    chemistry, and would need many basis functions. An effective core potential replaces them by a smooth
+    potential $V_{\text{ECP}}(\mathbf r)$ added to the nuclear attraction, and the calculation treats only the remaining valence
+    and semicore electrons explicitly. This helps in two ways: it removes many electrons, and the potential can be fitted to
+    a relativistic atomic calculation, which includes the effect (the contraction of the heavy atom's inner orbitals) that a non-relativistic
+    calculation misses. This second reason is general knowledge, not something I checked in a source for this notebook.
+    Without an ECP, a transition-metal complex of a few hundred atoms would be both costlier and less accurate.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    #### def2-tzvpd(-f)
+
+    This is `def2-TZVPD` of section 4 with the suffix `(-f)`. The Jaguar manual says that the suffix means that **the $f$ and
+    higher functions are removed**. They are the largest and most expensive shells for the main-group atoms, and
+    the metal-ligand scans of job (b) need many energies. The manual lists the set for H to Kr with analytic integrals,
+    and for the heavier atoms together with an ECP. What the manual does not say, in the part I read, is whether the
+    metal keeps its own $f$ functions. The counts below remove them from the main-group atoms only.
+
+    #### 6-311++G** and CBS
+
+    - **6-311++G\*\*** is a Pople triple-zeta set: each core orbital is one contracted function of six Gaussians, and each valence
+      orbital is split into **three** (the `311`). The `++` adds diffuse functions on every atom including hydrogen, and `**`
+      adds polarization functions on every atom including hydrogen ($d$ on the heavy atoms, $p$ on hydrogen). This is the
+      Pople counterpart of `def2-TZVPPD` in SPICE II.
+    - **CBS** means complete basis set. No basis is meant: `CCSD(T)/CBS` is a coupled-cluster energy extrapolated from
+      calculations in a series of growing basis sets to the limit of an infinite one. A standard form is
+      $E_X = E_{\text{CBS}} + A\,X^{-3}$ for the correlation energy, where $X$ is the size index of the basis (2 for double zeta, 3 for triple, and so on). This is the textbook
+      form; which basis sets and which formula the reference of Table 3 used I did not check.
+
+    Counts of basis functions follow from these definitions. Benzene has 12 atoms and 42 electrons; the platinum complex is
+    $\text{Pt(NH}_3)_2\text{Cl}_2$ in an illustrative square-planar geometry (the counts do not depend on the geometry).
+    PySCF uses spherical $d$ and $f$ functions (5 and 7); a program using Cartesian Pople functions would count more.
+    """)
+    return
+
+
+@app.cell
+def _(mo, opls5_data):
+    _b = opls5_data["benzene"]
+    _rows = ["| Basis | Functions in benzene | Electrons treated explicitly |", "|---|---|---|"]
+    for _k, _v in _b.items():
+        _rows.append(f"| {_k} | {_v['n_basis']} | {_v['n_electrons']} of {_v['n_electrons_all']} |")
+    _rows2 = ["| Basis for the platinum complex | Functions | Electrons treated explicitly |", "|---|---|---|"]
+    for _k, _v in opls5_data["pt_complex"].items():
+        _rows2.append(f"| {_k} | {_v['n_basis']} | {_v['n_electrons']} of {_v['n_electrons_all']} |")
+    _d = _b["def2-TZVPD"]["n_basis"] - _b["def2-TZVPD(-f)"]["n_basis"]
+    mo.vstack([
+        mo.md("\n".join(_rows)),
+        mo.md(f"Removing the $f$ functions takes {_d} functions out of benzene, which is $6\\times 7$: one set of seven on each carbon. "
+              "`6-31+G*` is the light-atom part of `lacvp+*`; its count is for a metal-free molecule, where the ECP plays no role."),
+        mo.md("\n".join(_rows2)),
+        mo.md("In both ECP cases the platinum atom is left with 18 explicit electrons: 60 of 132 are replaced by the potential. "
+              "The LANL2DZ row is the closest PySCF has to the Jaguar set: it is the Hay-Wadt potential with its standard valence "
+              "basis on platinum and `6-31+G*` on the others, but it is **not** a check of Jaguar's `lacvp+*`, whose valence basis on the metal I did not compare."),
+    ])
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    #### A check we can run: the probe charge on benzene (job c)
+
+    Job (c) puts a point charge of $+1$ above the centre of the ring, perpendicular to its plane, and asks for the
+    interaction energy $E(\text{benzene}+q) - E(\text{benzene})$. The force field has to reproduce this attraction of the
+    charge to the $\pi$ cloud, which it can only do with a polarizable site; the paper tunes the Drude polarizability until the numbers fit.
+
+    PySCF has the ωB97X-D functional (under its libxc name) but cannot add the -D term. That does not matter here, because
+    the -D term is a sum over pairs of *atoms* and a point charge has none, so the electronic part gives the whole
+    interaction energy. This is my reasoning, not a calculation. The geometry is a standard D6h benzene
+    (C-C 1.397 Å, C-H 1.087 Å) rather than the paper's, which is not given in the text.
+    """)
+    return
+
+
+@app.cell
+def _(mo, opls5_data):
+    _p = opls5_data["probe"]
+    _rows = ["| Distance | Paper: QM (kcal/mol) | Here, ωB97X-D/6-311++G** (kcal/mol) |", "|---|---|---|"]
+    for _z in ("3.5", "4.0"):
+        _rows.append(f"| {_z} Å | {_p['paper_QM'][_z]:.1f} | {_p['computed'][_z]:.2f} |")
+    mo.vstack([
+        mo.md("\n".join(_rows)),
+        mo.md("The printed values are reproduced. A force field with no polarizability ($\\alpha=0$ in the paper's Table 1) gets "
+              "only $-7.4$ and $-5.4$, about half of this; polarizability of $1.0$ Å$^3$ on the ring gives $-12.7$ and $-8.8$, "
+              "the closest of the values the paper tried. The agreement to every printed digit is helped by rounding: the paper's grid and convergence settings are not stated."),
+    ])
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    #### Why one paper uses four levels of theory
+
+    A force-field fit needs the *cheapest* calculation that is accurate enough for each quantity.
+
+    - **Geometry (a)** needs thousands of optimisation steps on complexes with heavy metals: a hybrid with a modest basis and an ECP.
+    - **Energy scans (b)** need accurate *relative* energies along a path, hence the larger triple-zeta basis with diffuse functions (`def2-tzvpd(-f)`),
+      with the $f$ functions dropped to save cost.
+    - **Probe charge (c)** is a small benzene and a charge, so the Pople basis with diffuse and polarization functions on
+      every atom is cheap, and the diffuse functions are what let the $\pi$ cloud respond to the charge.
+    - **Reference (d)** is the target against which everything else is judged, so it gets the most accurate method, CCSD(T) at the complete-basis limit,
+      only affordable for a small cluster of a charged group and its partner.
+
+    This is also the reason to read each label as a **pair** (method, basis) and to ask what job it was chosen for. The paper does not
+    explain these choices in this way; the paragraph above is my reading of what each job needs.
+
+    #### All labels in this notebook
+
+    | | OMol25 | SPICE II | OPLS5 (a) | OPLS5 (b) | OPLS5 (c) | OPLS5 (d) |
+    |---|---|---|---|---|---|---|
+    | Method | ωB97M-V | ωB97M-D3(BJ) | ωB97X-D3 | ωB97X-D3 | ωB97X-D | CCSD(T) |
+    | Type | meta-GGA, range-separated hybrid | meta-GGA, range-separated hybrid | GGA, range-separated hybrid | GGA, range-separated hybrid | GGA, range-separated hybrid | wave function |
+    | Dispersion | VV10 inside | D3(BJ) added | D3 added | D3 added | -D (no effect for a point charge) | not needed |
+    | Basis | def2-TZVPD | def2-TZVPPD | lacvp+* | def2-tzvpd(-f) | 6-311++G** | extrapolated to CBS |
+    | ECP | yes, heavy elements | not recorded here | yes, Hay-Wadt, for the metals | yes for heavy atoms (def2 ECP) | none, no heavy atoms | none |
+    | Program | ORCA 6.0.0 | Psi4 | not stated in the paper | not stated in the paper | not stated in the paper | not stated |
+    | Use | training labels for ML potentials | training labels for ML potentials | geometries, ESP | metal-ligand scans | polarizability fit | reference energies |
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
     ## 10. What was checked, and what was not
 
     **Checked on 2026-11-05 against published sources:**
@@ -616,7 +814,27 @@ def _(mo):
     - the pieces of $F_{11}$ quoted in section 3 come from a one-off PySCF script that is not part of `compute_dft_data.py`,
       and the statements about the cost of Hartree-Fock, DFT and CCSD(T) are general knowledge, not measured here.
 
-    **Computed here** (not from memory): all numbers and figures in sections 2 to 8, from PySCF 2.14 on the rigid
+    **The OPLS5 labels (section 9, third source), checked on 2026-11-05:**
+
+    - the four labels and what each was used for were read from the text of the ChemRxiv preprint (doi
+      10.26434/chemrxiv-2024-2svr7, version 1, 13 August 2024; I read a local PDF copy and found the title and date through a search);
+      the programs used are not named there.
+    - **Jaguar manual** (a mirror of Schrödinger's user manual, page "Basis Sets", no version number on the page): LACVP is the Los Alamos
+      (Hay-Wadt) ECP with 6-31G on H to Ar; the ECP elements include Hf to Au; the suffix `(-f)` removes $f$ and higher functions; `def2-tzvpd(-f)` is a listed option.
+    - **Lin, Li, Mao and Chai,** J. Chem. Theory Comput. 9 (2013) 263 (ωB97X-D3): the title, journal, volume, pages and the statement that it
+      reoptimises ωB97X-D with improved D3 dispersion were confirmed by search results (arXiv 1211.0387); I did not read the paper.
+    - **Computed here:** exchange fractions of ωB97X, ωB97X-D, ωB97X-D3 and ωB97M-V (PySCF/libxc), the benzene and platinum-complex function counts,
+      the 60-electron core of Pt in both ECPs, and the probe-charge energies ($-13.61$ and $-9.52$ kcal/mol), which match the paper's Table 1.
+
+    **Still from memory in the OPLS5 part:** the meaning of `*` and `+` (standard Pople notation; the manual does not define them for LACVP);
+    the original references of ωB97X and ωB97X-D (Chai and Head-Gordon, J. Chem. Phys. 2008 and Phys. Chem. Chem. Phys. 2008) and of the Pople
+    6-311G set; the claim that D3 coefficients depend on the number of neighbours; the reasons an ECP is used (relativistic effects);
+    the form $A\,X^{-3}$ of the extrapolation, and which one the CCSD(T)/CBS values of the paper's Table 3 (taken from the OPLS4 paper by Lu et al.) used.
+    The paper cites Hay and Wadt, J. Chem. Phys. 82 (1985) 270 and Weigend, Phys. Chem. Chem. Phys. 8 (2006) 1057 (a Coulomb-fitting set, an
+    auxiliary basis for the density) for its labels, but not the Weigend-Ahlrichs paper that defines def2 itself. I did not open the ACS, ChemRxiv or Wiley
+    pages of these papers, so their details beyond the preprint's reference list are not verified.
+
+    **Computed here** (not from memory): all numbers and figures in sections 2 to 8 and the tables of section 9 marked as computed, from PySCF 2.14 on the rigid
     geometries in `compute_dft_data.py`.
     """)
     return

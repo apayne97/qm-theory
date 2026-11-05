@@ -2,7 +2,7 @@
 
 The notebook only reads these files, so it needs no PySCF. Needs `pyscf` (2.14 tested) and numpy.
 Run from this folder:  python compute_dft_data.py PART      with PART one of
-scf, basis, ladder, dispersion.  Each part writes data_PART.json.
+scf, basis, ladder, dispersion, opls5.  Each part writes data_PART.json.
 """
 import json
 import time
@@ -192,7 +192,80 @@ def part_dispersion():
     return out
 
 
-PARTS = {"scf": part_scf, "basis": part_basis, "ladder": part_ladder, "dispersion": part_dispersion}
+def benzene():
+    """D6h benzene, r(CC) = 1.397 A, r(CH) = 1.087 A (a standard geometry, not the one used in the OPLS5 paper)."""
+    atoms = []
+    for k in range(6):
+        a = np.radians(60 * k)
+        atoms.append(("C", (1.397 * np.cos(a), 1.397 * np.sin(a), 0.0)))
+        atoms.append(("H", ((1.397 + 1.087) * np.cos(a), (1.397 + 1.087) * np.sin(a), 0.0)))
+    return atoms
+
+
+def strip_f(basis_name, elements):
+    """The 'def2-TZVPD(-f)' idea: the named basis with every shell of angular momentum >= 3 removed."""
+    out = {}
+    for el in elements:
+        out[el] = [sh for sh in gto.basis.load(basis_name, el) if sh[0] < 3]
+    return out
+
+
+def count(atoms, basis, ecp=None, charge=0, spin=0):
+    mol = gto.M(atom=fmt(atoms), basis=basis, ecp=ecp, charge=charge, spin=spin, verbose=0)
+    return {"n_basis": int(mol.nao), "n_electrons": int(mol.nelectron),
+            "n_electrons_all": int(sum(gto.charge(el) for el, _ in atoms) - charge)}
+
+
+# cisplatin-like Pt(NH3)2Cl2 (square planar, illustrative geometry; only counts are used)
+PT_COMPLEX = [("Pt", (0, 0, 0)), ("Cl", (2.33, 0, 0)), ("Cl", (0, 2.33, 0)), ("N", (-2.05, 0, 0)), ("N", (0, -2.05, 0)),
+              ("H", (-2.45, 0.9, 0)), ("H", (-2.45, -0.45, 0.78)), ("H", (-2.45, -0.45, -0.78)),
+              ("H", (0.9, -2.45, 0)), ("H", (-0.45, -2.45, 0.78)), ("H", (-0.45, -2.45, -0.78))]
+
+
+def part_opls5():
+    out = {}
+    # (a) exchange fractions for the functionals named in the OPLS5 paper, as PySCF/libxc report them
+    out["rsh"] = {}
+    for label, name in [("wB97X", "HYB_GGA_XC_WB97X"), ("wB97X-D", "HYB_GGA_XC_WB97X_D"),
+                       ("wB97X-D3", "HYB_GGA_XC_WB97X_D3"), ("wB97M-V", "wb97m_v")]:
+        w, lr, sr_minus_lr = dft.libxc.rsh_coeff(name)
+        out["rsh"][label] = {"omega": float(w), "long_range": float(lr), "short_range": float(lr + sr_minus_lr)}
+    # (c) +1 point charge above the ring centre of benzene, wB97X-D functional, 6-311++G**, as in Table 1 of the paper.
+    # The -D term is pair-wise between atoms, and a point charge has none, so it adds nothing to this interaction.
+    mol = gto.M(atom=fmt(benzene()), basis="6-311++g**", verbose=0)
+    def run(z=None):
+        mf = dft.RKS(mol)
+        mf.xc = "HYB_GGA_XC_WB97X_D"
+        mf.grids.atom_grid = (75, 302)
+        if z is not None:
+            from pyscf import qmmm
+            mf = qmmm.mm_charge(mf, [[0, 0, z]], [1.0], unit="Angstrom")
+        mf.kernel()
+        assert mf.converged
+        return mf.e_tot
+    e0 = run()
+    out["probe"] = {"n_basis": int(mol.nao), "paper_QM": {"3.5": -13.6, "4.0": -9.5},
+                    "computed": {f"{z}": (run(z) - e0) * HA2KCAL for z in (3.5, 4.0)}}
+    print(out["probe"], flush=True)
+    # basis function counts: benzene and a platinum complex
+    bz = benzene()
+    out["benzene"] = {
+        "6-31+G*": count(bz, "6-31+g*"), "6-311++G**": count(bz, "6-311++g**"),
+        "def2-TZVPD": count(bz, "def2-tzvpd"), "def2-TZVPD(-f)": count(bz, strip_f("def2-tzvpd", ["C", "H"])),
+    }
+    els = ["Cl", "N", "H"]
+    light = {"Cl": "6-31+g*", "N": "6-31+g*", "H": "6-31+g*"}
+    out["pt_complex"] = {
+        "LANL2DZ on Pt, 6-31+G* elsewhere (ECP)": count(PT_COMPLEX, {"Pt": "lanl2dz", **light}, ecp={"Pt": "lanl2dz"}),
+        "def2-TZVPD with def2 ECP on Pt": count(PT_COMPLEX, "def2-tzvpd", ecp={"Pt": "def2-tzvpd"}),
+        "def2-TZVPD(-f) with def2 ECP on Pt": count(
+            PT_COMPLEX, {**strip_f("def2-tzvpd", els), "Pt": "def2-tzvpd"}, ecp={"Pt": "def2-tzvpd"}),
+    }
+    print(out["benzene"], out["pt_complex"], flush=True)
+    return out
+
+
+PARTS = {"scf": part_scf, "basis": part_basis, "ladder": part_ladder, "dispersion": part_dispersion, "opls5": part_opls5}
 
 
 @click.command()
