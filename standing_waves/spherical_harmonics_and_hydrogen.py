@@ -178,7 +178,7 @@ def _(mo):
     the node cuts across**. We follow both from a string to a drumhead to an atom.
 
     **One dimension: a string.** A string has one direction, along its length $x$. A node is a point on the string, and
-    it cuts across $x$. A wave with $n$ half-wavelengths has $n-1$ nodes inside the string. More nodes, more energy.
+    it cuts across $x$. A wave with $n$ half-wavelengths has $N_\text{nodes}=n-1$ nodes inside the string. More nodes, more energy.
     """)
     return
 
@@ -208,14 +208,21 @@ def _(mo):
     vibration modes are products of a wave in $r$ and a wave in $\varphi$,
 
     $$
-    \psi_{m_\ell k}(r,\varphi) = J_{\lvert m_\ell\rvert}\!\big(j_{\lvert m_\ell\rvert k}\,r\big)\times
+    \psi_{n\ell m_\ell}(r,\varphi) = R_{n\ell}(r)\times
     \begin{cases}\cos(m_\ell\varphi), & m_\ell\ge 0,\\[2pt] \sin(\lvert m_\ell\rvert\varphi), & m_\ell<0,\end{cases}
-    \qquad m_\ell=0,\pm1,\pm2,\dots,\quad k=1,2,3,\dots
+    \qquad R_{n\ell}(r)=J_\ell\!\big(j_{\ell,\,n_r+1}\,r\big),\qquad m_\ell=0,\pm1,\pm2,\dots
     $$
 
-    where $J_{\lvert m_\ell\rvert}$ is a Bessel function (a wave in $r$ whose swings shrink toward the rim, like ripples
-    spreading on water), and $j_{\lvert m_\ell\rvert k}$ is its $k$-th zero, chosen so that the rim, $r=1$, is a node that is held fixed. We do
-    not need the formula for $J$; the figure shows what it does. The angular factor is the ring wave of
+    where $J_\ell$ is a Bessel function (a wave in $r$ whose swings shrink toward the rim, like ripples spreading on
+    water), and $j_{\ell,\,n_r+1}$ is its $(n_r+1)$-th zero, chosen so that the rim, $r=1$, is a node that is held
+    fixed. We do not need the formula for $J$; the figure shows what it does. The names of the whole numbers are the
+    ones that the atom will use:
+
+    - $\ell=\lvert m_\ell\rvert$ is the number of **angular nodes**, the lines through the centre;
+    - $n_r$ is the number of **radial nodes**, the circles around the centre (the fixed rim is not counted);
+    - $n=n_r+\ell+1$, so that the total number of nodes is $N_\text{nodes}=n-1=\ell+n_r$.
+
+    The angular factor is the ring wave of
     `../quantization`: it returns to itself after one turn only if $m_\ell$ is a whole number. The two signs of
     $m_\ell$ are the two real waves of the ring: $m_\ell>0$ is the cosine, and $m_\ell<0$ is the sine, the same shape
     turned by a quarter of the period $2\pi/\lvert m_\ell\rvert$. They have the same frequency, and
@@ -223,29 +230,32 @@ def _(mo):
 
     The two factors give two **different kinds of node line**, and each cuts across a different direction:
 
-    - $k-1$ **circles** around the centre. They cut across $r$, and they are the string's nodes, bent into circles.
-      (The fixed rim is not counted.)
-    - $\lvert m_\ell\rvert$ **diameters** through the centre. They cut across $\varphi$: they come from the zeros of
-      $\cos(m_\ell\varphi)$ or $\sin(\lvert m_\ell\rvert\varphi)$, which have $2\lvert m_\ell\rvert$ zeros around a
+    - $n_r$ **circles** around the centre. They cut across $r$, and they are the string's nodes, bent into circles.
+    - $\ell=\lvert m_\ell\rvert$ **diameters** through the centre. They cut across $\varphi$: they come from the zeros of
+      $\cos(m_\ell\varphi)$ or $\sin(\lvert m_\ell\rvert\varphi)$, which have $2\ell$ zeros around a
       full turn, and two opposite zeros make one diameter.
+
+    On the sphere of section 3, the $\ell$ angular nodes split into $\lvert m_\ell\rvert$ that contain the axis and
+    $\ell-\lvert m_\ell\rvert$ that are circles of latitude. The drum has no latitude circles, because it is flat, so
+    all of its $\ell$ angular nodes contain the centre and $\ell=\lvert m_\ell\rvert$.
     """)
     return
 
 
 @app.cell
 def _(mo):
-    m_drum = mo.ui.slider(-6, 6, step=1, value=2, label=r"$m_\ell$ ($\lvert m_\ell\rvert$ diameters)", show_value=True)
-    k_drum = mo.ui.slider(1, 4, step=1, value=3, label=r"$k$ (circles $+$ 1)", show_value=True)
-    return k_drum, m_drum
+    m_drum = mo.ui.slider(-6, 6, step=1, value=2, label=r"$m_\ell$ ($\ell=\lvert m_\ell\rvert$ diameters)", show_value=True)
+    nr_drum = mo.ui.slider(0, 3, step=1, value=2, label=r"$n_r$ (circles)", show_value=True)
+    return m_drum, nr_drum
 
 
 @app.cell
-def _(drum_figure, drum_gif, k_drum, m_drum, mo, plt):
-    _fig = drum_figure(m_drum.value, k_drum.value)
-    _out = mo.vstack([mo.hstack([m_drum, k_drum], justify="start"), _fig,
+def _(drum_figure, drum_gif, m_drum, mo, nr_drum, plt):
+    _fig = drum_figure(m_drum.value, nr_drum.value)
+    _out = mo.vstack([mo.hstack([m_drum, nr_drum], justify="start"), _fig,
                       mo.md("The same mode vibrating (colour is the sign of the mode, so the nodal circles and "
                             "diameters show as white seams that never move):"),
-                      mo.image(src=drum_gif(m_drum.value, k_drum.value))])
+                      mo.image(src=drum_gif(m_drum.value, nr_drum.value))])
     plt.close(_fig)
     _out
     return
@@ -253,10 +263,10 @@ def _(drum_figure, drum_gif, k_drum, m_drum, mo, plt):
 
 @app.cell
 def _(drum_gallery_figure, mo, plt):
-    _fig = drum_gallery_figure(3, 3)
+    _fig = drum_gallery_figure(3, 2)
     _out = mo.vstack([
-        mo.md("All the drum modes with up to $2$ circles and $3$ diameters. Each column has one number of diameters, "
-              "each row one number of circles; the shape is the product of the two."),
+        mo.md("All the drum modes with up to $n_r=2$ circles and $\\ell=3$ diameters. Each column has one $\\ell$, "
+              "each row one $n_r$; the shape is the product of the two."),
         _fig,
     ])
     plt.close(_fig)
@@ -268,9 +278,15 @@ def _(drum_gallery_figure, mo, plt):
 def _(mo):
     mo.md(r"""
     Two differences from the string are worth noting. The drum's frequencies are proportional to the zeros
-    $j_{m_\ell k}$, which are not equally spaced, so they are not whole-number multiples of the lowest one; and the rim
+    $j_{\ell,\,n_r+1}$, which are not equally spaced, so they are not whole-number multiples of the lowest one; and the rim
     is a fixed boundary, whereas the atom's "rim" is infinity, where the wave simply dies away. What stays the same is
     the counting: **each coordinate has its own family of nodes and its own whole number.**
+
+    **What $n$ does and does not order.** $n=n_r+\ell+1$ counts all the nodes, but it does not order the energies of
+    the drum. The frequencies go as $j_{0,1}=2.405$, $j_{1,1}=3.832$, $j_{2,1}=5.136$ and $j_{0,2}=5.520$, so the mode with
+    two nodes ($\ell=2$, $n_r=0$) lies below the mode with one node ($\ell=0$, $n_r=1$). In hydrogen, the levels
+    with the same $n$ and different $\ell$ have the same energy, but this accidental degeneracy is a special property of
+    the Coulomb pull, and not a general property of standing waves.
 
     **Three dimensions: an atom.** The atom has one more direction, the polar angle $\vartheta$, and so one more
     family of nodes. In three dimensions a node is a surface, and the three kinds are the three-dimensional versions
@@ -278,10 +294,10 @@ def _(mo):
 
     | Direction the node cuts across | String | Drumhead | Atom | Whole number |
     |---|---|---|---|---|
-    | distance ($x$ or $r$) | $n-1$ points | $k-1$ circles | $n-\ell-1$ **spheres** | $n$ (radial) |
+    | distance ($x$ or $r$) | $n-1$ points | $n_r=n-\ell-1$ circles | $n_r=n-\ell-1$ **spheres** | $n_r$ (radial) |
     | polar angle $\vartheta$ | none | none | $\ell-\lvert m_\ell\rvert$ **cones** (a flat plane through the centre counts as a cone) | $\ell$ |
-    | azimuth $\varphi$ | none | $\lvert m_\ell\rvert$ diameters | $\lvert m_\ell\rvert$ **planes** through the $z$ axis | $m_\ell$ |
-    | **total** | $n-1$ | $k-1+\lvert m_\ell\rvert$ | $n-1$ | |
+    | azimuth $\varphi$ | none | $\lvert m_\ell\rvert=\ell$ diameters | $\lvert m_\ell\rvert$ **planes** through the $z$ axis | $m_\ell$ |
+    | **total** $N_\text{nodes}$ | $n-1$ | $n_r+\ell=n-1$ | $n-1$ | |
 
     The azimuth row is the same on the drum and in the atom: the diameters of the drum are the traces, in a
     horizontal slice, of the atom's planes through the axis. The distance row is the same for the string, the drum and

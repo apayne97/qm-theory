@@ -448,7 +448,7 @@ def string_figure(n):
     ax.set_ylim(-1.4, 1.4)
     ax.set_yticks([])
     ax.set_xticks([0, 1], ["0", "$L$"])
-    ax.set_title(rf"string, $n={n}$: {n - 1} node{'s' if n != 2 else ''}, each a point that cuts across $x$", fontsize=9)
+    ax.set_title(rf"string, $n={n}$: $N_\mathrm{{nodes}}={n - 1}$ node{'s' if n != 2 else ''}, each a point that cuts across $x$", fontsize=9)
     fig.tight_layout()
     return fig
 
@@ -477,8 +477,12 @@ def _draw_drum(ax, m, k, res=360):
     ax.set_yticks([])
 
 
-def drum_figure(m, k):
-    """A circular drumhead mode seen from above (left), with its radial wave and its wave around the centre (right)."""
+def drum_figure(m, nr):
+    """A circular drumhead mode seen from above (left), with its radial wave and its wave around the centre (right).
+    m is the signed m_l (l = |m| diameters), nr the number of nodal circles; n = nr + l + 1."""
+    k = nr + 1  # index of the Bessel zero that sets the frequency
+    l = abs(m)
+    n = nr + l + 1
     j = drum_frequency(m, k)
     fig = plt.figure(figsize=(9.8, 3.6))
     ax = fig.add_subplot(1, 3, 1)
@@ -492,7 +496,7 @@ def drum_figure(m, k):
     a = abs(m)
     ax.plot(radii, np.zeros_like(radii), "o", color=RADIAL_NODE, ms=8, zorder=5)
     ax.set_xlabel(r"distance from centre $r$ (rim at 1)")
-    ax.set_title(f"along a radius: {k - 1} nodal circle{'s' if k != 2 else ''}\n(like the string, $k$ half-waves)", fontsize=9)
+    ax.set_title(rf"along a radius: $n_r={nr}$ nodal circle{'s' if nr != 1 else ''}" + f"\n(like the string, {k} half-wave{'s' if k != 1 else ''})", fontsize=9)
     ax.set_yticks([])
     ax = fig.add_subplot(1, 3, 3)
     ph = np.linspace(0, 2 * np.pi, 500)
@@ -504,22 +508,22 @@ def drum_figure(m, k):
     ax.set_xlabel(r"azimuth $\varphi$ (degrees)")
     ax.set_yticks([])
     form = r"\cos" if m >= 0 else r"\sin"
-    ax.set_title(f"around the centre: {a} nodal diameter{'s' if a != 1 else ''}\n"
+    ax.set_title(rf"around the centre: $\ell={a}$ nodal diameter{'s' if a != 1 else ''}" + "\n"
                  rf"(like the ring: ${form}({a}\varphi)$, {a} period{'s' if a != 1 else ''})", fontsize=9)
-    fig.suptitle(rf"$m_\ell={m},\ k={k}$: {k - 1} circle{'s' if k != 2 else ''} + {a} diameter{'s' if a != 1 else ''};  "
+    fig.suptitle(rf"$n={n},\ \ell={a},\ n_r={nr},\ m_\ell={m}$: $N_\mathrm{{nodes}}={n - 1}$ = {nr} circle{'s' if nr != 1 else ''} + {a} diameter{'s' if a != 1 else ''};  "
                  rf"frequency $\propto j_{{{a},{k}}}={j:.3f}$", fontsize=10, y=1.02)
     fig.tight_layout()
     return fig
 
 
-def drum_gallery_figure(m_max=3, k_max=3):
-    """Drum modes in a grid: columns m = 0 ... m_max (diameters), rows k = 1 ... k_max (circles + rim)."""
-    fig, axes = plt.subplots(k_max, m_max + 1, figsize=(2.2 * (m_max + 1), 2.2 * k_max))
-    for k in range(1, k_max + 1):
-        for m in range(m_max + 1):
-            ax = axes[k - 1, m]
-            _draw_drum(ax, m, k, 200)
-            ax.set_title(f"{k - 1} circle{'s' if k != 2 else ''}, {m} diam.", fontsize=8)
+def drum_gallery_figure(l_max=3, nr_max=2):
+    """Drum modes in a grid: columns l = 0 ... l_max (diameters), rows n_r = 0 ... nr_max (circles)."""
+    fig, axes = plt.subplots(nr_max + 1, l_max + 1, figsize=(2.2 * (l_max + 1), 2.2 * (nr_max + 1)))
+    for nr in range(nr_max + 1):
+        for l in range(l_max + 1):
+            ax = axes[nr, l]
+            _draw_drum(ax, l, nr + 1, 200)
+            ax.set_title(rf"$n_r={nr}$, $\ell={l}$", fontsize=8)
     fig.suptitle("circles (pink): cut across $r$;  diameters (green): cut across $\\varphi$;  rim (dark): fixed", fontsize=9)
     fig.tight_layout()
     return fig
@@ -639,9 +643,10 @@ def string_gif(n, n_frames=36, dpi=70):
 
 
 @lru_cache(maxsize=None)
-def drum_gif(m, k, n_frames=30, dpi=60):
-    """The (m, k) drum mode vibrating through one period, seen obliquely. The colour is the sign of the mode (blue,
-    red), so the nodal circles and diameters stay visible as white seams while the surface moves."""
+def drum_gif(m, nr, n_frames=30, dpi=60):
+    """The (m_l = m, n_r = nr) drum mode vibrating through one period, seen obliquely. The colour is the sign of the
+    mode (blue, red), so the nodal circles and diameters stay visible as white seams while the surface moves."""
+    k = nr + 1
     r = np.linspace(0, 1, 36)[:, None]
     phi = np.linspace(0, 2 * np.pi, 97)[None, :]
     mode = drum_mode(m, k, r, phi)

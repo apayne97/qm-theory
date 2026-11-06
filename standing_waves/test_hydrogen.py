@@ -430,6 +430,21 @@ def test_named_orbitals_and_their_nodes():
     assert len(node_geometry(3, 0, 0)["spheres"]) == 2
 
 
+@pytest.mark.parametrize("m,nr", [(0, 0), (2, 1), (-3, 2)])
+def test_drum_figure_titles_use_n_l_nr(m, nr):
+    import matplotlib.pyplot as plt
+
+    from hydrogen_plots import drum_figure
+
+    fig = drum_figure(m, nr)
+    title = fig._suptitle.get_text()
+    assert all("\\n" not in ax.get_title() for ax in fig.axes)  # no literal backslash-n from a raw string
+    plt.close(fig)
+    n, l = nr + abs(m) + 1, abs(m)
+    assert f"n={n}" in title and rf"\ell={l}" in title and f"n_r={nr}" in title and f"m_\\ell={m}" in title
+    assert f"N_\\mathrm{{nodes}}={n - 1}" in title and f"j_{{{l},{nr + 1}}}" in title
+
+
 def test_animations_are_looping_gifs_with_one_period():
     import io
 
@@ -437,7 +452,7 @@ def test_animations_are_looping_gifs_with_one_period():
 
     from hydrogen_plots import drum_gif, string_gif
 
-    for data, frames in ((string_gif(3, n_frames=12, dpi=40), 12), (drum_gif(1, 2, n_frames=8, dpi=40), 8)):
+    for data, frames in ((string_gif(3, n_frames=12, dpi=40), 12), (drum_gif(1, 1, n_frames=8, dpi=40), 8)):
         im = Image.open(io.BytesIO(data))
         assert im.format == "GIF" and im.n_frames == frames and im.info.get("loop") == 0
         first = np.asarray(im.convert("RGB")).astype(int)
