@@ -25,6 +25,8 @@ def _():
         spherical_coordinates_figure,
         spherical_surfaces_figure,
     )
+    from drum_fourier import TARGETS
+    from drum_fourier_plots import drum_fourier_figure, drum_fourier_modes_figure
     from hydrogen_plots import (
         coordinates_figure,
         drum_figure,
@@ -48,6 +50,9 @@ def _():
 
     return (
         HARTREE_EV,
+        TARGETS,
+        drum_fourier_figure,
+        drum_fourier_modes_figure,
         polar_grid_figure,
         polar_point_figure,
         spherical_coordinates_figure,
@@ -426,6 +431,71 @@ def _(drum_gallery_figure, mo, plt):
         _fig,
     ])
     plt.close(_fig)
+    _out
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    ### Any pattern on the drum as a sum of modes
+
+    The box notebook made a promise about the string: the sine waves are enough: any shape of the string that
+    is zero at the ends is a sum of the standing waves $\sin(n\pi x/L)$. The drum keeps the promise in two
+    dimensions. Take the modes of a drum in the order of their frequencies $j_{\ell,\,n_r+1}$ (which is the physical
+    order, the order in which they would be heard; $n$ is not the order). A mode is labelled by its number of circles
+    $n_r$, its number of angular nodes $\ell$ and the sign of $m_\ell=\pm\ell$ (cosine for $m_\ell>0$, sine for $m_\ell<0$),
+    and has $N_\text{nodes}=n_r+\ell$ nodes. Call the modes in this order $\psi_1,\psi_2,\psi_3,\dots$, scaled so that
+
+    $$
+    \int_0^{2\pi}\!\!\int_0^1 \psi_k\,\psi_{k'}\;r\,dr\,d\varphi=\begin{cases}1,&k=k',\\0,&k\ne k'.\end{cases}
+    $$
+
+    The zero for two different modes is called the **orthogonality** of the modes. It is the same fact that made the coefficients of
+    the string's sines easy. (The weight $r\,dr\,d\varphi$ is the area element of section 2.) A pattern $f(r,\varphi)$
+    with $f=0$ at the rim is approximated by the first $M$ modes,
+
+    $$
+    f(r,\varphi)\approx\sum_{k=1}^{M} c_k\,\psi_k(r,\varphi),
+    \qquad
+    c_k=\int_0^{2\pi}\!\!\int_0^1 f\,\psi_k\;r\,dr\,d\varphi ,
+    $$
+
+    where each coefficient $c_k$ is found by multiplying $f$ by that one mode and adding up: orthogonality makes
+    all the other modes drop out. Choose a pattern and move the slider. The three pictures use one colour scale (blue
+    positive, red negative); the graph shows how much of the pattern is left after $M$ modes, as a fraction of its own size.
+    """)
+    return
+
+
+@app.cell
+def _(TARGETS, mo):
+    target_dd = mo.ui.dropdown(options={v: k for k, v in TARGETS.items()}, value=TARGETS["poke"], label="pattern")
+    m_modes = mo.ui.slider(1, 200, step=1, value=10, label=r"$M$ (number of modes)", show_value=True)
+    return m_modes, target_dd
+
+
+@app.cell
+def _(drum_fourier_figure, drum_fourier_modes_figure, m_modes, mo, plt, target_dd):
+    _fig = drum_fourier_figure(target_dd.value, m_modes.value)
+    _fig2 = drum_fourier_modes_figure(m_modes.value)
+    _out = mo.vstack([
+        mo.hstack([target_dd, m_modes], justify="start"),
+        _fig,
+        mo.md(r"""
+        The modes in the sum, by number of angular nodes $\ell$ and number of circles $n_r$ (a cell holds the cosine mode
+        on its left and the sine mode on its right; the red one is the last one added):
+        """),
+        _fig2,
+        mo.md(r"""
+        This works because the modes are **complete**: every smooth pattern that is zero at the rim is the limit of such
+        sums, so the error can be made as small as one likes by adding modes. The speed is another matter. A smooth, wide
+        pattern needs few modes; a sharp feature, such as the narrow pluck or the thin gaps of the rose, needs many, because small details need modes
+        with many nodes. This is the 2D version of the ringing of a Fourier series for a square pulse in section 4.
+        """),
+    ])
+    plt.close(_fig)
+    plt.close(_fig2)
     _out
     return
 

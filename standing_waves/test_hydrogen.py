@@ -663,3 +663,103 @@ def test_coordinate_figures_draw_expected_lines():
     fig = spherical_surfaces_figure(slide=False)
     assert len(fig.axes) == 3
     plt.close(fig)
+
+
+# ---------------------------------------------------------------------------------------------------------------
+# a pattern on the drum as a sum of modes (drum_fourier.py)
+
+
+def test_drum_modes_are_orthonormal_and_ordered_by_frequency():
+    import drum_fourier as df
+
+    modes, (_, _, w) = df.modes_on_quadrature(), df.quadrature()
+    gram = np.tensordot(modes * w, modes, axes=([1, 2], [1, 2]))
+    assert gram == pytest.approx(np.eye(df.M_MAX), abs=1e-9)
+    freqs = [j for (_, _, _, j) in df.mode_list()]
+    assert freqs == sorted(freqs)
+    assert freqs[:4] == pytest.approx([2.404826, 3.831706, 3.831706, 5.135622], abs=1e-5)
+    # the modes in the list agree with drum_mode(m, n_r + 1) up to the normalisation
+    l, nr, m, j = df.mode_list()[6]
+    r, phi = 0.37, 1.1
+    ratio = df.mode_values(6, r, phi) / drum_mode(m, nr + 1, r, phi)
+    assert abs(ratio) > 0
+    assert df.mode_values(6, 0.62, 2.0) / drum_mode(m, nr + 1, 0.62, 2.0) == pytest.approx(ratio, rel=1e-4)
+
+
+@pytest.mark.parametrize("k", [0, 1, 2, 5, 9])
+def test_a_pattern_that_is_one_mode_is_reproduced_by_that_mode(k):
+    import drum_fourier as df
+
+    modes = df.modes_on_quadrature()
+    c = df._project(3.0 * modes[k])
+    assert c[k] == pytest.approx(3.0, abs=1e-9)
+    assert np.abs(np.delete(c, k)).max() < 1e-9
+
+
+def test_drum_series_error_never_increases_and_parseval_holds():
+    import drum_fourier as df
+
+    _, _, w = df.quadrature()
+    r, phi, _ = df.quadrature()
+    for key in df.TARGETS:
+        c, norm2, err = df.series(key)
+        assert np.all(np.diff(err) <= 1e-12) and err[0] == 1.0 and err[-1] < 1
+        f = df.target_function(key, r * np.cos(phi), r * np.sin(phi))
+        assert np.sum(c**2) <= norm2 * (1 + 1e-12)  # Bessel's inequality
+        # Parseval: the size of what is left is the size of the pattern minus the sizes of the coefficients
+        modes = df.modes_on_quadrature()
+        for M in (1, 7, 30):
+            rest = f - np.tensordot(c[:M], modes[:M], axes=(0, 0))
+            assert np.sum(rest**2 * w) == pytest.approx(norm2 * err[M] ** 2, rel=1e-8, abs=1e-12)
+
+
+def test_drum_series_respects_symmetry():
+    import drum_fourier as df
+
+    c, _, _ = df.series("pluck")  # symmetric under y -> -y: no sine modes (m_l < 0), and none with odd l ... for x -> -x
+    for ck, (l, nr, m, j) in zip(c, df.mode_list()):
+        if m < 0:
+            assert abs(ck) < 1e-10
+        if l % 2 == 1:
+            assert abs(ck) < 1e-10  # symmetric under x -> -x: cos(l phi) with odd l is odd
+    c2, _, _ = df.series("poke")  # not symmetric: sine modes are present
+    assert max(abs(ck) for ck, mode in zip(c2, df.mode_list()) if mode[2] < 0) > 1e-3
+
+
+def test_rose_is_rings_of_petals_with_thin_gaps():
+    import drum_fourier as df
+
+    # the petals have one sign (negative, drawn red); between them are thin white gaps
+    x = np.linspace(-1, 1, 401)
+    X, Y = np.meshgrid(x, x)
+    R = np.hypot(X, Y)
+    f = np.where(R <= 1, df.target_function("rose", X, Y), 0.0)  # only the disc counts
+    assert f.max() <= 1e-12 and f.min() >= -1.0 - 1e-12
+    gaps = np.abs(f[R < 0.9]) < 0.1 * np.abs(f).max()
+    assert 0.03 < gaps.mean() < 0.25  # thin gaps: a small part of the disc, but there are some
+    # seven outer petals: seven separate red regions round a circle through the outer ring
+    phi = np.linspace(0, 2 * np.pi, 2000, endpoint=False)
+    for rr in (0.55, 0.7):
+        ring = df.target_function("rose", rr * np.cos(phi), rr * np.sin(phi))
+        inside = ring < -0.5 * np.abs(ring).max()
+        assert np.sum(inside & ~np.roll(inside, 1)) == 7
+    # the envelope: the pattern fades to zero at the rim
+    assert np.abs(f[(R > 0.995) & (R <= 1)]).max() < 0.1
+
+
+def test_drum_targets_vanish_at_the_rim():
+    import drum_fourier as df
+
+    phi = np.linspace(0, 2 * np.pi, 50)
+    for key in df.TARGETS:
+        assert np.abs(df.target_function(key, np.cos(phi), np.sin(phi))).max() < 1e-12
+
+
+def test_drum_fourier_figures_build():
+    import matplotlib.pyplot as plt
+
+    from drum_fourier_plots import drum_fourier_figure, drum_fourier_modes_figure
+
+    for fig in (drum_fourier_figure("two", 7), drum_fourier_modes_figure(7)):
+        assert len(fig.axes) >= 1
+        plt.close(fig)

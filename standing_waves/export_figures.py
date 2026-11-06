@@ -1,5 +1,6 @@
-"""Write the slide figures of the polar-coordinates section (section 2 of spherical_harmonics_and_hydrogen.py) as PNG
-and SVG files: white background, 20 pt text, thick lines, every figure 6 inches high.
+"""Write the slide figures of the polar-coordinates section (section 2 of spherical_harmonics_and_hydrogen.py) and of the
+drum Fourier example (end of the drum part of section 3) as PNG and SVG files, and the build-up of the drum sum as a
+GIF: white background, 20 pt text, thick lines. The coordinate figures are 6 inches high, the drum rows 4.4.
 
     pixi run python standing_waves/export_figures.py [--out standing_waves/figures]
 """
@@ -8,6 +9,13 @@ from pathlib import Path
 
 import click
 import matplotlib.pyplot as plt
+from drum_fourier_plots import (
+    drum_fourier_error_figure,
+    drum_fourier_figure,
+    drum_fourier_gif_frames,
+    drum_fourier_modes_figure,
+    drum_fourier_steps_figure,
+)
 from coordinates_plots import (
     polar_grid_figure,
     polar_point_figure,
@@ -24,6 +32,11 @@ FIGURES = {
     "spherical_3d_const_theta": lambda: spherical_surface_figure("theta"),
     "spherical_3d_const_phi": lambda: spherical_surface_figure("phi"),
     "spherical_3d_surfaces": spherical_surfaces_figure,
+    "drum_fourier_steps": drum_fourier_steps_figure,
+    "drum_fourier_rose_steps": lambda: drum_fourier_steps_figure("rose", (1, 10, 50, 200)),
+    "drum_fourier_error": drum_fourier_error_figure,
+    "drum_fourier_example": lambda: drum_fourier_figure("poke", 10, slide=True),
+    "drum_fourier_modes_used": lambda: drum_fourier_modes_figure(10, slide=True, l_max=7, nr_max=6),
 }
 
 
@@ -39,7 +52,15 @@ def main(out_dir, dpi):
             fig.savefig(out_dir / f"{name}.{ext}", dpi=dpi, facecolor="white")
         plt.close(fig)
         click.echo(name)
-    click.echo(f"{2 * len(FIGURES)} files in {out_dir}")
+    frames = drum_fourier_gif_frames("poke")
+    frames[0].save(out_dir / "drum_fourier_build_up.gif", save_all=True, append_images=frames[1:], duration=450, loop=0,
+                   disposal=2)
+    click.echo("drum_fourier_build_up.gif")
+    frames = drum_fourier_gif_frames("rose", ms=(1, 2, 3, 5, 8, 12, 18, 25, 35, 50, 70, 100, 140, 200))
+    frames[0].save(out_dir / "drum_fourier_rose_build_up.gif", save_all=True, append_images=frames[1:], duration=450,
+                   loop=0, disposal=2)
+    click.echo("drum_fourier_rose_build_up.gif")
+    click.echo(f"{2 * len(FIGURES) + 2} files in {out_dir}")
 
 
 if __name__ == "__main__":
