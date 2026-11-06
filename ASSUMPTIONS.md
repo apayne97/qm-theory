@@ -15,17 +15,17 @@ Draft v2, 2026-11-05 (renumbered after adding the basis-set notebook and the OPL
 | A3 | Assumption | Any state is a superposition $\sum_n c_n\psi_{E_n}e^{-iE_nt/\hbar}$ of stationary states (the set is complete). | Justifies expanding in base states; in practice the sum is truncated (A14). | standard | `basis_sets_from_base_states` §1 |
 | A4 | Assumption | Box with infinitely hard walls: $\psi=0$ at the boundary. | Gives whole numbers of half-wavelengths; an idealisation of a bound particle. | standard | `standing_waves_in_boxes` §1 |
 | A5 | Assumption | Rectangular box, so the 2D/3D wave is a product of 1D waves and energies add. | Gives the $(k_x,k_y,k_z)$ lattice and the level pattern 1,3,3,3,1,6. | standard | `standing_waves_in_boxes` §2-5 |
-| A6 | Assumption | The potential depends only on the distance $r$ from the nucleus (central potential). | Allows radial times angular parts; the angular part is the spherical harmonics. | standard | `spherical_harmonics_and_hydrogen` §1-3 |
-| A7 | Approximation | Point nucleus of infinite mass (electron mass, not reduced mass). | Correction of order 1/1836 in the energy. | standard | `spherical_harmonics_and_hydrogen` §4 |
-| A8 | Approximation | Hydrogen levels from the Coulomb attraction only: no spin-orbit coupling, Lamb shift or hyperfine structure. | $E=-13.6/n^2$ eV is the leading term; fine structure is much smaller. | standard | `spherical_harmonics_and_hydrogen` §4 |
+| A6 | Assumption | The potential depends only on the distance $r$ from the nucleus (central potential). | Allows radial times angular parts; the angular part is the spherical harmonics. | standard | `spherical_harmonics_and_hydrogen` §1-4 |
+| A7 | Approximation | Point nucleus of infinite mass (electron mass, not reduced mass). | Correction of order 1/1836 in the energy. | standard | `spherical_harmonics_and_hydrogen` §5 |
+| A8 | Approximation | Hydrogen levels from the Coulomb attraction only: no spin-orbit coupling, Lamb shift or hyperfine structure. | $E=-13.6/n^2$ eV is the leading term; fine structure is much smaller. | standard | `spherical_harmonics_and_hydrogen` §5 |
 
 ## Part 3. From atoms to molecules
 
 | # | Kind | Statement | Consequence | Status | Notebook |
 |---|------|-----------|-------------|--------|----------|
-| A9 | Approximation | Born-Oppenheimer: nuclei are fixed, and the electrons are solved at each geometry. | Gives one energy surface $E(\text{geometry})$; fails near surface crossings. | standard | `spherical_harmonics_and_hydrogen` §6 |
+| A9 | Approximation | Born-Oppenheimer: nuclei are fixed, and the electrons are solved at each geometry. | Gives one energy surface $E(\text{geometry})$; fails near surface crossings. | standard | `spherical_harmonics_and_hydrogen` §7 |
 | A10 | Setting | The label energy is a single electronic energy of one geometry, ground state, no vibrations, no temperature. | Zero-point energy and thermal terms are not included. | standard | `reading_a_dft_label` §1 |
-| A11 | Approximation | Orbital approximation: each electron occupies its own orbital; the many-electron wavefunction is built from them. | Neglects correlated motion of electrons (see A18, A20). | standard | `spherical_harmonics_and_hydrogen` §6, `reading_a_dft_label` §2 |
+| A11 | Approximation | Orbital approximation: each electron occupies its own orbital; the many-electron wavefunction is built from them. | Neglects correlated motion of electrons (see A18, A20). | standard | `spherical_harmonics_and_hydrogen` §7, `reading_a_dft_label` §2 |
 | A12 | Requirement | The wavefunction must be antisymmetric under swapping two electrons (Pauli). | Not an approximation; a Slater determinant satisfies it. | standard | `reading_a_dft_label` §2 |
 | A13 | Approximation | LCAO: molecular orbitals are linear combinations of atom-centred functions. | Reduces the equations to a matrix problem; accuracy depends on the functions chosen (A14-A17). | standard | `basis_sets_from_base_states` §3, `kohn_sham_matrix` §1 |
 

@@ -11,13 +11,14 @@ Draft 2026-11-05. Each part names the notebook and sections to draw on. Gallery:
 - Box to atom: why new coordinates — §7
 
 ## Part 2. Spheres and atoms
-- Nodes and direction: string, drumhead, atom — `standing_waves/spherical_harmonics_and_hydrogen.py` §1–2
-- Spherical harmonics as standing waves on a sphere (ℓ, m, nodal lines; s, p, d shapes) — §3
-- Radial part, effective potential, E = −13.6/n² eV — §4
-- Hydrogen orbital gallery, reading an orbital from its nodes — §5
+- New coordinates and polar coordinates in 2D and 3D — `standing_waves/spherical_harmonics_and_hydrogen.py` §1–2
+- Nodes and direction: string, drumhead, atom — §3
+- Spherical harmonics as standing waves on a sphere (ℓ, m, nodal lines; s, p, d shapes) — §4
+- Radial part, effective potential, E = −13.6/n² eV — §5
+- Hydrogen orbital gallery, reading an orbital from its nodes — §6
 
 ## Part 3. From atoms to organic molecules (approximations)
-- Born-Oppenheimer, orbital approximation, LCAO — `spherical_harmonics_and_hydrogen.py` §6 (short bridge only)
+- Born-Oppenheimer, orbital approximation, LCAO — `spherical_harmonics_and_hydrogen.py` §7 (short bridge only)
 - Link to carbon/methane in `~/science/qm-calculations`
 - **Gap:** only a short bridge; possible dedicated notebook.
 

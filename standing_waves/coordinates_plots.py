@@ -1,0 +1,183 @@
+"""Figures for polar and spherical coordinates, for the notebook and for slides. Each function returns a Figure.
+
+`slide=True` gives the slide style: white background, large fonts (20 pt), thick lines, height 6 inches.
+`slide=False` gives the same figure smaller, for the notebook. Colours come from qmstyle.py (one colour per quantity:
+the distance r is pink, as in the node figures; the polar angle and the cones are orange; the azimuth and the planes
+through the axis are green; marks and the point are red; angle marks and axes are dark).
+"""
+
+import sys
+from pathlib import Path
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from coordinates import polar_grid_lines, polar_to_cartesian, spherical_to_cartesian  # noqa: E402
+from qmstyle import A_COLOR, INK, K_COLOR, OMEGA_COLOR, R_COLOR  # noqa: E402
+
+R_C, POLAR_C, AZIMUTH_C, POINT_C = R_COLOR, OMEGA_COLOR, K_COLOR, A_COLOR
+HEIGHT = 6.0  # inches; every slide figure has this height, 8 inches width (the three-panel figure 18)
+
+
+def _scale(slide):
+    return 1.0 if slide else 0.55
+
+
+def _rc(slide):
+    s = _scale(slide)
+    return plt.rc_context({
+        "font.size": 20 * s, "axes.titlesize": 20 * s, "lines.linewidth": 3.5 * s,
+        "figure.facecolor": "white", "axes.facecolor": "white", "savefig.facecolor": "white",
+        "mathtext.fontset": "dejavusans",
+    })
+
+
+def _figure(width, slide):
+    s = _scale(slide)
+    return plt.figure(figsize=(width * s, HEIGHT * s))
+
+
+def _arrow(ax, p, q, color=INK, lw=3.0):
+    ax.annotate("", xy=q, xytext=p, arrowprops=dict(arrowstyle="-|>", color=color, lw=lw, shrinkA=0, shrinkB=0))
+
+
+def polar_point_figure(r=1.6, phi_deg=40.0, slide=True, lim=2.2):
+    """One point described two ways: by (x, y) (dashed projections) and by (r, phi) (pink distance, dark angle)."""
+    s = _scale(slide)
+    phi = np.radians(phi_deg)
+    x, y = (float(v) for v in polar_to_cartesian(r, phi))
+    with _rc(slide):
+        fig = _figure(8, slide)
+        ax = fig.add_axes([0.04, 0.04, 0.92, 0.80])
+        ax.set_xlim(-lim, lim)
+        ax.set_ylim(-lim, lim)
+        ax.set_aspect("equal")
+        ax.axis("off")
+        _arrow(ax, (-lim * 0.97, 0), (lim * 0.97, 0), lw=2.5 * s)
+        _arrow(ax, (0, -lim * 0.97), (0, lim * 0.97), lw=2.5 * s)
+        ax.text(lim * 0.97, -0.28, r"$x$", ha="right", va="top")
+        ax.text(0.1, lim * 0.97, r"$y$", ha="left", va="top")
+        ax.plot([x, x], [0, y], color="0.45", ls="--", lw=2.5 * s)
+        ax.plot([0, x], [y, y], color="0.45", ls="--", lw=2.5 * s)
+        ax.plot([0, x], [0, y], color=R_C, lw=4.5 * s, solid_capstyle="round")
+        if r > 1e-9:
+            a = np.linspace(0, phi, 60)
+            ar = min(0.55, 0.6 * r)
+            ax.plot(ar * np.cos(a), ar * np.sin(a), color=INK, lw=3 * s)
+            ax.text(1.35 * ar * np.cos(phi / 2), 1.35 * ar * np.sin(phi / 2), r"$\varphi$", ha="center", va="center")
+            ax.text(0.5 * x - 0.15 * np.sin(phi), 0.5 * y + 0.15 * np.cos(phi), r"$r$", color=R_C, ha="center", va="center")
+        ax.scatter([x], [y], s=260 * s**2, color=POINT_C, zorder=5)
+        ax.text(x, -0.28 if y >= 0 else 0.1, r"$x$" if abs(x) > 0.25 else "", ha="center", va="top" if y >= 0 else "bottom", color="0.35")
+        ax.text(-0.1 if x >= 0 else 0.1, y, r"$y$" if abs(y) > 0.25 else "", ha="right" if x >= 0 else "left", va="center", color="0.35")
+        fig.suptitle(rf"$(x,y)=({x:.2f},\ {y:.2f})$   $\Leftrightarrow$   $(r,\varphi)=({r:.2f},\ {phi_deg:.0f}^\circ)$",
+                     y=0.97, fontsize=17 * s)
+    return fig
+
+
+def polar_grid_figure(n_circles=4, n_rays=12, slide=True, r_max=2.0):
+    """The polar grid: circles of constant r (pink) and rays of constant phi (green) through the centre."""
+    s = _scale(slide)
+    radii, angles = polar_grid_lines(n_circles, n_rays, r_max)
+    with _rc(slide):
+        fig = _figure(8, slide)
+        ax = fig.add_axes([0.04, 0.02, 0.92, 0.88])
+        lim = 1.12 * r_max
+        ax.set_xlim(-lim, lim)
+        ax.set_ylim(-lim, lim)
+        ax.set_aspect("equal")
+        ax.axis("off")
+        for a in angles:
+            ax.plot([0, r_max * np.cos(a)], [0, r_max * np.sin(a)], color=AZIMUTH_C, lw=3 * s)
+        t = np.linspace(0, 2 * np.pi, 400)
+        for rad in radii:
+            ax.plot(rad * np.cos(t), rad * np.sin(t), color=R_C, lw=3.5 * s)
+        ax.scatter([0], [0], s=150 * s**2, color=INK, zorder=5)
+        fig.suptitle("circles: constant $r$,  rays: constant $\\varphi$", y=0.97, fontsize=17 * s)
+    return fig
+
+
+def _axes_3d(ax, lim=1.15, labels=True, zoom=0.85, lo=0.0):
+    ax.set_box_aspect((1, 1, 1), zoom=zoom)
+    ax.set_xlim(lo, lim)
+    ax.set_ylim(lo, lim)
+    ax.set_zlim(lo, lim)
+    ax.set_axis_off()
+    ax.view_init(elev=18, azim=-58)
+    for d, lab in zip(np.eye(3), ("x", "y", "z")):
+        ax.plot(*zip(np.zeros(3), 1.12 * d), color=INK, lw=2.2)
+        if labels:
+            ax.text(*(1.24 * d), f"${lab}$", color=INK, ha="center", va="center")
+
+
+def spherical_coordinates_figure(r=1.0, theta_deg=52.0, phi_deg=35.0, slide=True):
+    """The three coordinates of one point: the distance r (pink), the polar angle theta from the z axis and the azimuth
+    phi around it (dark arcs)."""
+    s = _scale(slide)
+    th, ph = np.radians(theta_deg), np.radians(phi_deg)
+    p = np.array([float(v) for v in spherical_to_cartesian(r, th, ph)])
+    foot = np.array([p[0], p[1], 0.0])
+    with _rc(slide):
+        fig = _figure(8, slide)
+        ax = fig.add_axes([0.14, -0.05, 1.0, 1.1], projection="3d")
+        _axes_3d(ax, lim=1.25, lo=-0.05, zoom=1.0)
+        ax.plot(*zip(np.zeros(3), p), color=R_C, lw=4.5 * s)
+        ax.plot(*zip(p, foot), color="0.45", lw=2.5 * s, ls="--")
+        ax.plot(*zip(np.zeros(3), foot), color="0.45", lw=2.5 * s, ls="--")
+        ax.scatter(*p, color=POINT_C, s=240 * s**2, zorder=5, depthshade=False)
+        t = np.linspace(0, th, 40)
+        ax.plot(0.5 * np.sin(t) * np.cos(ph), 0.5 * np.sin(t) * np.sin(ph), 0.5 * np.cos(t), color=INK, lw=3 * s)
+        f = np.linspace(0, ph, 40)
+        ax.plot(0.45 * np.cos(f), 0.45 * np.sin(f), 0 * f, color=INK, lw=3 * s)
+        ax.text(0.22, 0.0, 0.7, r"$\vartheta$", color=INK, fontsize=24 * s)
+        ax.text(0.55, 0.08, -0.03, r"$\varphi$", color=INK, fontsize=24 * s)
+        ax.text(*(0.5 * p + np.array([-0.14, 0.12, 0.0])), r"$r$", color=R_C, fontsize=24 * s)
+    return fig
+
+
+def _surface(ax, kind, r0, theta0, phi0, color):
+    if kind == "r":
+        th, ph = np.meshgrid(np.linspace(0, np.pi, 60), np.linspace(0, 1.5 * np.pi, 90))
+        x, y, z = spherical_to_cartesian(r0, th, ph)  # three quarters of the sphere: the missing quarter shows the axes
+    elif kind == "theta":
+        rr, ph = np.meshgrid(np.linspace(0, 1, 30), np.linspace(0, 2 * np.pi, 90))
+        x, y, z = spherical_to_cartesian(rr, theta0, ph)
+    else:
+        rr, th = np.meshgrid(np.linspace(0, 1, 30), np.linspace(0, np.pi, 50))
+        x, y, z = spherical_to_cartesian(rr, th, phi0)
+    ax.plot_surface(x, y, z, color=color, alpha=0.55, shade=False, rstride=3, cstride=3, edgecolor="white", linewidth=0.5)
+    return x, y, z
+
+
+def spherical_surface_figure(kind="r", slide=True, r0=1.0, theta_deg=50.0, phi_deg=40.0):
+    """One constant-coordinate surface: kind 'r' a sphere (pink), 'theta' a cone (orange), 'phi' a half-plane
+    through the z axis (green). The sphere is shown over three quarters of a turn, so that the axes stay visible."""
+    s = _scale(slide)
+    th0, ph0 = np.radians(theta_deg), np.radians(phi_deg)
+    color, text = {"r": (R_C, r"$r=\mathrm{const}$: sphere"), "theta": (POLAR_C, r"$\vartheta=\mathrm{const}$: cone"),
+                   "phi": (AZIMUTH_C, r"$\varphi=\mathrm{const}$: half-plane")}[kind]
+    with _rc(slide):
+        fig = _figure(8, slide)
+        ax = fig.add_axes([0.0, -0.08, 1.0, 1.0], projection="3d")
+        _axes_3d(ax, lim=1.2, lo=-1.2, zoom=1.0)
+        _surface(ax, kind, r0, th0, ph0, color)
+        fig.suptitle(text, y=0.97, fontsize=20 * s, color=color)
+    return fig
+
+
+def spherical_surfaces_figure(slide=True, r0=1.0, theta_deg=50.0, phi_deg=40.0):
+    """The three constant-coordinate surfaces side by side."""
+    s = _scale(slide)
+    th0, ph0 = np.radians(theta_deg), np.radians(phi_deg)
+    items = [("r", R_C, r"$r=\mathrm{const}$: sphere"), ("theta", POLAR_C, r"$\vartheta=\mathrm{const}$: cone"),
+             ("phi", AZIMUTH_C, r"$\varphi=\mathrm{const}$: half-plane")]
+    with _rc(slide):
+        fig = _figure(18, slide)
+        for i, (kind, color, text) in enumerate(items):
+            ax = fig.add_axes([i / 3, -0.08, 1 / 3, 1.0], projection="3d")
+            _axes_3d(ax, lim=1.2, lo=-1.2, zoom=1.0)
+            _surface(ax, kind, r0, th0, ph0, color)
+            fig.text((i + 0.5) / 3, 0.93, text, ha="center", va="center", fontsize=20 * s, color=color)
+    return fig

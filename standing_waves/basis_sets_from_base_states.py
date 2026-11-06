@@ -64,7 +64,7 @@ def _(mo):
     `def2-TZVPD`.
 
     **Read first:** `spherical_harmonics_and_hydrogen.py` (this folder), for the hydrogen orbitals and the real spherical
-    harmonics that reappear in section 5.
+    harmonics that reappear in section 6.
 
     **Contents**
 
@@ -443,7 +443,7 @@ def _(mo):
 
     ### Angular parts: shells and counting
 
-    As in the hydrogen notebook (section 5), a basis function is a radial part times an angular part, and the angular
+    As in the hydrogen notebook (section 6), a basis function is a radial part times an angular part, and the angular
     part is a real spherical harmonic $Y_{\ell m}$. A **shell** of angular momentum $\ell$ is the set of functions with the same radial part and all
     $2\ell+1$ harmonics of that $\ell$:
 

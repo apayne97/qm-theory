@@ -19,6 +19,12 @@ def _():
         numerical_levels,
         quantum_numbers,
     )
+    from coordinates_plots import (
+        polar_grid_figure,
+        polar_point_figure,
+        spherical_coordinates_figure,
+        spherical_surfaces_figure,
+    )
     from hydrogen_plots import (
         coordinates_figure,
         drum_figure,
@@ -42,6 +48,10 @@ def _():
 
     return (
         HARTREE_EV,
+        polar_grid_figure,
+        polar_point_figure,
+        spherical_coordinates_figure,
+        spherical_surfaces_figure,
         coordinates_figure,
         degeneracy,
         drum_figure,
@@ -86,7 +96,7 @@ def _(mo):
     One idea runs through the whole notebook: **the shape of a standing wave is set by where its nodes are and which
     way they point.** A string has nodes that are points. A drumhead has nodes that are lines, of two kinds: circles
     around the centre and diameters through it. An atom has nodes that are surfaces, of three kinds: spheres, cones and
-    planes. By section 5 the shape of every orbital can be read off by counting nodes of each kind.
+    planes. By section 6 the shape of every orbital can be read off by counting nodes of each kind.
 
     **Read first:** `standing_waves_in_boxes.py` (this folder), and `../quantization`, section 5, which states the hydrogen
     quantum numbers without deriving them. This notebook supplies the reasons.
@@ -94,15 +104,16 @@ def _(mo):
     **Contents**
 
     1. From a box to an atom: new coordinates
-    2. Nodes and their direction: string, drumhead, atom
-    3. Standing waves on a sphere: the spherical harmonics
-    4. The radial part: effective potential and energy levels
-    5. Hydrogen orbitals, and reading an orbital from its nodes
-    6. A short bridge to molecules
+    2. Polar coordinates in 2D and 3D
+    3. Nodes and their direction: string, drumhead, atom
+    4. Standing waves on a sphere: the spherical harmonics
+    5. The radial part: effective potential and energy levels
+    6. Hydrogen orbitals, and reading an orbital from its nodes
+    7. A short bridge to molecules
 
     **How much is derived.** The full separation of the Schrödinger equation is not repeated here. The equations
     that come out of it are stated, and each statement is checked numerically in `test_hydrogen.py` (the list is at
-    the end of section 6). Units are atomic units: lengths in bohr ($a_0 = 0.0529$ nm), energies in hartree
+    the end of section 7). Units are atomic units: lengths in bohr ($a_0 = 0.0529$ nm), energies in hartree
     (1 hartree $=27.2$ eV), $\hbar=m_e=1$.
     """)
     return
@@ -151,10 +162,11 @@ def _(mo):
     wave contributes an energy that depends on how much it curves over the sphere; we will see that this number is
     $\ell(\ell+1)$, and it enters the radial equation as a repulsive term. So the plan is:
 
-    1. Look at the nodes of a string and of a drumhead, to learn what a node is and which way it can point (section 2).
-    2. Find all the waves on a sphere and the number $\ell(\ell+1)$ that goes with each (section 3).
-    3. Put that number into the radial equation and find its allowed energies (section 4).
-    4. Multiply the two parts and read the shapes (section 5).
+    1. Learn to describe a position by a distance and angles instead of $x$, $y$, $z$ (section 2).
+    2. Look at the nodes of a string and of a drumhead, to learn what a node is and which way it can point (section 3).
+    3. Find all the waves on a sphere and the number $\ell(\ell+1)$ that goes with each (section 4).
+    4. Put that number into the radial equation and find its allowed energies (section 5).
+    5. Multiply the two parts and read the shapes (section 6).
     """)
     return
 
@@ -170,7 +182,151 @@ def _(coordinates_figure, plt):
 @app.cell
 def _(mo):
     mo.md(r"""
-    ## 2 Nodes and their direction: string, drumhead, atom
+    ## 2 Polar coordinates in 2D and 3D
+
+    Section 1 named the coordinates $r$, $\vartheta$ and $\varphi$ without saying what they mean. This section does,
+    first on a flat sheet (two numbers per point) and then in space (three numbers per point). The figures are written as
+    slide-ready image files by `export_figures.py`.
+
+    **Two dimensions: $(r,\varphi)$.** A point on a sheet can be described in two ways. The **Cartesian** description
+    gives two distances, $x$ along a horizontal axis and $y$ along a vertical axis. The **polar** description gives
+    the distance $r$ from the centre (the origin), and the angle $\varphi$ between the horizontal axis and the line from
+    the centre to the point, measured counterclockwise. The two descriptions are linked by
+
+    $$
+    x = r\cos\varphi,\qquad y = r\sin\varphi,
+    \qquad\text{and back:}\qquad
+    r=\sqrt{x^2+y^2},\qquad \varphi=\operatorname{atan2}(y,x).
+    $$
+
+    The function $\operatorname{atan2}(y,x)$ is the angle of the point $(x,y)$, placed in the correct quarter of the
+    plane; the plain ratio $y/x$ would not tell $(1,1)$ from $(-1,-1)$. The ranges are $r\ge 0$ and
+    $0\le\varphi<2\pi$: the angle **wraps**, so $\varphi=2\pi$ is the same direction as $\varphi=0$, and at
+    $r=0$ the angle means nothing. Move the sliders: the point is the same point in both descriptions.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    r_pt = mo.ui.slider(0.0, 2.0, step=0.1, value=1.6, label=r"$r$", show_value=True)
+    phi_pt = mo.ui.slider(0, 355, step=5, value=40, label=r"$\varphi$ (degrees)", show_value=True)
+    return phi_pt, r_pt
+
+
+@app.cell
+def _(mo, phi_pt, plt, polar_point_figure, r_pt):
+    _fig = polar_point_figure(r_pt.value, phi_pt.value, slide=False)
+    _out = mo.vstack([mo.hstack([r_pt, phi_pt], justify="start"), _fig])
+    plt.close(_fig)
+    _out
+    return
+
+
+@app.cell
+def _(mo, plt, polar_grid_figure):
+    _fig = polar_grid_figure(slide=False)
+    _out = mo.vstack([
+        mo.md(r"""
+        **The coordinate grid.** Fix one coordinate and let the other vary, and a line appears. A line of constant $r$ is
+        a **circle** around the centre; a line of constant $\varphi$ is a **ray** from the centre. Every point of the
+        sheet is where one circle and one ray cross.
+        """),
+        _fig,
+        mo.md(r"""
+        This is why the drum of section 3 has the nodes it has. A node at constant $r$ is a circle, and a node at
+        constant $\varphi$ is a diameter (two rays on opposite sides of the centre).
+        """),
+    ])
+    plt.close(_fig)
+    _out
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    **Three dimensions: $(r,\vartheta,\varphi)$.** In space a point needs three numbers. The Cartesian description
+    uses $(x,y,z)$. The **spherical** description uses the distance $r\ge0$ from the centre, the **polar angle**
+    $\vartheta$ between the $z$ axis and the line from the centre to the point ($0\le\vartheta\le\pi$, from the north
+    pole to the south pole), and the **azimuth** $\varphi$ ($0\le\varphi<2\pi$), the angle around the $z$ axis of the
+    shadow that the point casts on the $xy$ plane, measured from the $x$ axis. The conversions are
+
+    $$
+    x=r\sin\vartheta\cos\varphi,\qquad y=r\sin\vartheta\sin\varphi,\qquad z=r\cos\vartheta .
+    $$
+
+    The shadow on the $xy$ plane has length $r\sin\vartheta$, which is why $\sin\vartheta$ appears in $x$ and $y$; the
+    height of the point is $z=r\cos\vartheta$. This notebook uses the **physics convention** for the names, matching the
+    rest of the notebook: $\vartheta$ is the polar angle and $\varphi$ is the azimuth. Some books swap the two
+    names, so check which one is meant before comparing formulas.
+    """)
+    return
+
+
+@app.cell
+def _(mo, plt, spherical_coordinates_figure):
+    _fig = spherical_coordinates_figure(slide=False)
+    _out = mo.vstack([_fig])
+    plt.close(_fig)
+    _out
+    return
+
+
+@app.cell
+def _(mo, plt, spherical_surfaces_figure):
+    _fig = spherical_surfaces_figure(slide=False)
+    _out = mo.vstack([
+        mo.md(r"""
+        **The coordinate surfaces.** Fix one of the three coordinates and a surface appears, as the lines did in two
+        dimensions:
+
+        - constant $r$: a **sphere** around the centre;
+        - constant $\vartheta$: a **cone** around the $z$ axis (for $\vartheta=\pi/2$ the cone is the flat $xy$ plane);
+        - constant $\varphi$: a **half-plane** that starts at the $z$ axis.
+
+        (The figure shows the sphere with a quarter cut away, so that the axes stay visible.)
+        """),
+        _fig,
+        mo.md(r"""
+        The surface of a sphere of fixed radius is labelled by the two angles $(\vartheta,\varphi)$ alone: a point on
+        it is a direction. On that sphere, a ring of latitude is a line of constant $\vartheta$ (the cone meets the sphere
+        in a circle), and a meridian is a line of constant $\varphi$. These two families of lines are the ones that
+        section 4 uses to place the nodes of a standing wave on a sphere.
+        """),
+    ])
+    plt.close(_fig)
+    _out
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    **Why use them.** Two reasons. First, a function of $r$ alone, such as the pull of a nucleus, looks the same in every
+    direction: in polar coordinates it does not depend on the angles at all, while in $x,y,z$ it depends on all three.
+    Second, nodes at fixed coordinates are simple: a circle, a sphere, a cone and a half-plane each have one coordinate
+    fixed. Sections 3 to 6 use both facts.
+
+    **Small areas and volumes.** To add up a probability one needs the size of a small patch. Take a small step $dr$ along a
+    ray and a small step $d\varphi$ around the centre: the patch is nearly a rectangle with sides $dr$ and $r\,d\varphi$
+    (an arc is the radius times the angle), so its area is
+    $dA=r\,dr\,d\varphi$. In space, add a step $d\vartheta$, whose side is $r\,d\vartheta$; the azimuth step moves along a
+    circle of latitude of radius $r\sin\vartheta$, so its side is $r\sin\vartheta\,d\varphi$, and the volume is
+
+    $$
+    dV=r^2\sin\vartheta\;dr\,d\vartheta\,d\varphi .
+    $$
+
+    Both factors are used, not derived any further, when the notebook says that an orbital is normalised.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    ## 3 Nodes and their direction: string, drumhead, atom
 
     A **node** is a place where the wave is zero, and the wave changes sign when you cross it. A standing wave is
     pictured most simply by its nodes: they cut the region into pieces, and the wave is positive in one piece, negative
@@ -235,7 +391,7 @@ def _(mo):
       $\cos(m_\ell\varphi)$ or $\sin(\lvert m_\ell\rvert\varphi)$, which have $2\ell$ zeros around a
       full turn, and two opposite zeros make one diameter.
 
-    On the sphere of section 3, the $\ell$ angular nodes split into $\lvert m_\ell\rvert$ that contain the axis and
+    On the sphere of section 4, the $\ell$ angular nodes split into $\lvert m_\ell\rvert$ that contain the axis and
     $\ell-\lvert m_\ell\rvert$ that are circles of latitude. The drum has no latitude circles, because it is flat, so
     all of its $\ell$ angular nodes contain the centre and $\ell=\lvert m_\ell\rvert$.
     """)
@@ -313,7 +469,7 @@ def _(mo):
 @app.cell
 def _(mo):
     mo.md(r"""
-    ## 3 Standing waves on a sphere: the spherical harmonics
+    ## 4 Standing waves on a sphere: the spherical harmonics
 
     The surface of a sphere has no walls, so the condition that fixes the allowed waves is different from the box.
     A wave on the sphere must have one definite value at every point and stay finite everywhere. Two places need
@@ -396,7 +552,7 @@ def _(mo):
 
     **Nodal lines.** A standing wave is described by where it vanishes. The harmonic $Y_{\ell m_\ell}$ has exactly
     $\ell$ nodal lines on the sphere in total. They are of two kinds, and each cuts across a different direction, as in
-    the table of section 2:
+    the table of section 3:
 
     | Kind of nodal line | Cuts across | How many | Where it comes from |
     |---|---|---|---|
@@ -551,7 +707,7 @@ def _(kind_pl, l_pl, m_pl, mo, node_placement_figure, plt):
 def _(mo):
     mo.md(r"""
     Orange marks the circles of latitude (cut across $\vartheta$), green the planes through the axis (cut across
-    $\varphi$), as in the table of section 2. The right panel is the polar part alone: each time the curve crosses zero is
+    $\varphi$), as in the table of section 3. The right panel is the polar part alone: each time the curve crosses zero is
     one circle of latitude. The switch only turns the planes by half their spacing, $\pi/(2\lvert m_\ell\rvert)$,
     about the axis ($\cos$ to $\sin$); the nodes keep the same number and the same spacing.
 
@@ -672,7 +828,7 @@ def _(mo):
 @app.cell
 def _(mo):
     mo.md(r"""
-    ## 4 The radial part: effective potential and energy levels
+    ## 5 The radial part: effective potential and energy levels
 
     The angular number $\ell(\ell+1)$ goes into the equation for the distance. Writing $u(r)=rR(r)$ (a convenient
     form, because then the equation looks like one for a wave along a line), the radial equation in atomic units is
@@ -822,10 +978,10 @@ def _(degeneracy, mo, quantum_numbers):
 @app.cell
 def _(mo):
     mo.md(r"""
-    ## 5 Hydrogen orbitals
+    ## 6 Hydrogen orbitals
 
     Multiplying the two parts gives the orbital, $\psi_{n\ell m_\ell}=R_{n\ell}(r)\,Y_{\ell m_\ell}(\vartheta,\varphi)$. Its
-    square gives the probability density. Three kinds of node combine, as in the table of section 2: $n-\ell-1$ spheres from the radial part, and
+    square gives the probability density. Three kinds of node combine, as in the table of section 3: $n-\ell-1$ spheres from the radial part, and
     from the angular part $\ell-\lvert m_\ell\rvert$ cones and $\lvert m_\ell\rvert$ planes through the axis (each
     nodal line of the sphere extends outward as a surface through the nucleus). The total is $n-1$ nodal surfaces. The names are
     1s, 2s, 2p, 3s, 3p, 3d: the number is $n$ and the letter is $\ell$.
@@ -982,7 +1138,7 @@ def _(mo, node_geometry):
 @app.cell
 def _(mo):
     mo.md(r"""
-    ## 6 A short bridge to molecules
+    ## 7 A short bridge to molecules
 
     Hydrogen is one of the very few problems in chemistry that can be solved exactly. What goes wrong with anything
     larger, and what is done about it?
@@ -1001,7 +1157,7 @@ def _(mo):
     - **More than one centre.** In a molecule the potential no longer has spherical symmetry, so the orbitals cannot be
       found by separating variables. The practical method, **LCAO** (linear combination of atomic-like orbitals), builds each
       molecular orbital as a sum of functions centred on the atoms. Each of these basis functions has the form
-      (radial function) $\times$ (real spherical harmonic), as in section 5. The radial function is replaced by a sum of
+      (radial function) $\times$ (real spherical harmonic), as in section 6. The radial function is replaced by a sum of
       Gaussians, which makes the integrals fast, and the sum is made large enough to be accurate. Mixing s and p functions on
       carbon gives the $sp^3$ hybrids that point to the corners of a tetrahedron in methane.
 
@@ -1024,7 +1180,7 @@ def _(mo):
 
     **What was checked, and what was not.** All the numerical statements marked above are tested in `test_hydrogen.py`.
     The restriction $\lvert m_\ell\rvert\le\ell$, the full separation of the Schrödinger equation and the whole of
-    section 6 are stated without derivation or calculation here.
+    section 7 are stated without derivation or calculation here.
     """)
     return
 

@@ -586,3 +586,80 @@ def test_complex_harmonic_has_only_latitude_nodes():
         # the phase winds m times round the axis
         ph = np.unwrap(np.angle(ylm(l, m, np.pi / 2 + 0.3, np.linspace(0, 2 * np.pi, 2000))))
         assert (ph[-1] - ph[0]) / (2 * np.pi) == pytest.approx(m, abs=0.01)
+
+
+# ---------------------------------------------------------------------------------------------------------------
+# polar and spherical coordinates
+
+
+def test_polar_conversions_round_trip_and_ranges():
+    from coordinates import cartesian_to_polar, polar_to_cartesian
+
+    rng = np.random.default_rng(3)
+    r, phi = rng.uniform(0.01, 3.0, 200), rng.uniform(0.0, 2 * np.pi, 200)
+    x, y = polar_to_cartesian(r, phi)
+    r2, phi2 = cartesian_to_polar(x, y)
+    assert r2 == pytest.approx(r) and phi2 == pytest.approx(phi)
+    assert np.all(r2 >= 0) and np.all((phi2 >= 0) & (phi2 < 2 * np.pi))
+    # the four quarters of the plane, and the point that plain y/x cannot tell from its opposite
+    assert cartesian_to_polar(1.0, 1.0)[1] == pytest.approx(np.pi / 4)
+    assert cartesian_to_polar(-1.0, -1.0)[1] == pytest.approx(5 * np.pi / 4)
+    assert cartesian_to_polar(0.0, -1.0)[1] == pytest.approx(3 * np.pi / 2)
+    # the angle wraps: phi + 2 pi is the same point
+    assert polar_to_cartesian(1.3, 0.4 + 2 * np.pi) == pytest.approx(polar_to_cartesian(1.3, 0.4))
+
+
+def test_spherical_conversions_round_trip_and_ranges():
+    from coordinates import cartesian_to_spherical, spherical_to_cartesian
+
+    rng = np.random.default_rng(4)
+    r, th, ph = rng.uniform(0.01, 3.0, 300), rng.uniform(0.01, np.pi - 0.01, 300), rng.uniform(0.0, 2 * np.pi, 300)
+    x, y, z = spherical_to_cartesian(r, th, ph)
+    r2, th2, ph2 = cartesian_to_spherical(x, y, z)
+    assert r2 == pytest.approx(r) and th2 == pytest.approx(th) and ph2 == pytest.approx(ph)
+    assert np.all((th2 >= 0) & (th2 <= np.pi)) and np.all((ph2 >= 0) & (ph2 < 2 * np.pi))
+    assert np.sqrt(x**2 + y**2 + z**2) == pytest.approx(r)
+    assert spherical_to_cartesian(2.0, 0.0, 1.0) == pytest.approx((0.0, 0.0, 2.0))  # north pole: on the z axis
+    assert spherical_to_cartesian(2.0, np.pi / 2, 0.0) == pytest.approx((2.0, 0.0, 0.0))  # equator, phi = 0: on x
+    assert cartesian_to_spherical(0.0, 0.0, -1.5)[1] == pytest.approx(np.pi)  # south pole
+
+
+def test_coordinate_surfaces():
+    from coordinates import spherical_to_cartesian
+
+    rng = np.random.default_rng(5)
+    th, ph = rng.uniform(0, np.pi, 50), rng.uniform(0, 2 * np.pi, 50)
+    x, y, z = spherical_to_cartesian(1.7, th, ph)  # constant r: a sphere
+    assert x**2 + y**2 + z**2 == pytest.approx(1.7**2)
+    r = rng.uniform(0.1, 2, 50)
+    x, y, z = spherical_to_cartesian(r, 0.9, ph)  # constant theta: a cone, z = sqrt(x^2 + y^2) / tan(theta)
+    assert z == pytest.approx(np.hypot(x, y) / np.tan(0.9))
+    x, y, z = spherical_to_cartesian(r, th, 0.7)  # constant phi: a half-plane through the z axis
+    assert y * np.cos(0.7) - x * np.sin(0.7) == pytest.approx(0.0, abs=1e-12)
+    assert np.all(x * np.cos(0.7) + y * np.sin(0.7) >= -1e-12)  # only the half on the phi side of the axis
+
+
+def test_polar_grid_lines_count_and_spacing():
+    from coordinates import polar_grid_lines
+
+    radii, angles = polar_grid_lines(4, 12, 2.0)
+    assert len(radii) == 4 and len(angles) == 12
+    assert radii == pytest.approx([0.5, 1.0, 1.5, 2.0])
+    assert np.diff(angles) == pytest.approx(np.full(11, np.pi / 6))
+    assert angles[0] == 0.0 and angles[-1] < 2 * np.pi
+
+
+def test_coordinate_figures_draw_expected_lines():
+    import matplotlib.pyplot as plt
+
+    from coordinates_plots import polar_grid_figure, polar_point_figure, spherical_surfaces_figure
+
+    fig = polar_grid_figure(3, 8, slide=False)
+    lines = fig.axes[0].lines
+    assert len(lines) == 8 + 3  # eight rays and three circles
+    plt.close(fig)
+    fig = polar_point_figure(0.0, 0.0, slide=False)  # the centre: no angle to draw, no error
+    plt.close(fig)
+    fig = spherical_surfaces_figure(slide=False)
+    assert len(fig.axes) == 3
+    plt.close(fig)
