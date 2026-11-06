@@ -14,6 +14,7 @@ from matplotlib.colors import PowerNorm
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from coordinates import VIEW_AZIM, VIEW_ELEV  # noqa: E402
 from hydrogen import (  # noqa: E402
     azimuth_nodes,
     latitude_nodes_predicted,
@@ -88,34 +89,11 @@ def _draw_shape(ax, l, m, n_theta=90, n_phi=180):
 
 
 def coordinates_figure():
-    """The three spherical coordinates of one point: distance r, polar angle theta from the z axis, azimuth phi."""
-    r, th, ph = 1.0, np.radians(52), np.radians(35)
-    p = r * np.array([np.sin(th) * np.cos(ph), np.sin(th) * np.sin(ph), np.cos(th)])
-    foot = np.array([p[0], p[1], 0.0])
-    fig = plt.figure(figsize=(4.2, 3.8))
-    ax = fig.add_subplot(111, projection="3d")
-    for d, lab in zip(np.eye(3), ("x", "y", "z")):
-        ax.plot(*zip(np.zeros(3), 1.1 * d), color="0.45", lw=1)
-        ax.text(*(1.17 * d), f"${lab}$", color=INK, ha="center", va="center")
-    ax.plot(*zip(np.zeros(3), p), color=R_COLOR, lw=2.6)
-    ax.plot(*zip(p, foot), color="0.5", lw=1, ls="--")
-    ax.plot(*zip(np.zeros(3), foot), color="0.5", lw=1, ls="--")
-    ax.scatter(*p, color=A_COLOR, s=45, zorder=5)
-    t = np.linspace(0, th, 40)
-    ax.plot(0.45 * np.sin(t) * np.cos(ph), 0.45 * np.sin(t) * np.sin(ph), 0.45 * np.cos(t), color=INK, lw=1.4)
-    f = np.linspace(0, ph, 40)
-    ax.plot(0.4 * np.cos(f), 0.4 * np.sin(f), 0 * f, color=INK, lw=1.4)
-    ax.text(0.2, 0.0, 0.62, r"$\vartheta$", color=INK, fontsize=13)
-    ax.text(0.5, 0.1, -0.02, r"$\varphi$", color=INK, fontsize=13)
-    ax.text(*(0.5 * p + np.array([-0.12, 0.1, 0.0])), r"$r$", color=R_COLOR, fontsize=13)
-    ax.set_box_aspect((1, 1, 1))
-    ax.set_xlim(0, 1.2)
-    ax.set_ylim(0, 1.2)
-    ax.set_zlim(0, 1.2)
-    ax.set_axis_off()
-    ax.view_init(elev=16, azim=-58)
-    fig.tight_layout()
-    return fig
+    """The three spherical coordinates of one point: distance r, polar angle theta from the z axis, azimuth phi. The same
+    figure, in the same view and colours, as the slide figure of coordinates_plots.py."""
+    from coordinates_plots import spherical_coordinates_figure
+
+    return spherical_coordinates_figure(slide=False)
 
 
 def harmonic_figure(l, m):
@@ -124,7 +102,7 @@ def harmonic_figure(l, m):
     fig = plt.figure(figsize=(9.6, 3.9))
     ax = fig.add_subplot(1, 2, 1, projection="3d")
     _draw_shape(ax, l, m)
-    ax.view_init(elev=20, azim=-60)
+    ax.view_init(elev=VIEW_ELEV, azim=VIEW_AZIM)
     ax.set_title("shape: distance from centre $=|Y|$\n(blue $Y>0$, red $Y<0$)", fontsize=9)
     ax2 = fig.add_subplot(1, 2, 2)
     theta = np.linspace(0, np.pi, 240)[:, None]
@@ -156,7 +134,7 @@ def node_placement_figure(l, m_abs, kind="cos"):
     lat = latitude_nodes_predicted(l, m_abs)
     azi = azimuth_nodes(m_abs, "cos" if m >= 0 else "sin")
     fig = plt.figure(figsize=(12.6, 3.9))
-    elev, azim = 22, -58
+    elev, azim = VIEW_ELEV, VIEW_AZIM
     # sphere
     ax = fig.add_subplot(1, 3, 1, projection="3d")
     th = np.linspace(0, np.pi, 140)[:, None]
@@ -230,7 +208,7 @@ def harmonic_gallery_figure(l_max=3):
         for m in range(-l, l + 1):
             ax = fig.add_subplot(l_max + 1, cols, l * cols + (m + l_max) + 1, projection="3d")
             _draw_shape(ax, l, m, 60, 120)
-            ax.view_init(elev=22, azim=-55)
+            ax.view_init(elev=VIEW_ELEV, azim=VIEW_AZIM)
             ax.set_title(f"$m_\\ell={m}$", fontsize=8, pad=-6)
         fig.text(0.005, 1 - (l + 0.5) / (l_max + 1), f"$\\ell={l}$\n{'spdf'[l]}", fontsize=10, va="center", color=INK)
     fig.subplots_adjust(left=0.05, right=0.995, top=0.97, bottom=0.01, wspace=-0.12, hspace=0.05)

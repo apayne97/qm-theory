@@ -39,3 +39,8 @@ def polar_grid_lines(n_circles=4, n_rays=12, r_max=2.0):
     radii = r_max * np.arange(1, n_circles + 1) / n_circles
     angles = 2 * np.pi * np.arange(n_rays) / n_rays
     return radii, angles
+
+
+# The one view of every 3D figure with axes: a right-handed system seen from the first octant, z up, y to the right,
+# x towards the viewer (down and to the left), as in the classic textbook figure of spherical coordinates.
+VIEW_ELEV, VIEW_AZIM = 20, 35
