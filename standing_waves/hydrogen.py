@@ -420,6 +420,12 @@ def drum_nodes(m, k):
 # Where the nodes of a hydrogen orbital are
 
 
+def node_counts(n, l, m):
+    """The three node counts of the orbital (n, l, m): (n_r, n_theta, n_phi) = (n - l - 1 spheres, l - |m| cones,
+    |m| planes through the z axis). They add up to N_nodes = n - 1, and l = n_theta + n_phi angular nodes."""
+    return n - l - 1, l - abs(m), abs(m)
+
+
 def node_geometry(n, l, m):
     """Nodal surfaces of the real orbital (n, l, m): dict with
     'spheres'  radii of the n - l - 1 spherical shells (zeros of R_nl),

@@ -763,3 +763,57 @@ def test_drum_fourier_figures_build():
     for fig in (drum_fourier_figure("two", 7), drum_fourier_modes_figure(7)):
         assert len(fig.axes) >= 1
         plt.close(fig)
+
+
+def test_half_plane_is_not_seen_edge_on():
+    from coordinates import VIEW_AZIM
+    from coordinates_plots import PHI_PLANE_DEG
+
+    # the line of sight runs along the azimuth VIEW_AZIM (and VIEW_AZIM + 180); a half-plane at azimuth phi is seen
+    # edge-on when phi is that direction, and face-on when it is 90 degrees away
+    away = abs((PHI_PLANE_DEG - VIEW_AZIM + 90.0) % 180.0 - 90.0)
+    assert away >= 60.0
+
+
+def test_phi_surface_is_the_full_plane_with_its_trace():
+    import matplotlib.pyplot as plt
+
+    from coordinates_plots import PHI_PLANE_DEG, spherical_surface_figure
+
+    fig = spherical_surface_figure("phi", slide=False)
+    ax = fig.axes[0]
+    phi0 = np.radians(PHI_PLANE_DEG)
+    # four surface pieces: the two half-planes (phi0 and phi0 + pi), each above and below the floor
+    assert len(ax.collections) == 4
+    from coordinates_plots import plane_piece
+
+    for sign in (1, -1):
+        for lower in (False, True):
+            x, y, z = plane_piece(phi0, sign, lower)
+            assert np.abs(y * np.cos(phi0) - x * np.sin(phi0)).max() < 1e-12  # in the plane through the z axis
+            assert np.all(np.hypot(x, y) + np.abs(z) * 0 >= 0) and np.all(x**2 + y**2 + z**2 <= 1 + 1e-12)
+            assert (z <= 1e-12).all() if lower else (z >= -1e-12).all()
+            # the side of the axis: along (cos phi0, sin phi0) for sign = +1, opposite for sign = -1
+            assert np.all(sign * (x * np.cos(phi0) + y * np.sin(phi0)) >= -1e-12)
+    # two dashed traces on the floor: at phi0 and at phi0 + pi
+    traces = [ln for ln in ax.lines if ln.get_linestyle() == "--" and np.allclose(ln.get_data_3d()[2], 0)]
+    ends = sorted(round(float(np.degrees(np.arctan2(ln.get_data_3d()[1][1], ln.get_data_3d()[0][1])) % 360), 3) for ln in traces)
+    assert ends == [PHI_PLANE_DEG, PHI_PLANE_DEG + 180.0]
+    plt.close(fig)
+
+
+def test_node_counts_add_up_for_every_orbital():
+    from hydrogen import node_counts, node_geometry, quantum_numbers
+
+    for n in range(1, 6):
+        for (l, m) in quantum_numbers(n):
+            n_r, n_th, n_ph = node_counts(n, l, m)
+            assert n_r + n_th + n_ph == n - 1  # N_nodes
+            assert n_th + n_ph == l  # the angular nodes
+            assert n_ph == abs(m) and n_r >= 0 and n_th >= 0
+    # the helper agrees with the zeros found from the wave function, for the orbitals of the gallery
+    for n, l, m in [(1, 0, 0), (2, 0, 0), (2, 1, 0), (2, 1, 1), (3, 0, 0), (3, 1, 0), (3, 2, 0), (3, 2, -2), (3, 2, 1), (4, 3, 0)]:
+        g = node_geometry(n, l, m)
+        assert (len(g["spheres"]), len(g["cones"]), len(g["planes"])) == node_counts(n, l, m)
+    assert node_counts(2, 1, 0) == (0, 1, 0)  # p_z: one polar node (the flat plane), no cone
+    assert node_counts(4, 3, 0) == (0, 3, 0)

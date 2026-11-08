@@ -19,6 +19,7 @@ from coordinates import VIEW_AZIM, VIEW_ELEV, polar_grid_lines, polar_to_cartesi
 from qmstyle import A_COLOR, INK, K_COLOR, OMEGA_COLOR, R_COLOR  # noqa: E402
 
 R_C, POLAR_C, AZIMUTH_C, POINT_C = R_COLOR, OMEGA_COLOR, K_COLOR, A_COLOR
+PHI_PLANE_DEG = 100.0  # azimuth of the drawn half-plane: 65 degrees from the line of sight (azimuth VIEW_AZIM), clearly not edge-on
 HEIGHT = 6.0  # inches; every slide figure has this height, 8 inches width (the three-panel figure 18)
 
 
@@ -99,7 +100,7 @@ def polar_grid_figure(n_circles=4, n_rays=12, slide=True, r_max=2.0):
     return fig
 
 
-def _axes_3d(ax, lim=1.15, labels=True, zoom=0.85, lo=0.0, grid=False):
+def _axes_3d(ax, lim=1.15, labels=True, zoom=0.85, lo=0.0, grid=False, floor=False):
     """Axes of the shared view (VIEW_ELEV, VIEW_AZIM): z up, y right, x towards the viewer. With grid=True the floor
     (z = 0) and the back wall (x = 0) carry a light grid, as in the textbook figure."""
     ax.set_box_aspect((1, 1, 1), zoom=zoom)
@@ -108,6 +109,11 @@ def _axes_3d(ax, lim=1.15, labels=True, zoom=0.85, lo=0.0, grid=False):
     ax.set_zlim(lo, lim)
     ax.set_axis_off()
     ax.view_init(elev=VIEW_ELEV, azim=VIEW_AZIM)
+    if floor:  # a light floor grid over the whole range, so that x and y visibly lie in it (a filled floor would be
+        # depth-sorted over the surfaces and wash them out)
+        for v in np.linspace(lo, lim, 9):
+            ax.plot([v, v], [lo, lim], [0, 0], color="0.8", lw=1.4)
+            ax.plot([lo, lim], [v, v], [0, 0], color="0.8", lw=1.4)
     if grid:
         g = np.linspace(0, lim, 7)
         for v in g:
@@ -151,6 +157,13 @@ def spherical_coordinates_figure(r=1.0, theta_deg=50.0, phi_deg=68.0, slide=True
     return fig
 
 
+def plane_piece(phi0, sign=1, lower=False, n=30):
+    """Points of one quarter-disc of the plane through the z axis at azimuth phi0: sign = +1 for the half-plane at phi0 and
+    -1 for the opposite one (phi0 + pi); lower=True for the part below the xy plane. Radius 1."""
+    q, al = np.meshgrid(np.linspace(0, 1, n), np.linspace(0, np.pi / 2, n) * (-1 if lower else 1))
+    return sign * q * np.cos(al) * np.cos(phi0), sign * q * np.cos(al) * np.sin(phi0), q * np.sin(al)
+
+
 def _surface(ax, kind, r0, theta0, phi0, color):
     if kind == "r":
         th, ph = np.meshgrid(np.linspace(0, np.pi, 60), np.linspace(0.5 * np.pi, 2 * np.pi, 90))
@@ -159,39 +172,60 @@ def _surface(ax, kind, r0, theta0, phi0, color):
         rr, ph = np.meshgrid(np.linspace(0, 1, 30), np.linspace(0, 2 * np.pi, 90))
         x, y, z = spherical_to_cartesian(rr, theta0, ph)
     else:
-        rr, th = np.meshgrid(np.linspace(0, 1, 30), np.linspace(0, np.pi, 50))
-        x, y, z = spherical_to_cartesian(rr, th, phi0)
+        # the full plane through the z axis, as two half-discs (z from -1 to 1): the half-plane at phi0 in full colour,
+        # and the opposite half-plane (phi0 + pi), which belongs to the same node, lighter
+        for sign, lower, alpha in ((1, False, 0.55), (1, True, 0.2), (-1, False, 0.22), (-1, True, 0.1)):
+            # the part below the floor (z < 0) is drawn lighter, so that the plane reads as passing through the floor
+            x, y, z = plane_piece(phi0, sign, lower)
+            ax.plot_surface(x, y, z, color=color, alpha=alpha, shade=False, rstride=3, cstride=3, edgecolor="white",
+                            linewidth=0.5)
+        return x, y, z
     ax.plot_surface(x, y, z, color=color, alpha=0.55, shade=False, rstride=3, cstride=3, edgecolor="white", linewidth=0.5)
     return x, y, z
 
 
-def spherical_surface_figure(kind="r", slide=True, r0=1.0, theta_deg=50.0, phi_deg=68.0):
+def _decorate_phi(ax, phi0, s):
+    """Make the plane read as standing on the xy plane: its trace on the floor (dashed; lighter for the opposite half)
+    and the angle phi from the +x axis to the trace (arc)."""
+    ax.plot([0, np.cos(phi0)], [0, np.sin(phi0)], [0, 0], color=AZIMUTH_C, lw=3 * s, ls="--", zorder=6)
+    ax.plot([0, -np.cos(phi0)], [0, -np.sin(phi0)], [0, 0], color=AZIMUTH_C, lw=3 * s, ls="--", alpha=0.35, zorder=6)
+    f = np.linspace(0, phi0, 60)
+    ax.plot(*spherical_to_cartesian(0.45, np.pi / 2, f), color=AZIMUTH_C, lw=4 * s, zorder=6)
+    ax.text(*spherical_to_cartesian(0.62, np.pi / 2, phi0 / 2), r"$\varphi$", color=AZIMUTH_C, fontsize=24 * s,
+            ha="center", va="center")
+
+
+def spherical_surface_figure(kind="r", slide=True, r0=1.0, theta_deg=50.0, phi_deg=PHI_PLANE_DEG):
     """One constant-coordinate surface: kind 'r' a sphere (pink), 'theta' a cone (orange), 'phi' a half-plane
-    through the z axis (green). The sphere is shown over three quarters of a turn, so that the axes stay visible."""
+    through the z axis (green), drawn standing on the floor with its trace and the angle phi. The sphere is shown over three quarters of a turn, so that the axes stay visible."""
     s = _scale(slide)
     th0, ph0 = np.radians(theta_deg), np.radians(phi_deg)
     color, text = {"r": (R_C, r"$r=\mathrm{const}$: sphere"), "theta": (POLAR_C, r"$\vartheta=\mathrm{const}$: cone"),
-                   "phi": (AZIMUTH_C, r"$\varphi=\mathrm{const}$: half-plane")}[kind]
+                   "phi": (AZIMUTH_C, r"$\varphi=\mathrm{const}$: half-plane"+"\n(a node is the full plane)")}[kind]
     with _rc(slide):
         fig = _figure(8, slide)
         ax = fig.add_axes([0.0, -0.08, 1.0, 1.0], projection="3d")
-        _axes_3d(ax, lim=1.2, lo=-1.2, zoom=1.12)
+        _axes_3d(ax, lim=1.2, lo=-1.2, zoom=1.12, floor=True)
         _surface(ax, kind, r0, th0, ph0, color)
+        if kind == "phi":
+            _decorate_phi(ax, ph0, s)
         fig.suptitle(text, y=0.97, fontsize=20 * s, color=color)
     return fig
 
 
-def spherical_surfaces_figure(slide=True, r0=1.0, theta_deg=50.0, phi_deg=68.0):
+def spherical_surfaces_figure(slide=True, r0=1.0, theta_deg=50.0, phi_deg=PHI_PLANE_DEG):
     """The three constant-coordinate surfaces side by side."""
     s = _scale(slide)
     th0, ph0 = np.radians(theta_deg), np.radians(phi_deg)
     items = [("r", R_C, r"$r=\mathrm{const}$: sphere"), ("theta", POLAR_C, r"$\vartheta=\mathrm{const}$: cone"),
-             ("phi", AZIMUTH_C, r"$\varphi=\mathrm{const}$: half-plane")]
+             ("phi", AZIMUTH_C, r"$\varphi=\mathrm{const}$: half-plane" + "\n(a node is the full plane)")]
     with _rc(slide):
         fig = _figure(18, slide)
         for i, (kind, color, text) in enumerate(items):
             ax = fig.add_axes([i / 3, -0.08, 1 / 3, 1.0], projection="3d")
-            _axes_3d(ax, lim=1.2, lo=-1.2, zoom=1.12)
+            _axes_3d(ax, lim=1.2, lo=-1.2, zoom=1.12, floor=True)
             _surface(ax, kind, r0, th0, ph0, color)
+            if kind == "phi":
+                _decorate_phi(ax, ph0, s)
             fig.text((i + 0.5) / 3, 0.93, text, ha="center", va="center", fontsize=20 * s, color=color)
     return fig

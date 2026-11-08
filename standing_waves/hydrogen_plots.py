@@ -97,7 +97,8 @@ def coordinates_figure():
 
 
 def harmonic_figure(l, m):
-    """A real spherical harmonic as a shape (left) and unrolled onto a map (right) with its node lines."""
+    """A real spherical harmonic as a shape (left) and unrolled onto a map (right) with the lines where its angular nodes
+    (planes and cones) meet the sphere."""
     through, latitudes = nodal_structure(l, m)
     fig = plt.figure(figsize=(9.6, 3.9))
     ax = fig.add_subplot(1, 2, 1, projection="3d")
@@ -117,8 +118,8 @@ def harmonic_figure(l, m):
     ax2.set_xticks([0, 90, 180, 270, 360])
     ax2.set_yticks([0, 45, 90, 135, 180])
     ax2.set_title(
-        rf"$\ell={l},\ m_\ell={m}$: {l} nodal line{'s' if l != 1 else ''} = {through} through the poles + "
-        rf"{latitudes} of latitude" "\n" rf"$\ell(\ell+1)={l * (l + 1)}$",
+        rf"$\ell={l},\ m_\ell={m}$: $\ell={l}$ angular node{'s' if l != 1 else ''} = $n_\varphi={through}$ plane{'s' if through != 1 else ''} + "
+        rf"$n_\vartheta={latitudes}$ cone{'s' if latitudes != 1 else ''}" "\n" rf"$\ell(\ell+1)={l * (l + 1)}$",
         fontsize=9,
     )
     fig.tight_layout()
@@ -128,7 +129,7 @@ def harmonic_figure(l, m):
 def node_placement_figure(l, m_abs, kind="cos"):
     """Where the nodes of a real harmonic sit. Left: the sphere with its nodes. Middle: the same as a map, the
     nodes found from the wave (solid white) and the predicted positions (dashed colour). Right: the polar part
-    P_l^|m|(cos theta) against theta, with its zeros (the latitude nodes) marked."""
+    P_l^|m|(cos theta) against theta, with its zeros (the polar nodes, which are cones) marked."""
     m_abs = min(abs(m_abs), l)
     m = m_abs if (kind == "cos" or m_abs == 0) else -m_abs
     lat = latitude_nodes_predicted(l, m_abs)
@@ -176,8 +177,8 @@ def node_placement_figure(l, m_abs, kind="cos"):
     ax2.set_ylabel(r"polar angle $\vartheta$ (degrees)")
     trig = "cos" if m >= 0 else "sin"
     ax2.set_title(rf"white: zeros of the wave; dashed: predicted" "\n"
-                  rf"{m_abs} plane{'s' if m_abs != 1 else ''} (green) + {l - m_abs} latitude circle{'s' if l - m_abs != 1 else ''} "
-                  rf"(orange): total $\ell={l}$", fontsize=9)
+                  rf"$n_\varphi={m_abs}$ plane{'s' if m_abs != 1 else ''} (green) + $n_\vartheta={l - m_abs}$ cone{'s' if l - m_abs != 1 else ''} "
+                  rf"(orange): $\ell={l}$ angular nodes", fontsize=9)
     # polar part
     ax3 = fig.add_subplot(1, 3, 3)
     tt = np.linspace(0, np.pi, 600)
@@ -195,7 +196,7 @@ def node_placement_figure(l, m_abs, kind="cos"):
     ax3.set_xticks([0, 45, 90, 135, 180])
     ax3.set_xlabel(r"polar angle $\vartheta$ (degrees)")
     ax3.set_ylabel(rf"$N\,P_{{{l}}}^{{{m_abs}}}(\cos\vartheta)$")
-    ax3.set_title(rf"polar part of the wave: its {l - m_abs} zero{'s' if l - m_abs != 1 else ''} are the latitudes", fontsize=9)
+    ax3.set_title(rf"polar part of the wave: its {l - m_abs} zero{'s' if l - m_abs != 1 else ''} are the polar nodes (cones)", fontsize=9)
     fig.tight_layout()
     return fig
 
@@ -293,7 +294,7 @@ def radial_state_figure(n, l):
     ax.set_xlabel(r"distance $r$ (bohr)")
     ax.set_ylabel("energy (hartree)")
     ax.set_title(
-        rf"$n={n},\ \ell={l}$: {n - l - 1} radial node{'s' if n - l - 1 != 1 else ''} (black dots);  "
+        rf"$n={n},\ \ell={l}$: $n_r={n - l - 1}$ radial node{'s' if n - l - 1 != 1 else ''} (black dots);  "
         rf"exact $E=-1/(2n^2)={hydrogen_energy(n):.5f}$ ({hydrogen_energy_ev(n):.3f} eV)",
         fontsize=8.5,
     )
@@ -361,7 +362,7 @@ def orbital_figure(n, l, m, n_points=3500):
     ax.plot(rr, radial_u(n, l, rr) ** 2, color=R_COLOR, lw=2)
     ax.axvline(mean_radius(n, l), color=A_COLOR, ls="--", lw=1.2, label=rf"mean $\langle r\rangle={mean_radius(n, l):g}$")
     ax.set_xlabel(r"distance $r$ (bohr)")
-    ax.set_title(r"probability per bohr, $r^2R^2$" "\n" rf"{n - l - 1} radial node{'s' if n - l - 1 != 1 else ''}", fontsize=8.5)
+    ax.set_title(r"probability per bohr, $r^2R^2$" "\n" rf"$n_r={n - l - 1}$ radial node{'s' if n - l - 1 != 1 else ''}", fontsize=8.5)
     ax.legend(fontsize=8)
     ax.set_xlim(0, ext * 1.1)
     fig.suptitle(
@@ -389,7 +390,7 @@ def orbital_gallery_figure():
         ax.imshow(np.sign(psi) * np.abs(psi) ** 0.5, origin="lower", extent=[-ext, ext, -ext, ext],
                   cmap=WAVE_CMAP, vmin=-top**0.5, vmax=top**0.5)
         ax.contour(s[0], z[:, 0], psi, levels=[0], colors=[INK], linewidths=0.8)
-        ax.set_title(f"{orbital_name(n, l, m)}  (" + (f"{n - l - 1} radial, {l} angular nodes") + ")", fontsize=8.5)
+        ax.set_title(f"{orbital_name(n, l, m)}  (" + (rf"$n_r={n - l - 1}$, $\ell={l}$") + ")", fontsize=8.5)
         ax.set_xticks([])
         ax.set_yticks([])
         rr = np.linspace(0, ext * 1.1, 600)
@@ -565,8 +566,8 @@ def node_anatomy_figure(n, l, m):
                  else rf"horizontal slice at $z={z0:.1f}$ bohr (the plane $z=0$ is itself a node)", fontsize=9)
     ns, nc, npl = len(g["spheres"]), len(g["cones"]), len(g["planes"])
     fig.suptitle(
-        rf"{orbital_name(n, l, m)}:  {ns} sphere{'s' if ns != 1 else ''} (pink) + {nc} cone{'s' if nc != 1 else ''} "
-        rf"(orange) + {npl} plane{'s' if npl != 1 else ''} through the axis (green) = {n - 1} nodal surface{'s' if n != 2 else ''}",
+        rf"{orbital_name(n, l, m)}:  $n_r={ns}$ sphere{'s' if ns != 1 else ''} (pink) + $n_\vartheta={nc}$ cone{'s' if nc != 1 else ''} "
+        rf"(orange) + $n_\varphi={npl}$ plane{'s' if npl != 1 else ''} through the axis (green) = $N_\mathrm{{nodes}}={n - 1}$",
         fontsize=10, y=1.0)
     fig.tight_layout()
     return fig
