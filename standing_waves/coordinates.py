@@ -44,3 +44,25 @@ def polar_grid_lines(n_circles=4, n_rays=12, r_max=2.0):
 # The one view of every 3D figure with axes: a right-handed system seen from the first octant, z up, y to the right,
 # x towards the viewer (down and to the left), as in the classic textbook figure of spherical coordinates.
 VIEW_ELEV, VIEW_AZIM = 20, 35
+
+
+def laplacian_spherical(f, r, theta, phi, h=1e-3):
+    """The Laplacian of f(r, theta, phi) at a point, written in spherical coordinates (central differences):
+    d2f/dr2 + (2/r) df/dr + (1/r^2) [ (1/sin theta) d/dtheta (sin theta df/dtheta) + (1/sin^2 theta) d2f/dphi2 ]."""
+    f0 = f(r, theta, phi)
+    f_r = (f(r + h, theta, phi) - f(r - h, theta, phi)) / (2 * h)
+    f_rr = (f(r + h, theta, phi) - 2 * f0 + f(r - h, theta, phi)) / h**2
+    f_t = (f(r, theta + h, phi) - f(r, theta - h, phi)) / (2 * h)
+    f_tt = (f(r, theta + h, phi) - 2 * f0 + f(r, theta - h, phi)) / h**2
+    f_pp = (f(r, theta, phi + h) - 2 * f0 + f(r, theta, phi - h)) / h**2
+    angular = f_tt + f_t / np.tan(theta) + f_pp / np.sin(theta) ** 2  # (1/sin) d(sin df)/dtheta = f_tt + cot f_t
+    return f_rr + 2.0 * f_r / r + angular / r**2
+
+
+def laplacian_polar(f, r, phi, h=1e-3):
+    """The Laplacian of f(r, phi) in polar coordinates: d2f/dr2 + (1/r) df/dr + (1/r^2) d2f/dphi2."""
+    f0 = f(r, phi)
+    f_r = (f(r + h, phi) - f(r - h, phi)) / (2 * h)
+    f_rr = (f(r + h, phi) - 2 * f0 + f(r - h, phi)) / h**2
+    f_pp = (f(r, phi + h) - 2 * f0 + f(r, phi - h)) / h**2
+    return f_rr + f_r / r + f_pp / r**2

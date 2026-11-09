@@ -16,7 +16,10 @@ from drum_fourier_plots import (
     drum_fourier_modes_figure,
     drum_fourier_steps_figure,
 )
+from hydrogen_plots import central_levels_figure
 from coordinates_plots import (
+    cartesian_cell_figure,
+    length_factors_figure,
     polar_grid_figure,
     polar_point_figure,
     spherical_coordinates_figure,
@@ -32,6 +35,11 @@ FIGURES = {
     "spherical_3d_const_theta": lambda: spherical_surface_figure("theta"),
     "spherical_3d_const_phi": lambda: spherical_surface_figure("phi"),
     "spherical_3d_surfaces": spherical_surfaces_figure,
+    "central_length_factors": length_factors_figure,
+    "central_cartesian_cell": cartesian_cell_figure,
+    "central_levels_l0": lambda: central_levels_figure(0, slide=True),
+    "central_levels_l1": lambda: central_levels_figure(1, slide=True),
+    "central_levels_l2": lambda: central_levels_figure(2, slide=True),
     "drum_fourier_steps": drum_fourier_steps_figure,
     "drum_fourier_rose_steps": lambda: drum_fourier_steps_figure("rose", (1, 10, 50, 200)),
     "drum_fourier_error": drum_fourier_error_figure,

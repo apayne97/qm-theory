@@ -21,7 +21,7 @@ from drum_fourier import (  # noqa: E402
     target_on_display,
 )
 from matplotlib.colors import LinearSegmentedColormap  # noqa: E402
-from qmstyle import A_COLOR, H_COLOR, INK  # noqa: E402
+from qmstyle import A_COLOR, ANGULAR_COLOR, H_COLOR, INK  # noqa: E402
 
 # A stronger diverging colour map than the one of the box notebook: blue positive, red negative, white zero, with dark
 # ends. The value is also shown through a square root (GAMMA = 0.5), so that small values are not washed out. The limits
@@ -93,7 +93,8 @@ def drum_fourier_modes_figure(M=10, slide=False, l_max=24, nr_max=10):
         ax.set_yticks(range(nr_max + 1))
         ax.set_xlim(-0.6, l_max + 0.6)
         ax.set_ylim(-0.6, nr_max + 0.6)
-        ax.set_xlabel(r"$\ell$ (angular nodes)")
+        ax.set_xlabel(r"$\ell$ (angular nodes)", color=ANGULAR_COLOR)
+        ax.tick_params(axis="x", colors=ANGULAR_COLOR)
         ax.set_ylabel(r"$n_r$ (circles)")
         ax.spines[["top", "right"]].set_visible(False)
         ax.set_title(f"the first {M} modes (by frequency)", fontsize=18 * s)

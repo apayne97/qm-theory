@@ -16,7 +16,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from coordinates import VIEW_AZIM, VIEW_ELEV, polar_grid_lines, polar_to_cartesian, spherical_to_cartesian  # noqa: E402
-from qmstyle import A_COLOR, INK, K_COLOR, OMEGA_COLOR, R_COLOR  # noqa: E402
+from qmstyle import A_COLOR, CX2_COLOR, FREQ_COLOR, H_COLOR, INK, K_COLOR, OMEGA_COLOR, R_COLOR  # noqa: E402
 
 R_C, POLAR_C, AZIMUTH_C, POINT_C = R_COLOR, OMEGA_COLOR, K_COLOR, A_COLOR
 PHI_PLANE_DEG = 100.0  # azimuth of the drawn half-plane: 65 degrees from the line of sight (azimuth VIEW_AZIM), clearly not edge-on
@@ -228,4 +228,98 @@ def spherical_surfaces_figure(slide=True, r0=1.0, theta_deg=50.0, phi_deg=PHI_PL
             if kind == "phi":
                 _decorate_phi(ax, ph0, s)
             fig.text((i + 0.5) / 3, 0.93, text, ha="center", va="center", fontsize=20 * s, color=color)
+    return fig
+
+
+def _edge_label(fig, ax, pos, centre, text, color, fontsize, push=0.075, direction=None):
+    """A label for an edge of a cell. It sits next to the middle of the edge, pushed away from the middle of the cell
+    *on the page* (not in space), so that it does not lie on the box; the white background keeps lines out of the text."""
+    from mpl_toolkits.mplot3d import proj3d
+
+    def to_fig(p):
+        x2, y2, _ = proj3d.proj_transform(*p, ax.get_proj())
+        return fig.transFigure.inverted().transform(ax.transData.transform((x2, y2)))
+
+    a, c = to_fig(pos), to_fig(centre)
+    d = a - c if direction is None else np.asarray(direction, dtype=float)  # direction: an explicit way on the page
+    d = d / max(np.linalg.norm(d), 1e-9)
+    fig.text(*(a + push * d), text, color=color, fontsize=fontsize, ha="center", va="center",
+             bbox=dict(facecolor="white", edgecolor="none", pad=1.5, alpha=0.9), zorder=10)
+
+
+def length_factors_figure(r=0.85, theta_deg=62.0, phi_deg=62.0, dr=0.45, dtheta=0.4, dphi=0.5, slide=True):
+    """A small cell of the spherical coordinates, magnified, with its three edges from one corner marked: dr (pink),
+    r dtheta (orange) and r sin(theta) dphi (green). The steps are drawn large so that they can be seen."""
+    s = _scale(slide)
+    th0, ph0 = np.radians(theta_deg), np.radians(phi_deg)
+    colors = (R_C, POLAR_C, AZIMUTH_C)
+
+    def point(ir, it, ip):
+        return np.array([float(v) for v in spherical_to_cartesian(r + ir * dr, th0 + it * dtheta, ph0 + ip * dphi)])
+
+    def edge(vary, a, b):
+        """The edge along coordinate `vary`, the two other coordinates fixed at a and b (each 0 or 1)."""
+        t = np.linspace(0, 1, 30)
+        others = iter((a, b))
+        ir, it, ip = (t if k == vary else next(others) for k in range(3))
+        return spherical_to_cartesian(r + ir * dr, th0 + it * dtheta, ph0 + ip * dphi)
+
+    with _rc(slide):
+        fig = _figure(8, slide)
+        ax = fig.add_axes([0.0, 0.0, 1.0, 1.0], projection="3d")
+        ax.set_axis_off()
+        ax.view_init(elev=VIEW_ELEV, azim=VIEW_AZIM)
+        centre, w = point(0.5, 0.5, 0.5), 0.3
+        ax.set_box_aspect((1, 1, 1), zoom=1.15)
+        ax.set_xlim(centre[0] - w, centre[0] + w)
+        ax.set_ylim(centre[1] - w, centre[1] + w)
+        ax.set_zlim(centre[2] - w, centre[2] + w)
+        for vary in range(3):  # the 12 edges of the cell, four along each coordinate
+            for a in (0, 1):
+                for b in (0, 1):
+                    main = a == 0 and b == 0
+                    ax.plot(*edge(vary, a, b), color=colors[vary], lw=(6 if main else 1.8) * s, alpha=1.0 if main else 0.4)
+        ax.scatter(*point(0, 0, 0), color=POINT_C, s=150 * s**2, zorder=6, depthshade=False)
+        labels = (r"$dr$", r"$r\,d\vartheta$", r"$r\sin\vartheta\,d\varphi$")
+        for vary in range(3):
+            e = [0.0, 0.0, 0.0]
+            e[vary] = 0.5
+            _edge_label(fig, ax, point(*e), centre, labels[vary], colors[vary], 24 * s, push=(0.07, 0.075, 0.08)[vary],
+                        direction=((-0.3, 1.0), None, (0.9, -1.0))[vary])
+    return fig
+
+
+CART_COLORS = (H_COLOR, CX2_COLOR, FREQ_COLOR)  # x, y, z (none of the colours of r, theta, phi or of l)
+
+
+def cartesian_cell_figure(dx=0.5, dy=0.5, dz=0.4, slide=True):
+    """A small cell of the Cartesian coordinates: a plain box with the edges dx, dy and dz, all of them lengths (every
+    h = 1). The three edges from one corner are marked, in the same view as the spherical cell."""
+    s = _scale(slide)
+    origin = np.array([0.25, 0.25, 0.2])
+    steps = (np.array([dx, 0, 0]), np.array([0, dy, 0]), np.array([0, 0, dz]))
+    with _rc(slide):
+        fig = _figure(8, slide)
+        ax = fig.add_axes([0.0, 0.0, 1.0, 1.0], projection="3d")
+        ax.set_axis_off()
+        ax.view_init(elev=VIEW_ELEV, azim=VIEW_AZIM)
+        centre = origin + 0.5 * (steps[0] + steps[1] + steps[2])
+        w = 0.5
+        ax.set_box_aspect((1, 1, 1), zoom=1.15)
+        ax.set_xlim(centre[0] - w, centre[0] + w)
+        ax.set_ylim(centre[1] - w, centre[1] + w)
+        ax.set_zlim(centre[2] - w, centre[2] + w)
+        for vary in range(3):
+            others = [k for k in range(3) if k != vary]
+            for a in (0, 1):
+                for b in (0, 1):
+                    start = origin + a * steps[others[0]] + b * steps[others[1]]
+                    end = start + steps[vary]
+                    main = a == 0 and b == 0
+                    ax.plot(*zip(start, end), color=CART_COLORS[vary], lw=(6 if main else 1.8) * s,
+                            alpha=1.0 if main else 0.4)
+        ax.scatter(*origin, color=POINT_C, s=150 * s**2, zorder=6, depthshade=False)
+        for vary, text in enumerate((r"$dx$", r"$dy$", r"$dz$")):
+            _edge_label(fig, ax, origin + 0.5 * steps[vary], centre, text, CART_COLORS[vary], 24 * s, push=(0.085, 0.085, 0.07)[vary],
+                        direction=((-1.0, -0.35), (1.0, -0.3), (1.0, -0.1))[vary])
     return fig

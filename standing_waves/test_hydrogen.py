@@ -817,3 +817,109 @@ def test_node_counts_add_up_for_every_orbital():
         assert (len(g["spheres"]), len(g["cones"]), len(g["planes"])) == node_counts(n, l, m)
     assert node_counts(2, 1, 0) == (0, 1, 0)  # p_z: one polar node (the flat plane), no cone
     assert node_counts(4, 3, 0) == (0, 3, 0)
+
+
+# ---------------------------------------------------------------------------------------------------------------
+# the Laplacian in spherical coordinates, and the central-potential radial problem
+
+
+def _cart(r, th, ph):
+    from coordinates import spherical_to_cartesian
+
+    return spherical_to_cartesian(r, th, ph)
+
+
+@pytest.mark.parametrize("name,f,exact", [
+    ("x^2+yz", lambda r, t, p: (lambda x, y, z: x**2 + y * z)(*_cart(r, t, p)), lambda r, t, p: 2.0),
+    ("r^2 cos(theta)", lambda r, t, p: r**2 * np.cos(t), lambda r, t, p: 4.0 * np.cos(t)),
+    ("1/r", lambda r, t, p: 1.0 / r, lambda r, t, p: 0.0),  # harmonic away from the origin
+    ("r^2", lambda r, t, p: r**2, lambda r, t, p: 6.0),
+])
+def test_spherical_laplacian_matches_the_exact_value(name, f, exact):
+    from coordinates import laplacian_spherical
+
+    for r, t, p in [(0.8, 0.9, 0.4), (1.7, 2.2, 3.0), (0.5, 1.4, 5.5)]:
+        assert laplacian_spherical(f, r, t, p, h=1e-3) == pytest.approx(exact(r, t, p), abs=2e-4)
+
+
+def test_spherical_laplacian_matches_cartesian_second_differences():
+    from coordinates import laplacian_spherical, spherical_to_cartesian
+
+    g = lambda x, y, z: np.exp(-(x**2 + 2 * y**2 + 3 * z**2)) * (1 + x * y)  # noqa: E731
+    h = 1e-3
+    r, t, p = 0.9, 1.1, 0.7
+    x, y, z = spherical_to_cartesian(r, t, p)
+    cart = sum((g(*(np.array([x, y, z]) + h * e)) - 2 * g(x, y, z) + g(*(np.array([x, y, z]) - h * e))) / h**2
+               for e in np.eye(3))
+    sph = laplacian_spherical(lambda rr, tt, pp: g(*spherical_to_cartesian(rr, tt, pp)), r, t, p, h=1e-3)
+    assert sph == pytest.approx(cart, rel=2e-3)
+
+
+def test_polar_laplacian_and_the_bessel_equation():
+    from coordinates import laplacian_polar
+
+    f = lambda r, p: r**3 * np.cos(3 * p)  # = Re (x + iy)^3, a harmonic function  # noqa: E731
+    assert laplacian_polar(f, 0.9, 0.7) == pytest.approx(0.0, abs=2e-4)
+    # drum modes: -laplacian(psi) = j^2 psi
+    for m, k in [(0, 1), (2, 1), (1, 2)]:
+        j = drum_frequency(m, k)
+        g = lambda r, p, m=m, k=k: drum_mode(m, k, r, p)  # noqa: E731
+        assert -laplacian_polar(g, 0.55, 0.8, h=1e-3) == pytest.approx(j**2 * g(0.55, 0.8), abs=2e-3)
+
+
+def test_scale_factors_give_the_volume_element():
+    # the cell with edges h_r dr, h_theta dtheta, h_phi dphi has the volume r^2 sin(theta) dr dtheta dphi: integrating
+    # it over a ball gives 4 pi R^3 / 3
+    r = np.linspace(0, 2.0, 2001)
+    th = np.linspace(0, np.pi, 2001)
+    vol = np.trapezoid(r**2, r) * np.trapezoid(np.sin(th), th) * 2 * np.pi
+    assert vol == pytest.approx(4 * np.pi * 2.0**3 / 3, rel=1e-5)
+
+
+@pytest.mark.parametrize("l", [0, 1, 2])
+def test_radial_equation_gives_minus_one_over_two_n_squared_with_n_r_nodes(l):
+    r, e, v = solve_radial(l, n_states=4)
+    for k in range(3):
+        n = l + 1 + k
+        assert e[k] == pytest.approx(-1.0 / (2 * n * n), rel=2e-3)
+        assert count_sign_changes(v[:, k]) == k == n - l - 1  # n_r nodes
+        assert np.sum(v[:, k] ** 2) * (r[1] - r[0]) == pytest.approx(1.0, rel=1e-9)  # normalised, int u^2 dr = 1
+
+
+def test_radial_function_normalisation_and_behaviour_at_the_nucleus():
+    r = np.linspace(1e-6, 120, 400001)
+    for n, l in [(1, 0), (2, 0), (2, 1), (3, 2), (4, 3)]:
+        assert np.trapezoid(radial_R(n, l, r) ** 2 * r**2, r) == pytest.approx(1.0, rel=1e-6)
+    # R(0) is not zero only for l = 0; for l > 0 it goes as r^l
+    assert abs(radial_R(2, 0, np.array([1e-9]))[0]) > 0.1
+    for n, l in [(2, 1), (3, 2), (4, 3)]:
+        r1, r2 = 1e-3, 2e-3
+        ratio = radial_R(n, l, np.array([r2]))[0] / radial_R(n, l, np.array([r1]))[0]
+        assert ratio == pytest.approx(2.0**l, rel=2e-2)
+
+
+def test_laguerre_series_terminates_at_n_r():
+    # the coefficients of f obey c_{k+1} = 2 (kappa (k + l + 1) - 1) / ((k + 1)(k + 2 l + 2)) c_k, kappa = 1/n: the series
+    # stops after k = n_r, and f is the Laguerre polynomial of the exact radial function
+    for n, l in [(3, 0), (3, 1), (4, 1), (4, 2)]:
+        kappa = 1.0 / n
+        c = [1.0]
+        for k in range(n - l - 1):
+            c.append(2 * (kappa * (k + l + 1) - 1) / ((k + 1) * (k + 2 * l + 2)) * c[-1])
+        assert 2 * (kappa * (n - l - 1 + l + 1) - 1) == pytest.approx(0.0, abs=1e-12)  # c_{n_r + 1} = 0
+        r = np.linspace(0.1, 11.3, 50)  # stay away from the nodes of u, where the ratio is 0/0
+        f = sum(ck * r**k for k, ck in enumerate(c))
+        u = r ** (l + 1) * np.exp(-kappa * r) * f
+        ratio = u / radial_u(n, l, r)
+        assert ratio == pytest.approx(np.full_like(r, ratio[0]), rel=1e-9)
+
+
+def test_cell_figures_build():
+    import matplotlib.pyplot as plt
+
+    from coordinates_plots import cartesian_cell_figure, length_factors_figure
+
+    for make in (cartesian_cell_figure, length_factors_figure):
+        fig = make(slide=False)
+        assert len(fig.axes) == 1 and len(fig.texts) == 3  # the three edge labels
+        plt.close(fig)

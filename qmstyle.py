@@ -28,6 +28,7 @@ _TABLE = {
 globals().update({name: value[0] for name, value in _TABLE.items()})
 
 LAMBDA_COLOR = PERIOD_COLOR   # period and wavelength share one colour
+ANGULAR_COLOR = PHASE_COLOR   # the total number of angular nodes, l = n_theta + n_phi (next to R pink, theta orange, phi green)
 RE_COLOR = H_COLOR            # real part of psi is a height
 ARROW_COLOR = CX_COLOR        # an arrow is a complex number
 

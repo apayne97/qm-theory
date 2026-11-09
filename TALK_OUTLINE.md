@@ -17,6 +17,45 @@ Draft 2026-11-05. Each part names the notebook and sections to draw on. Gallery:
 - Radial part, effective potential, E = −13.6/n² eV — §5
 - Hydrogen orbital gallery, reading an orbital from its nodes — §6
 
+## Part 2, slide order and figures (hydrogen section; slide numbers from the 2026-11-08 deck)
+
+Figure files are written by `pixi run python standing_waves/export_figures.py` into `standing_waves/figures/` (PNG and SVG,
+git-ignored); GIFs are `drum_fourier_*_build_up.gif` there and `standing_waves/gifs/` (`export_gifs.py`: strings and drums).
+
+1. **Setup (slides 4-8).** Time-dependent equation (4), time-independent equation (6), sum over stationary states (7).
+   Trim slide 8 to the Cartesian lines only (1D and 3D equations, ∇² = ∂ₓ² + ∂ᵧ² + ∂_z²): drop the "∇²ψ(r,ϑ,φ) = ???" line and the
+   spherical equation, which are slide 25. Delete hidden slide 9 (it duplicates 26). Fix slide 8's first line: it should be
+   −ħ²/2mₑ · ∂²ψ_E/∂x² + V(x)ψ_E (no ∇², no subscript t).
+2. **1D and 2D standing waves (10-21).** As now. Add a polar-coordinates slide before or at 13:
+   `polar_2d_point` (the same point as (x, y) and as (r, φ)) and `polar_2d_grid` (circles of constant r, rays of constant φ;
+   a node at constant r is a circle, at constant φ a diameter). Notebook §2, §3.
+3. **Sum of modes (17-21).** Replace the single M = 100 view by `drum_fourier_steps` (M = 1, 3, 10, 30) and `drum_fourier_error`;
+   use `drum_fourier_modes_used` for the mode grid (ℓ axis in the angular purple); `drum_fourier_example` is one frame with
+   the error curve; the closer can be `drum_fourier_rose_steps` (M = 1, 10, 50, 200) or the GIF `drum_fourier_rose_build_up`.
+   Notebook §3, last subsection.
+4. **3D coordinates and the Laplacian (new, then 25-27).** Order: a 3D-coordinates slide with `spherical_3d_coordinates`
+   (r, ϑ, φ; x lower-left, y right, z up), then 25 (spherical potential, with the ??? line), 26 (cell sizes:
+   `central_cartesian_cell` above `central_length_factors`; dV = dx dy dz and r² sinϑ dr dϑ dφ), 27 (∇² = ∂_r² + (2/r)∂_r + Λ/r²,
+   −ΛY = ℓ(ℓ+1)Y). Fix slide 27: the left side is ∇²ψ(r,ϑ,φ) but the right side has no ψ (write ∇² = …); the last line
+   runs into the References box. Notebook §2 (Laplacian subsection), §5.
+5. **Nodes in 3D (23-24, after 27).** 23: nodes are surfaces: `spherical_3d_surfaces` (or the three `spherical_3d_const_*`
+   files); in the bullet say "r, ϑ, φ" (not "r, φ, ϑ"). 24: write N_nodes = n − 1 = n_r + n_ϑ + n_φ and ℓ = n_ϑ + n_φ (same
+   order as the bullets), ℓ and Y_ℓm in purple (ANGULAR_COLOR), R pink, ψ light blue. Complete the title ("Standing waves in
+   3D - node counts"). Notebook §3 table, §4.
+6. **Radial part (new).** The slide version is the short lead-in at the top of notebook §5: two eigenvalue problems side by side,
+   angular −ΛY = ℓ(ℓ+1)Y (eigenfunctions Y_ℓm) and radial [−ħ²/(2m) d²/dr² + V_eff]u = E u with V_eff = V + ħ²ℓ(ℓ+1)/(2mr²)
+   (eigenfunctions u_{n_r ℓ}, labelled by the radial nodes n_r); ℓ(ℓ+1) enters the radial problem as a fixed number, so each ℓ is
+   its own 1D problem with its own ladder of E; the centrifugal barrier keeps ℓ > 0 away from r = 0; hydrogen, V = −1/r, gives
+   E = −13.6/n² eV with n = n_r + ℓ + 1, shown with `central_levels_l0` to `central_levels_l2` (no series, no Laguerre, and Bessel functions are
+   not explained). The derivations are folded under "Details" in the notebook; use them only as backup slides: separation of variables
+   (the constant is ℓ(ℓ+1)); the hydrogen solution (limits r^(ℓ+1) and e^(−κr), the series must stop, 1/κ = n_r + ℓ + 1 = n,
+   E_n = −1/(2n²)). Notebook §5.
+7. **Orbitals (new).** Reading 3d, 4f, 3p from (n_r, n_ϑ, n_φ), the orbital gallery. Closing slide: the energy counts N_nodes (the
+   ℓ degeneracy is special to 1/r; drum and oscillator differ). Notebook §6, "What it says" at the end of §5.
+
+Colour keys for the figures: r pink, ϑ orange (cones), φ green (planes), ℓ purple (all angular nodes); Cartesian cell: x blue,
+y dark cyan, z teal; positive blue, negative red.
+
 ## Part 3. From atoms to organic molecules (approximations)
 - Born-Oppenheimer, orbital approximation, LCAO — `spherical_harmonics_and_hydrogen.py` §7 (short bridge only)
 - Link to carbon/methane in `~/science/qm-calculations`

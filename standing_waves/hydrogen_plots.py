@@ -51,6 +51,7 @@ from hydrogen import (  # noqa: E402
     solve_radial,
 )
 from qmstyle import (  # noqa: E402
+    ANGULAR_COLOR,
     A_COLOR,
     H_COLOR,
     INK,
@@ -266,6 +267,48 @@ def veff_figure():
     ax.set_title(r"effective potential $-1/r+\ell(\ell+1)/(2r^2)$ and the levels $E_n=-1/(2n^2)$", fontsize=10)
     ax.legend(loc="lower right")
     fig.tight_layout()
+    return fig
+
+
+def central_levels_figure(l=0, slide=False):
+    """The potential -1/r, the centrifugal term l(l+1)/(2r^2) and their sum V_eff, in atomic units, with the allowed
+    levels E_n = -1/(2n^2) as horizontal lines and the radial waves u(r) of the allowed n_r = n - l - 1 drawn at their
+    energies. Fixed axes, so that the figures for different l can be compared."""
+    from coordinates_plots import _rc, _scale
+
+    sc = _scale(slide)
+    n_max = l + 3  # the three lowest allowed levels of this l (n_r = 0, 1, 2) and their waves
+    r = np.linspace(0.05, 34, 3400)
+    with _rc(slide):
+        fig = plt.figure(figsize=(8 * sc if slide else 8, 6 * sc if slide else 4.4))
+        ax = fig.add_axes([0.17, 0.15, 0.8, 0.78])
+        ax.plot(r, np.clip(-1.0 / r, -0.7, None), color=POT_COLOR, lw=2.2 * sc, alpha=0.55, label=r"$-1/r$")
+        if l > 0:
+            ax.plot(r, np.clip(l * (l + 1) / (2 * r**2), None, 0.5), color=KIN_COLOR, lw=2.2 * sc, ls="--",
+                    label=r"$\ell(\ell+1)/(2r^2)$")
+        ax.plot(r, np.clip(effective_potential(r, l), -0.7, 0.5), color=POT_COLOR, lw=3.2 * sc,
+                label=r"$V_{\mathrm{eff}}$")
+        ax.axhline(0, color="black", lw=0.8)
+        for n in range(1, n_max + 1):
+            e = float(hydrogen_energy(n))
+            allowed = n >= l + 1
+            ax.axhline(e, color=OMEGA_COLOR, lw=(2.0 if allowed else 0.8) * sc, alpha=1.0 if allowed else 0.25,
+                       ls="-" if allowed else ":", zorder=1)
+            if n <= 3:
+                ax.text(33.7, e + 0.012, f"$n={n}$", color=INK, fontsize=(15 if slide else 9), ha="right", va="bottom")
+            if allowed:
+                u = radial_u(n, l, r)
+                scale = 0.05 / np.abs(u).max()
+                ax.plot(r, e + scale * u, color=H_COLOR, lw=2.6 * sc)
+        ax.set_xlim(0, 34)
+        ax.set_ylim(-0.7, 0.2)
+        ax.set_xlabel(r"distance $r$ (bohr)")
+        ax.set_ylabel("energy (hartree)")
+        ax.spines[["top", "right"]].set_visible(False)
+        ax.legend(loc="upper right", frameon=False, fontsize=(15 if slide else 9))
+        ax.set_title(rf"$\ell={l}$", fontsize=(22 if slide else 11), color=ANGULAR_COLOR)
+        ax.text(0.02, 0.97, r"$n_r=n-\ell-1=0,1,\dots$", transform=ax.transAxes, fontsize=(15 if slide else 8.5),
+                va="top", color=INK)
     return fig
 
 

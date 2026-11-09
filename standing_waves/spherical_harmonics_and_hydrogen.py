@@ -21,6 +21,8 @@ def _():
         quantum_numbers,
     )
     from coordinates_plots import (
+        cartesian_cell_figure,
+        length_factors_figure,
         polar_grid_figure,
         polar_point_figure,
         spherical_coordinates_figure,
@@ -29,6 +31,7 @@ def _():
     from drum_fourier import TARGETS
     from drum_fourier_plots import drum_fourier_figure, drum_fourier_modes_figure
     from hydrogen_plots import (
+        central_levels_figure,
         coordinates_figure,
         drum_figure,
         drum_gallery_figure,
@@ -46,12 +49,14 @@ def _():
         radial_state_figure,
         string_figure,
         string_gif,
-        veff_figure,
     )
 
     return (
         HARTREE_EV,
         TARGETS,
+        cartesian_cell_figure,
+        central_levels_figure,
+        length_factors_figure,
         drum_fourier_figure,
         drum_fourier_modes_figure,
         polar_grid_figure,
@@ -85,7 +90,6 @@ def _():
         radial_state_figure,
         string_figure,
         string_gif,
-        veff_figure,
     )
 
 
@@ -180,6 +184,10 @@ def _(mo):
     3. Find all the waves on a sphere and the number $\ell(\ell+1)$ that goes with each (section 4).
     4. Put that number into the radial equation and find its allowed energies (section 5).
     5. Multiply the two parts and read the shapes (section 6).
+
+    The kinetic energy in these coordinates, the **Laplacian** $\nabla^2$, is derived at the end of section 2. How the
+    equation then splits into an angular and a radial part, what the effective potential is, and how the hydrogen
+    energies $-1/(2n^2)$ come out, is derived in section 5.
     """)
     return
 
@@ -338,6 +346,98 @@ def _(mo):
     $$
 
     Both factors are used, not derived any further, when the notebook says that an orbital is normalised.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    ### The Laplacian in spherical coordinates
+
+    The kinetic energy of a wave is $-\frac{\hbar^2}{2m}\nabla^2\psi$, where $\hbar$ is the reduced Planck constant, $m$ the
+    mass and $\nabla^2\psi$ (the **Laplacian**) measures how much the wave curves: in $x,y,z$ it is the sum of the second
+    derivatives $\partial_x^2\psi+\partial_y^2\psi+\partial_z^2\psi$, with $\partial_x=\partial/\partial x$. In $r,\vartheta,\varphi$ the formula
+    changes, because a small step in each coordinate has a **different length**. A step $dr$ is a length $dr$. A step
+    $d\vartheta$ moves along an arc of radius $r$, so its length is $r\,d\vartheta$. A step $d\varphi$ moves along a circle of
+    latitude of radius $r\sin\vartheta$, so its length is $r\sin\vartheta\,d\varphi$. Writing the length of a step as
+    $h\,d(\text{coordinate})$, the factors $h$ are
+
+    $$
+    h_r=1,\qquad h_\vartheta=r,\qquad h_\varphi=r\sin\vartheta .
+    $$
+
+    The three directions are perpendicular, so the small cell in the figure is nearly a box, and its volume is
+    $h_rh_\vartheta h_\varphi\,dr\,d\vartheta\,d\varphi=r^2\sin\vartheta\,dr\,d\vartheta\,d\varphi$, as before.
+    """)
+    return
+
+
+@app.cell
+def _(cartesian_cell_figure, length_factors_figure, mo, plt):
+    _fig1 = cartesian_cell_figure(slide=False)
+    _fig2 = length_factors_figure(slide=False)
+    _out = mo.vstack([
+        mo.md("In $x,y,z$ the small cell is a plain box: its edges are $dx$, $dy$ and $dz$, so every $h=1$."),
+        _fig1,
+        mo.md("In $r,\\vartheta,\\varphi$ the cell is curved and its edges are $dr$, $r\\,d\\vartheta$ and $r\\sin\\vartheta\\,d\\varphi$."),
+        _fig2,
+    ])
+    plt.close(_fig1)
+    plt.close(_fig2)
+    _out
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    The Laplacian is the **divergence of the gradient**. The gradient of $\psi$ points the way the wave rises fastest, and
+    its component along direction $i$ is the change of $\psi$ per unit *length*, $\frac{1}{h_i}\partial_i\psi$. The divergence of
+    a field $F$ is the net flow out of the cell divided by its volume. The flow out through the two faces
+    perpendicular to direction $i$ is the change of (area of the face) $\times F_i$ across the cell, and the area of such a
+    face is the product of the other two lengths, $h_jh_k\,dx_j\,dx_k$. Dividing by the volume gives the Laplacian
+    (this step is the standard divergence formula, stated here and not proved):
+
+    $$
+    \nabla^2\psi=\frac{1}{h_rh_\vartheta h_\varphi}\Bigl[\partial_r\Bigl(\frac{h_rh_\vartheta h_\varphi}{h_r^{2}}\,\partial_r\psi\Bigr)
+    \;+\;\partial_\vartheta\Bigl(\frac{h_rh_\vartheta h_\varphi}{h_\vartheta^{2}}\,\partial_\vartheta\psi\Bigr)
+    \;+\;\partial_\varphi\Bigl(\frac{h_rh_\vartheta h_\varphi}{h_\varphi^{2}}\,\partial_\varphi\psi\Bigr)\Bigr].
+    $$
+
+    Put in $h_rh_\vartheta h_\varphi=r^2\sin\vartheta$. The three factors in front of the derivatives are $r^2\sin\vartheta$,
+    $\sin\vartheta$ and $1/\sin\vartheta$, and the result is
+
+    $$
+    \nabla^2\psi=\frac{1}{r^2}\,\partial_r\bigl(r^2\,\partial_r\psi\bigr)
+    \;+\;\frac{1}{r^2\sin\vartheta}\,\partial_\vartheta\bigl(\sin\vartheta\,\partial_\vartheta\psi\bigr)
+    \;+\;\frac{1}{r^2\sin^2\vartheta}\,\partial_\varphi^{2}\psi .
+    $$
+
+    Expand the first term, $\frac{1}{r^2}\partial_r(r^2\partial_r\psi)=\partial_r^2\psi+\frac2r\partial_r\psi$, and collect the angular
+    terms in one operator, $\Lambda$ ("lambda", the angular part of the Laplacian):
+
+    $$
+    \nabla^2=\partial_r^2+\frac{2}{r}\,\partial_r+\frac{1}{r^2}\,\Lambda,
+    \qquad
+    \Lambda=\frac{1}{\sin\vartheta}\,\partial_\vartheta\bigl(\sin\vartheta\,\partial_\vartheta\bigr)+\frac{1}{\sin^2\vartheta}\,\partial_\varphi^{2}.
+    $$
+
+    What each term means:
+
+    - $\partial_r^2+\frac2r\partial_r$ is the curvature along $r$. The extra $\frac2r\partial_r$ comes from the area of a shell
+      growing as $r^2$: a wave that moves outward spreads over larger and larger shells.
+    - $\frac{1}{r^2}\Lambda$ is the curvature across the angles. The factor $1/r^2$ is there because a fixed angle covers a
+      distance proportional to $r$, so the same pattern of angles is less curved at a larger radius: $\Lambda/r^2$ is the
+      Laplacian on a sphere of radius $r$. The operator $\Lambda$ is the one of section 4, $-\Lambda Y_{\ell m_\ell}=\ell(\ell+1)Y_{\ell m_\ell}$.
+    - The angular momentum squared is $\hat L^2=-\hbar^2\Lambda$. So the kinetic energy is a radial part plus
+      $\hat L^2/(2mr^2)$, the cost of going round the centre.
+
+    **The drum.** On the flat drum only two coordinates are needed, $h_r=1$ and $h_\varphi=r$, and the same steps give
+    $\nabla^2=\partial_r^2+\frac1r\partial_r+\frac{1}{r^2}\partial_\varphi^2$. For a mode $R(r)\cos(m_\ell\varphi)$ the equation
+    $-\nabla^2\psi=k^2\psi$ becomes $R''+\frac1rR'+\big(k^2-\frac{m_\ell^2}{r^2}\big)R=0$, which is the **Bessel equation**: its
+    solutions $J_{\lvert m_\ell\rvert}(kr)$ are the waves in $r$ of section 3. **Checked in the tests:** both formulas
+    against the Cartesian second derivatives of test functions such as $x^2+yz$ and $r^2\cos\vartheta$.
     """)
     return
 
@@ -542,6 +642,11 @@ def _(mo):
 
     A polar node at $\vartheta=\pi/2$ is the flat equatorial ($xy$) plane and not a cone: $p_z$, for example, has
     $n_\vartheta=1$ and a planar node. The drum has no cones.
+
+    $$
+    N_{\text{nodes}}\;=\;\textcolor{#FF84FA}{n_r}\;+\;\underbrace{\textcolor{#FF8021}{n_\vartheta}\;+\;\textcolor{#6B913C}{n_\varphi}}_{\textcolor{#7030A0}{\ell}}
+    \;=\;n-1 .
+    $$
 
     The azimuth row is the same on the drum and in the atom: the diameters of the drum are the traces, in a
     horizontal slice, of the atom's planes through the axis (a plane through the axis is two half-planes, at $\varphi_0$ and
@@ -921,40 +1026,200 @@ def _(mo):
     mo.md(r"""
     ## 5 The radial part: effective potential and energy levels
 
-    The angular number $\ell(\ell+1)$ goes into the equation for the distance. Writing $u(r)=rR(r)$ (a convenient
-    form, because then the equation looks like one for a wave along a line), the radial equation in atomic units is
+    **The short version.** For an electron in a potential that depends only on the distance $r$ (a **central potential**
+    $V(r)$), the Schrödinger equation separates, and what remains is **two eigenvalue problems**, one for the angles and
+    one for the distance:
 
     $$
-    -\frac12\,\frac{d^2u}{dr^2}+\Big[\underbrace{-\frac{1}{r}}_{\text{pull of the nucleus}}
-    +\underbrace{\frac{\ell(\ell+1)}{2r^2}}_{\text{angular curvature}}\Big]u
-    = \textcolor{#FF8021}{E}\,u .
+    \begin{array}{lll}
+    \text{angular:} & \quad{-\Lambda}\,Y_{\ell m_\ell}=\textcolor{#7030A0}{\ell(\ell+1)}\,Y_{\ell m_\ell}
+    & \quad\text{eigenvalue }\textcolor{#7030A0}{\ell(\ell+1)}\\[6pt]
+    \text{radial:} & \quad\Bigl[-\dfrac{\hbar^2}{2m}\dfrac{d^2}{dr^2}+V_{\text{eff}}(r)\Bigr]u_{n_r\ell}=\textcolor{#FF8021}{E}\,u_{n_r\ell}
+    & \quad\text{eigenvalue }\textcolor{#FF8021}{E},
+    \end{array}
+    \qquad
+    V_{\text{eff}}=V+\frac{\hbar^2\,\textcolor{#7030A0}{\ell(\ell+1)}}{2m\,r^2},
     $$
 
-    This is a wave along a line with a potential. The first term in the bracket is the attraction of the nucleus.
-    The second term comes from the angular part: a wave that curves over the sphere costs kinetic energy, and the cost is
-    larger the closer the electron is to the centre, because the same angle spans a smaller circle. It acts like a
-    wall that pushes an electron with $\ell>0$ away from the nucleus. The sum is the **effective potential**, drawn
-    for $\ell=0,1,2$ together with the energy levels that we will find. Nothing is added by hand: the level lines are
-    the exact values $-1/(2n^2)$ from the next paragraphs.
+    where $u=rR$ is the radial wave in a convenient form, $\hbar$ is the reduced Planck constant and $m$ the mass of the electron.
+
+    - **Angular.** The operator $\Lambda$ acts on the sphere. Its eigenfunctions are the spherical harmonics
+      $Y_{\ell m_\ell}$ of section 4, and its eigenvalues are the numbers $\ell(\ell+1)$.
+    - **Radial.** The operator acts along $r$ only, so this is a **1D Schrödinger equation**, with the effective potential
+      $V_{\text{eff}}$. Its eigenfunctions $u_{n_r\ell}$ are the radial waves and its eigenvalues are the energies $E$. As on the
+      string, the wave must vanish at $r=0$ and die away far out, and only some energies fit; the eigenfunctions are labelled by
+      the number of **radial nodes** $n_r$ (spheres around the nucleus), the string's $n-1$ again.
+    - **How they are linked.** The eigenvalue $\ell(\ell+1)$ of the angular problem enters the radial problem as a **fixed
+      number**, inside $V_{\text{eff}}$. So each $\ell$ gives its own 1D problem, with its own ladder of energies $E$, and the
+      three-dimensional problem is a family of 1D problems, one for each $\ell$.
+    - **The centrifugal barrier.** The extra term in $V_{\text{eff}}$ is the cost of going round the centre: it grows as $r$
+      shrinks, so it acts as a wall that keeps states with $\ell>0$ away from $r=0$.
+    - **Hydrogen.** For the pull of the nucleus, $V=-1/r$ (atomic units), the energies come out as
+      $E=-13.6\ \text{eV}/n^2$ with $n=n_r+\ell+1$ (stated here, derived in the Details below). They depend on $n$ only, not on
+      how the nodes split between $n_r$ and $\ell$. The figure shows it: choose $\ell$; the horizontal lines are the allowed
+      energies, and the blue curves are the radial waves drawn at their energies.
+
+    The derivations are below, folded away (**Details**). Only the points above are needed for the next section.
     """)
     return
 
 
 @app.cell
-def _(plt, veff_figure):
-    _fig = veff_figure()
+def _(mo):
+    l_ctr = mo.ui.slider(0, 4, step=1, value=1, label=r"$\ell$", show_value=True)
+    return (l_ctr,)
+
+
+@app.cell
+def _(central_levels_figure, l_ctr, mo, plt):
+    _fig = central_levels_figure(l_ctr.value)
+    _out = mo.vstack([l_ctr, _fig])
     plt.close(_fig)
-    _fig
+    _out
+    return
+
+
+@app.cell
+def _(mo):
+    mo.accordion({
+        "Details (optional): from the Schrödinger equation to the radial equation": mo.md(r"""
+    **The angular part: a particle on a sphere**
+    
+        Take a particle that is free to move over the surface of a sphere of radius $a$ and nowhere else. Its wave depends on
+        the two angles only, and the Laplacian on the sphere is $\Lambda/a^2$, so the Schrödinger equation is
+        $-\frac{\hbar^2}{2ma^2}\Lambda Y=EY$. By section 4, $-\Lambda Y_{\ell m_\ell}=\ell(\ell+1)Y_{\ell m_\ell}$, so the allowed energies are
+    
+        $$
+        E_\ell=\frac{\hbar^2\,\ell(\ell+1)}{2ma^2},\qquad \ell=0,1,2,\dots,
+        $$
+    
+        with $2\ell+1$ states (the values of $m_\ell$) in each level. The $Y_{\ell m_\ell}$ are the eigenfunctions of two
+        operators: of $\hat L^2=-\hbar^2\Lambda$ (the angular momentum squared) with eigenvalue $\hbar^2\ell(\ell+1)$, and of
+        $\hat L_z=-i\hbar\,\partial_\varphi$ with eigenvalue $\hbar m_\ell$, because $\partial_\varphi e^{im_\ell\varphi}=im_\ell e^{im_\ell\varphi}$.
+    
+        **Separating the equation for a central potential**
+    
+        For an electron in $V(r)$ the Schrödinger equation is $-\frac{\hbar^2}{2m}\nabla^2\psi+V\psi=E\psi$, and with the
+        Laplacian of section 2,
+    
+        $$
+        {}-\frac{\hbar^2}{2m}\Bigl[\frac{1}{r^2}\,\partial_r\bigl(r^2\,\partial_r\psi\bigr)+\frac{1}{r^2}\,\Lambda\psi\Bigr]+V(r)\,\psi=E\,\psi .
+        $$
+    
+        Try a product, $\psi=R(r)\,Y(\vartheta,\varphi)$. The radial derivatives act only on $R$ and $\Lambda$ acts only on $Y$.
+        Divide everything by $RY$ and multiply by $-2mr^2/\hbar^2$:
+    
+        $$
+        \underbrace{\frac{1}{R}\,\frac{d}{dr}\Bigl(r^2\,\frac{dR}{dr}\Bigr)-\frac{2mr^2}{\hbar^2}\bigl[V(r)-E\bigr]}_{\text{depends on }r\text{ only}}
+        \;=\;\underbrace{-\frac{1}{Y}\,\Lambda Y}_{\text{depends on the angles only}} .
+        $$
+    
+        A function of $r$ alone can equal a function of the angles alone only if both are the same constant. That constant
+        is $\ell(\ell+1)$: the right side is exactly the equation of section 4, where finiteness at the poles forced the
+        constant to be $\ell(\ell+1)$ with $\ell$ a whole number. So the angular part is solved already, by $Y_{\ell m_\ell}$, and the
+        radial part is
+    
+        $$
+        \frac{1}{r^2}\,\frac{d}{dr}\Bigl(r^2\,\frac{dR}{dr}\Bigr)+\Bigl[\frac{2m}{\hbar^2}\bigl(E-V(r)\bigr)-\frac{\ell(\ell+1)}{r^2}\Bigr]R=0 .
+        $$
+    
+        **The radial equation and the effective potential**
+    
+        Write $u(r)=rR(r)$. Then $\frac{d}{dr}\bigl(r^2R'\bigr)=r\,u''$, and the radial equation becomes one for a wave along a line,
+    
+        $$
+        {}-\frac{\hbar^2}{2m}\,\frac{d^2u}{dr^2}+V_{\text{eff}}(r)\,u=E\,u,
+        \qquad
+        V_{\text{eff}}(r)=V(r)+\frac{\hbar^2\,\ell(\ell+1)}{2m\,r^2}.
+        $$
+    
+        The extra term in $V_{\text{eff}}$ is the $\hat L^2/(2mr^2)$ of section 2: a wave that curves over the sphere costs
+        kinetic energy, and the cost grows as $r$ gets smaller, because the same angle spans a smaller circle. It acts as a wall
+        (the "centrifugal barrier") that pushes an electron with $\ell>0$ away from the nucleus. Two conditions go with the
+        equation: $u(0)=0$, because $R$ must stay finite at the nucleus, and the normalisation of the whole wave,
+        $\int\lvert\psi\rvert^2dV=\int_0^\infty R^2r^2dr\int\lvert Y\rvert^2d\Omega=\int_0^\infty u^2\,dr=1$.
+    
+        For hydrogen, in atomic units ($\hbar=m=1$, lengths in bohr, energies in hartree), $V=-1/r$ and the equation is
+    
+        $$
+        {}-\frac12\,\frac{d^2u}{dr^2}+\Big[\underbrace{-\frac{1}{r}}_{\text{pull of the nucleus}}
+        +\underbrace{\frac{\ell(\ell+1)}{2r^2}}_{\text{angular curvature}}\Big]u
+        = \textcolor{#FF8021}{E}\,u .
+        $$
+    
+        The figure above shows the three terms for the $\ell$ chosen with the slider, the allowed levels (horizontal lines) and the
+        radial waves $u(r)$ drawn at their energies.
+    """)
+    })
+    return
+
+
+@app.cell
+def _(mo):
+    mo.accordion({
+        "Details (optional): solving the radial equation for hydrogen exactly": mo.md(r"""
+        Bound states have $E<0$. Write $E=-\kappa^2/2$ with $\kappa>0$ (the Greek letter kappa, a decay rate in units of inverse
+        bohr). The equation $-\frac12u''+V_{\text{eff}}u=Eu$ is
+    
+        $$
+        u''=\Bigl[\frac{\ell(\ell+1)}{r^2}-\frac{2}{r}+\kappa^2\Bigr]u .
+        $$
+    
+        Look at the two ends first. **Near the nucleus** the $1/r^2$ term wins, $u''\approx\ell(\ell+1)u/r^2$, and the solution
+        that vanishes at $r=0$ is $u\sim r^{\ell+1}$ (the other one, $r^{-\ell}$, is infinite). **Far away** the constant wins,
+        $u''\approx\kappa^2u$, and the solution that dies away is $u\sim e^{-\kappa r}$ (the other one grows without limit). So
+        write
+    
+        $$
+        u(r)=r^{\ell+1}\,e^{-\kappa r}\,f(r),
+        $$
+    
+        where $f$ carries what is left. Putting this into the equation and collecting terms (several lines of algebra, not shown)
+        gives an equation for $f$,
+    
+        $$
+        r\,f''+2\bigl(\ell+1-\kappa r\bigr)f'+2\bigl[1-\kappa(\ell+1)\bigr]f=0 .
+        $$
+    
+        Try a power series $f=\sum_k c_kr^k$. Each power of $r$ gives a relation between neighbouring coefficients (again
+        not shown),
+    
+        $$
+        c_{k+1}=\frac{2\bigl[\kappa(k+\ell+1)-1\bigr]}{(k+1)(k+2\ell+2)}\;c_k .
+        $$
+    
+        If the series never stops, $c_{k+1}/c_k\to2\kappa/k$ for large $k$, which is the ratio of the series of $e^{2\kappa r}$, so
+        $f\sim e^{2\kappa r}$ and $u\sim e^{+\kappa r}$: the wave grows far away and cannot be normalised. (This is the usual
+        argument, stated and not proved.) The series must **stop**: some coefficient $c_{k+1}$ must be zero, which happens when
+        $\kappa(k+\ell+1)=1$ for one whole number $k=n_r$. Then $f$ is a polynomial of degree $n_r$, so it has $n_r$ zeros: these
+        are the radial nodes. The condition is
+    
+        $$
+        \frac{1}{\kappa}=n_r+\ell+1=n,
+        \qquad
+        E_n=-\frac{\kappa^2}{2}=-\frac{1}{2n^2}\ \text{hartree}=-\frac{13.6\ \text{eV}}{n^2}.
+        $$
+    
+        The polynomial $f$ is a generalised Laguerre polynomial, so that the radial function is
+    
+        $$
+        R_{n\ell}(r)\;\propto\;r^{\ell}\,e^{-r/n}\,L^{\,2\ell+1}_{\,n-\ell-1}\!\Bigl(\frac{2r}{n}\Bigr).
+        $$
+    
+        That the series gives the Laguerre polynomials is **stated, not derived** here; the notebook checks it instead: the
+        exact functions solve the radial equation, are normalised and have $n_r=n-\ell-1$ nodes (see the tests below).
+    """)
+    })
     return
 
 
 @app.cell
 def _(mo):
     mo.md(r"""
-    Now apply the usual condition for a bound wave: $u$ must vanish at the nucleus, $u(0)=0$ (because $R$ is finite
-    there), and must die away far from it, as in the oscillator. Only some energies allow that. We find them by
-    putting the equation on a grid of distances $r_i = i\,h$ and replacing the second derivative by its finite-difference
-    form. The equation becomes a matrix eigenvalue problem, and its eigenvalues are the allowed energies, its
+    The same equation can also be solved on a computer, which needs none of the steps above and is the check that they
+    are right. Put it on a grid of distances $r_i = i\,h$ and replace the second derivative by its finite-difference
+    form. The conditions are that $u$ vanishes at the nucleus, $u(0)=0$, and dies away far from it, as in the oscillator. The
+    equation becomes a matrix eigenvalue problem, and its eigenvalues are the allowed energies, its
     eigenvectors the radial waves. The result for each $\ell$ is a ladder of energies. Counting the sign changes
     of the $k$-th wave gives $k$ **radial nodes**, spheres around the nucleus, and their number is called $n_r$. The waves are
     labelled by
@@ -1064,6 +1329,31 @@ def _(degeneracy, mo, quantum_numbers):
         shows it for the values computed).
         """),
     ])
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    ### What it says
+
+    - **Hydrogen's energy counts nodes.** Since $n_r+\ell=n-1=N_{\text{nodes}}$, the energy $E_n=-1/(2n^2)$ depends only on the
+      total number of nodes, and not on how they divide between $n_r$ radial nodes and $\ell$ angular ones. That is the
+      degeneracy in $\ell$ found above ($n^2$ states in a level), and it is special to the $-1/r$ attraction. Other central
+      potentials do not have it: the drum has $E\propto j_{\ell,\,n_r+1}^2$, where a radial node and an angular node cost
+      different energy, and the three-dimensional harmonic oscillator has $E=\hbar\omega\bigl(2n_r+\ell+\tfrac32\bigr)$ (stated,
+      not derived here), where a radial node costs twice as much as an angular one.
+    - **The centrifugal barrier.** Near the nucleus $u\sim r^{\ell+1}$, so $R\sim r^{\ell}$: the larger $\ell$ is, the more the
+      barrier $\ell(\ell+1)/(2r^2)$ pushes the wave away from the nucleus. Only $\ell=0$ has $\psi\neq0$ at the nucleus; all
+      other orbitals are zero there.
+    - **Only $R$ changes.** For any central potential the angular part is the same $Y_{\ell m_\ell}$, with the same
+      angular nodes; only the radial function $R(r)$, and with it the energies, depends on $V(r)$. The shapes of
+      sections 4 and 6 are therefore not special to hydrogen.
+
+    **Checked in the tests:** the Laplacian formulas of section 2 against Cartesian second derivatives of test functions;
+    the numerical radial equation for $\ell=0,1,2$ against $-1/(2n^2)$ with $n_r$ nodes for each level; the normalisation of
+    $R_{n\ell}$; and that $R_{n\ell}(0)\neq0$ only for $\ell=0$.
+    """)
     return
 
 
