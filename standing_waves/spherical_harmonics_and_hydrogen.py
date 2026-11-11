@@ -1545,7 +1545,7 @@ def _(mo):
       Gaussians, which makes the integrals fast, and the sum is made large enough to be accurate. Mixing s and p functions on
       carbon gives the $sp^3$ hybrids that point to the corners of a tetrahedron in methane.
 
-    Worked calculations that use these ideas are in `../../qm-calculations`: `carbon` (the carbon atom, its density
+    Each of the three steps is worked out in `from_atoms_to_molecules.py` (this folder). Worked calculations that use these ideas are in `../../qm-calculations`: `carbon` (the carbon atom, its density
     and a p orbital), `methane` (its molecular orbitals and a C-H bond orbital) and `basis-functions` (the shapes of the
     basis functions on hydrogen and oxygen). How the labels of a modern calculation, such as the functional and the basis set, are read is explained in
     `../dft/reading_a_dft_label.py`.

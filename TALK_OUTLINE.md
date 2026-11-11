@@ -57,9 +57,13 @@ Colour keys for the figures: r pink, ϑ orange (cones), φ green (planes), ℓ p
 y dark cyan, z teal; positive blue, negative red.
 
 ## Part 3. From atoms to organic molecules (approximations)
-- Born-Oppenheimer, orbital approximation, LCAO — `spherical_harmonics_and_hydrogen.py` §7 (short bridge only)
-- Link to carbon/methane in `~/science/qm-calculations`
-- **Gap:** only a short bridge; possible dedicated notebook.
+- Why hydrogen's recipe stops (3(N_nuc+N_el) coordinates) — `standing_waves/from_atoms_to_molecules.py` §1
+- Born-Oppenheimer: H2+ energy curve as the nuclear potential, vibration as a 1D standing wave, mass slider — §2
+- Orbital approximation: helium with one shared 1s orbital (E(ζ), ζ = Z − 5/16), correlation energy, screening so 2s < 2p — §3
+- Hybrids sp, sp², sp³ and the angles from 1 + n cos θ = 0 — §4
+- Methane: LCAO symmetry toy (a1 + 3 t2), four equivalent bond orbitals, link to carbon/methane in `~/science/qm-calculations` — §5
+- Short bridge also in `spherical_harmonics_and_hydrogen.py` §7. Takeaways for a slide are at the end of §5; basis sets themselves follow in Part 5
+  (`basis_sets_from_base_states.py` §3 has the H2+ LCAO calculation with two functions).
 
 ## Part 4. Hartree-Fock: the bridge to DFT
 - Slater determinant, J and K, what HF misses — `dft/reading_a_dft_label.py` §2
