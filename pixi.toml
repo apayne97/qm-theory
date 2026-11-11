@@ -20,7 +20,7 @@ compute = ["compute"]
 
 [tasks]
 test = "python -m pytest -q"
-# Read-only gallery of every notebook (code hidden), at http://localhost:4871 (4444 and 4455 are taken by other apps).
-notebooks = "marimo run --headless --no-token --port 4871 dft standing_waves quantization plane_waves oscillator spinors polarization field_quanta"
+# Read-only gallery of every notebook (code hidden), in talk order (numbered symlinks in gallery/), at http://localhost:4871 (4444 and 4455 are taken by other apps).
+notebooks = { cmd = "marimo run --headless --no-token --port 4871 gallery/*.py", env = { PYTHONPATH = ".:standing_waves:dft:quantization:plane_waves:oscillator:spinors:polarization:field_quanta" } }
 # File browser for editing, like JupyterLab's file view: http://localhost:4872
 edit-all = "marimo edit --headless --no-token --port 4872 ."

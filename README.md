@@ -10,7 +10,7 @@ Uses [pixi](https://pixi.sh) (`brew install pixi`); `pixi.lock` pins the exact v
 ```bash
 cd ~/science/qm-theory
 pixi install              # default environment: numpy, matplotlib, marimo, click, pytest
-pixi run notebooks     # read-only gallery of every notebook at http://localhost:4871 (code hidden)
+pixi run notebooks     # read-only gallery of every notebook, in talk order, at http://localhost:4871 (code hidden); order = numbered symlinks in gallery/, restart after changes
 pixi run edit-all       # file browser for editing, like JupyterLab's file view, at http://localhost:4872
 pixi run marimo edit dft/reading_a_dft_label.py   # one notebook
 pixi run test             # all pytest checks

@@ -1,6 +1,6 @@
 # Talk outline: from standing waves to DFT labels
 
-Draft 2026-11-05. Each part names the notebook and sections to draw on. Gallery: `pixi run notebooks` → http://localhost:4871.
+Draft 2026-11-05. Each part names the notebook and sections to draw on. Gallery: `pixi run notebooks` → http://localhost:4871 (cards in talk order: numbered symlinks in `gallery/`; to add a notebook, add the next-numbered symlink and restart).
 
 ## Part 1. Standing waves in a box (1D → 2D → 3D)
 - Whole numbers of half-wavelengths, energy from wavelength — `standing_waves/standing_waves_in_boxes.py` §1
