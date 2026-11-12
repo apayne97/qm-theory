@@ -29,6 +29,7 @@ def _():
         spherical_surfaces_figure,
     )
     from drum_fourier import TARGETS
+    from complex_waves import complex_vs_real_figure
     from drum_fourier_plots import drum_fourier_figure, drum_fourier_modes_figure
     from hydrogen_plots import (
         central_levels_figure,
@@ -54,6 +55,7 @@ def _():
     return (
         HARTREE_EV,
         TARGETS,
+        complex_vs_real_figure,
         cartesian_cell_figure,
         central_levels_figure,
         length_factors_figure,
@@ -797,6 +799,32 @@ def _(harmonic_figure, l_harm, m_harm, mo, plt):
 
 @app.cell
 def _(mo):
+    show_harm_nodes = mo.ui.switch(value=True, label="show nodes")
+    return (show_harm_nodes,)
+
+
+@app.cell
+def _(l_harm, m_harm, mo, plt, show_harm_nodes):
+    from harmonic_nodes_plots import harmonic_nodes_figure as _nodes_figure
+
+    _l = l_harm.value
+    _m = max(-_l, min(_l, m_harm.value))
+    _fig = _nodes_figure(_l, _m, show_nodes=show_harm_nodes.value)
+    _out = mo.vstack([
+        mo.md(
+            r"The same harmonic (set $\ell$ and $m_\ell$ with the sliders above), with its nodes drawn: "
+            r"each cone has a constant polar angle $\vartheta$, each plane contains the $z$ axis."
+        ),
+        show_harm_nodes,
+        _fig,
+    ])
+    plt.close(_fig)
+    _out
+    return
+
+
+@app.cell
+def _(mo):
     mo.md(r"""
     The left picture is the usual way to draw a harmonic: in each direction, the distance of the surface from the centre is
     the size $\lvert Y\rvert$ of the wave in that direction, and the colour tells the sign (blue positive, red negative).
@@ -943,6 +971,76 @@ def _(mo):
     $2\lvert m_\ell\rvert$ sign changes round the axis; the total is $\ell$ for both real forms; the example above gives
     $49.1^\circ$, $90^\circ$, $130.9^\circ$; and the complex harmonic has the same size at every azimuth with its phase winding
     $m_\ell$ times.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    ### Complex waves and real waves: why orbitals are drawn real
+
+    The harmonics with $m_\ell\neq0$ were introduced as $e^{im_\ell\varphi}$, a complex wave, yet the pictures show
+    $\cos(m_\ell\varphi)$ and $\sin(m_\ell\varphi)$. The two descriptions differ in what the wave does, not in its energy.
+
+    **The complex wave $e^{im_\ell\varphi}$ travels round the ring.** At each azimuth it is a point on a circle in the
+    complex plane, and going once round the axis turns that point $m_\ell$ times. It has no nodes: its size is $1$
+    everywhere, so $\lvert\psi\rvert^2$, the probability density, is the same at every azimuth. It has a definite angular
+    momentum about the $z$ axis, $L_z=m_\ell\hbar$, and the sign of $m_\ell$ is the direction of travel.
+
+    **The real waves $\cos(m_\ell\varphi)$ and $\sin(m_\ell\varphi)$ stand still.** They have $\lvert m_\ell\rvert$ nodal
+    planes through the axis and a probability density that is large in some directions and zero in others. Neither
+    has a single value of $L_z$: each is an equal mix of $+m_\ell$ and $-m_\ell$.
+
+    **Why both are allowed.** The waves $+m_\ell$ and $-m_\ell$ have the same energy, so any combination of them is an
+    equally good stationary state. The sum and difference give the two real waves,
+
+    $$
+    \cos(m_\ell\varphi)=\tfrac12\bigl(e^{im_\ell\varphi}+e^{-im_\ell\varphi}\bigr),\qquad
+    \sin(m_\ell\varphi)=\tfrac1{2i}\bigl(e^{im_\ell\varphi}-e^{-im_\ell\varphi}\bigr),
+    $$
+
+    and for the harmonics the real combinations $Y_{\ell m_\ell}\pm Y_{\ell,-m_\ell}$ (divided by $\sqrt2$, or by $\sqrt2\,i$ for the
+    difference) have the same $\ell$-dependence in $\vartheta$. Which pair to use is a choice of description. The
+    complex pair is the choice when the question is about $L_z$. The real pair is the choice when the question is about
+    shape, and it is the one chemists draw: its nodal planes have fixed directions, so each orbital points somewhere
+    in space, and a bond can be made along that direction. The Hamiltonian of the atom is real, so the real part of a
+    stationary state is again a stationary state with the same energy, which is why nothing is lost by drawing only that part.
+
+    **The time dependence changes only the overall phase.** A stationary state of energy $E$ evolves as
+    $\psi(\varphi,t)=\psi(\varphi)\,e^{-iEt/\hbar}$. This multiplies the wave by a point on the unit circle that turns
+    with time, so it changes the phase of the whole wave at once and leaves $\lvert\psi\rvert^2$ unchanged: nothing
+    that is measured about a stationary state depends on $t$. Move the slider, which is $\theta=Et/\hbar$. In the left
+    column the real part and the imaginary part of the complex wave slide round the ring, trading places, while
+    $\lvert\psi\rvert^2$ stays flat. In the right column the nodes of the real wave stay where they are and only its height
+    breathes between the real and the imaginary part.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    m_cx = mo.ui.slider(0, 4, step=1, value=2, label=r"$m_\ell$", show_value=True)
+    theta_cx = mo.ui.slider(0, 360, step=5, value=0, label=r"overall phase $\theta=Et/\hbar$ (degrees)", show_value=True)
+    return m_cx, theta_cx
+
+
+@app.cell
+def _(complex_vs_real_figure, m_cx, mo, plt, theta_cx):
+    _fig = complex_vs_real_figure(m_cx.value, theta_cx.value)
+    _out = mo.vstack([mo.hstack([m_cx, theta_cx], justify="start"), _fig])
+    plt.close(_fig)
+    _out
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    **Checked in the tests** (`test_complex_waves.py`): $\lvert e^{im_\ell\varphi}\rvert^2=1$ for every overall phase; the phase
+    of $e^{im_\ell\varphi}$ winds $m_\ell$ times round the axis; $\cos(m_\ell\varphi)$ has $2\lvert m_\ell\rvert$ equally spaced zeros
+    that do not move with $\theta$, while the zeros of the real part of the complex wave do; and the sum of the $+m_\ell$ and $-m_\ell$
+    waves is exactly the cosine.
     """)
     return
 

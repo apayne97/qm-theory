@@ -923,3 +923,21 @@ def test_cell_figures_build():
         fig = make(slide=False)
         assert len(fig.axes) == 1 and len(fig.texts) == 3  # the three edge labels
         plt.close(fig)
+
+
+# ---- harmonic_nodes_plots.harmonic_node_angles ----
+
+
+@pytest.mark.parametrize("l,m", [(0, 0), (1, 0), (1, 1), (1, -1), (2, 0), (2, 1), (2, -1), (2, 2), (3, 0), (3, -2), (4, 3)])
+def test_harmonic_node_angles_counts_and_zeros(l, m):
+    from harmonic_nodes_plots import harmonic_node_angles
+
+    thetas, phis = harmonic_node_angles(l, m)
+    assert len(thetas) == l - abs(m) and len(phis) == abs(m)
+    assert len(thetas) + len(phis) == l
+    for p0 in phis:  # a full plane: the harmonic vanishes at phi0 and phi0 + pi for every polar angle
+        th = np.linspace(0.3, 2.8, 7)
+        assert np.allclose(real_ylm(l, m, th, p0), 0, atol=1e-9)
+        assert np.allclose(real_ylm(l, m, th, p0 + np.pi), 0, atol=1e-9)
+    for t0 in thetas:
+        assert np.allclose(real_ylm(l, m, t0, np.linspace(0, 6, 7)), 0, atol=1e-9)
