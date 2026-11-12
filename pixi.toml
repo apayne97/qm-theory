@@ -20,7 +20,9 @@ compute = ["compute"]
 
 [tasks]
 test = "python -m pytest -q"
-# Read-only gallery of every notebook (code hidden), in talk order (numbered symlinks in gallery/), at http://localhost:4871 (4444 and 4455 are taken by other apps).
+# Read-only gallery of every notebook (code hidden), for the current talk (Parts 1-6) in talk order (numbered symlinks in gallery/), at http://localhost:4871 (4444 and 4455 are taken by other apps).
 notebooks = { cmd = "marimo run --headless --no-token --port 4871 gallery/*.py", env = { PYTHONPATH = ".:standing_waves:dft:quantization:plane_waves:oscillator:spinors:polarization:field_quanta" } }
+# Part I (the earlier lectures), read-only, in dependency order, at http://localhost:4873
+notebooks-part1 = { cmd = "marimo run --headless --no-token --port 4873 gallery_part1/*.py", env = { PYTHONPATH = ".:standing_waves:dft:quantization:plane_waves:oscillator:spinors:polarization:field_quanta" } }
 # File browser for editing, like JupyterLab's file view: http://localhost:4872
 edit-all = "marimo edit --headless --no-token --port 4872 ."
