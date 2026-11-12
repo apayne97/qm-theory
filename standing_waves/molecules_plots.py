@@ -110,7 +110,7 @@ def screening_figure(decay=0.5):
         for n in range(l + 1, 5):
             e = levels[(n, l)]
             ax.plot([l - 0.35, l + 0.35], [e, e], color=H_COLOR, lw=2.2)
-            ax.text(l + 0.38, e, f"{n}{name}", fontsize=8, va="center", color=INK)
+            ax.text(l + 0.38, e, f"{n}{name}", fontsize=8, va="center", color=INK, clip_on=True)
     for n in (2, 3, 4):
         ax.axhline(-0.5 / n**2, color=GREY, lw=0.6, ls=":")
         ax.text(2.8, -0.5 / n**2, f"n={n}", fontsize=7, color=GREY, va="bottom", ha="right")
