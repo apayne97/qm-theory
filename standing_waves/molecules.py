@@ -11,13 +11,18 @@ Everything is plain numpy and is tested in `test_molecules.py`. The H2+ energies
 
 from math import sqrt
 
+import json
+from pathlib import Path
+
 import numpy as np
 
 import basis_sets as bs
+import hydrogen as hy
 
 HARTREE_EV = 27.211386
 HARTREE_CM = 219474.63  # one hartree in wavenumbers (cm^-1)
 PROTON_MASS = 1836.15267343  # in electron masses
+BOHR_ANGSTROM = 0.529177210903  # one bohr in angstrom
 
 # ---------------------------------------------------------------------------------------------------------------
 # Section 1: how many coordinates?
@@ -148,6 +153,34 @@ def screened_levels(decay=0.5, z=3.0):
         for k, ek in enumerate(e):
             out[(l + 1 + k, l)] = float(ek)
     return out
+
+
+# ---------------------------------------------------------------------------------------------------------------
+# Section 3, continued: how the size of an orbital depends on the nuclear charge
+
+
+def hydrogen_like_radius(n, l, z=1.0):
+    """<r> = (3 n^2 - l (l + 1)) / (2 z) bohr for one electron around a nucleus of charge z."""
+    return hy.mean_radius(n, l) / z
+
+
+def hydrogen_like_energy(n, z=1.0):
+    """E = -z^2 / (2 n^2) hartree."""
+    return -z**2 / (2.0 * n**2)
+
+
+def hydrogen_like_density(n, l, z, r):
+    """Probability per bohr of finding the electron at distance r, for charge z: z u_nl(z r)^2 (the shape of hydrogen, squeezed by z)."""
+    r = np.asarray(r, dtype=float)
+    return z * hy.radial_probability(n, l, z * r)
+
+
+ATOM_SIZES_FILE = Path(__file__).parent / "data_atom_sizes.json"
+
+
+def atom_sizes():
+    """PySCF numbers from compute_atom_sizes.py: {'symbols', 'z', 'mean_radius_bohr', 'homo_energy_hartree'} for the atoms H to Ar."""
+    return json.loads(ATOM_SIZES_FILE.read_text())
 
 
 # ---------------------------------------------------------------------------------------------------------------

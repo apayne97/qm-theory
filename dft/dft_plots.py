@@ -15,7 +15,7 @@ from dft_data import (  # noqa: E402
     erf_split,
     exact_exchange_fraction,
 )
-from qmstyle import A_COLOR, H2_COLOR, H_COLOR, INK, K_COLOR, KIN_COLOR, PHASE_COLOR, PROB_COLOR, R_COLOR  # noqa: E402
+from qmstyle import ANGSTROM_PER_BOHR as AB, A_COLOR, H2_COLOR, H_COLOR, INK, K_COLOR, KIN_COLOR, PHASE_COLOR, PROB_COLOR, R_COLOR  # noqa: E402
 
 FUNCTIONAL_LABELS = {
     "HF": "Hartree-Fock", "svwn": "LDA (SVWN)", "pbe": "GGA (PBE)", "r2scan": "meta-GGA (r2SCAN)",
@@ -38,27 +38,27 @@ def scf_figure(scf):
 
 def line_fields_figure(scf):
     line = scf["line"]
-    s = np.array(line["s_bohr"])
-    rho, grad_s = np.array(line["rho"]), np.array(line["reduced_gradient"])
-    tau, tau_w = np.array(line["tau"]), np.array(line["tau_w"])
+    s = np.array(line["s_bohr"]) * AB  # display in ångström; the data stay in atomic units
+    rho, grad_s = np.array(line["rho"]) / AB**3, np.array(line["reduced_gradient"])  # bohr^-3 -> Å^-3
+    tau, tau_w = np.array(line["tau"]) / AB**3, np.array(line["tau_w"]) / AB**3  # hartree bohr^-3 -> hartree Å^-3
     fig, axes = plt.subplots(3, 1, figsize=(6.4, 7.2), sharex=True)
     axes[0].semilogy(s, rho, color=H_COLOR)
-    axes[0].set_ylabel("density ρ (bohr⁻³)")
+    axes[0].set_ylabel("density ρ (Å⁻³)")
     axes[0].set_title("Along the line from the oxygen through one hydrogen")
     axes[1].plot(s, np.clip(grad_s, 0, 6), color=A_COLOR)
     axes[1].set_ylabel("reduced gradient s\n(how fast ρ changes)")
     axes[2].semilogy(s, np.maximum(tau, 1e-8), color=KIN_COLOR, label="kinetic energy density τ")
     axes[2].semilogy(s, np.maximum(tau_w, 1e-8), color=INK, ls="--", label="τ for a single orbital (τ_W)")
-    axes[2].set_ylabel("τ (hartree bohr⁻³)")
-    axes[2].set_xlabel("distance from the oxygen nucleus (bohr)")
+    axes[2].set_ylabel("τ (hartree Å⁻³)")
+    axes[2].set_xlabel("distance from the oxygen nucleus (Å)")
     axes[2].legend(fontsize=8, loc="upper right")
-    h_pos = line["oh_length_bohr"]
+    h_pos = line["oh_length_bohr"] * AB
     for ax in axes:
         ax.axvline(0, color="gray", lw=0.8, ls=":")
         ax.axvline(h_pos, color="gray", lw=0.8, ls=":")
         ax.grid(alpha=0.3)
-    axes[0].text(0.05, 0.88, "O", transform=axes[0].get_xaxis_transform(), color="gray")
-    axes[0].text(h_pos + 0.05, 0.88, "H", transform=axes[0].get_xaxis_transform(), color="gray")
+    axes[0].text(0.03, 0.88, "O", transform=axes[0].get_xaxis_transform(), color="gray")
+    axes[0].text(h_pos + 0.03, 0.88, "H", transform=axes[0].get_xaxis_transform(), color="gray")
     fig.tight_layout()
     return fig
 
@@ -95,24 +95,25 @@ def eint_figure(ladder):
 
 
 def split_figure(omega, short_fraction, long_fraction):
-    r = np.linspace(0.3, 12, 300)
+    r = np.linspace(0.3, 12, 300)  # bohr
     short, long_ = erf_split(r, omega)
+    r_a = r * AB  # ångström, for the horizontal axes
     fig, axes = plt.subplots(1, 2, figsize=(9.2, 3.5))
     ax = axes[0]
-    ax.plot(r, 1 / r, color=INK, lw=2, label="1/r")
-    ax.plot(r, short, color=A_COLOR, label="short-range part erfc(ωr)/r")
-    ax.plot(r, long_, color=H_COLOR, label="long-range part erf(ωr)/r")
+    ax.plot(r_a, 1 / r, color=INK, lw=2, label="1/r")
+    ax.plot(r_a, short, color=A_COLOR, label="short-range part erfc(ωr)/r")
+    ax.plot(r_a, long_, color=H_COLOR, label="long-range part erf(ωr)/r")
     ax.set_ylim(0, 2.5)
-    ax.set_xlabel("distance between two electrons r (bohr)")
+    ax.set_xlabel("distance between two electrons r (Å)")
     ax.set_ylabel("repulsion (hartree)")
     ax.legend(fontsize=8)
     ax.set_title("The 1/r repulsion split in two")
     ax = axes[1]
-    ax.plot(r, exact_exchange_fraction(r, omega, short_fraction, long_fraction), color=H_COLOR, lw=2)
+    ax.plot(r_a, exact_exchange_fraction(r, omega, short_fraction, long_fraction), color=H_COLOR, lw=2)
     ax.axhline(short_fraction, color="gray", ls=":", lw=1)
     ax.axhline(long_fraction, color="gray", ls=":", lw=1)
     ax.set_ylim(0, 1.1)
-    ax.set_xlabel("distance between two electrons r (bohr)")
+    ax.set_xlabel("distance between two electrons r (Å)")
     ax.set_ylabel("fraction of exact exchange")
     ax.set_title(f"ωB97M-V: {short_fraction:.0%} up close, {long_fraction:.0%} far away")
     for a in axes:

@@ -1,5 +1,9 @@
 import re
 
+import math
+
+import pytest
+
 import qmstyle
 
 
@@ -37,3 +41,11 @@ def test_equations_are_coloured_but_running_text_is_not():
         text = path.read_text()
         outside_display = re.sub(r"\$\$.*?\$\$", "", text, flags=re.S)
         assert "\\textcolor" not in outside_display, path.name
+
+
+def test_angstrom_per_bohr_matches_codata():
+    """a0 = 4 pi eps0 hbar^2 / (m_e e^2) with the CODATA 2018 values, converted from metres to ångström."""
+    hbar, eps0, m_e, e = 1.054571817e-34, 8.8541878128e-12, 9.1093837015e-31, 1.602176634e-19
+    a0_angstrom = 4 * math.pi * eps0 * hbar**2 / (m_e * e**2) * 1e10
+    assert qmstyle.ANGSTROM_PER_BOHR == pytest.approx(a0_angstrom, rel=1e-8)
+    assert round(qmstyle.ANGSTROM_PER_BOHR, 3) == 0.529

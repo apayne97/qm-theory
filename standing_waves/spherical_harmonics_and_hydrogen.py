@@ -129,7 +129,7 @@ def _(mo):
     **How much is derived.** The full separation of the Schrödinger equation is not repeated here. The equations
     that come out of it are stated, and each statement is checked numerically in `test_hydrogen.py` (the list is at
     the end of section 7). The box notebook measured energy in units of $E_1$; from here on units are atomic units, here and
-    in every later notebook: lengths in bohr ($a_0 = 0.0529$ nm), energies in hartree (1 hartree $=27.2$ eV), $\hbar=m_e=1$.
+    in every later notebook: lengths in bohr ($a_0 = 0.0529$ nm, so 1 bohr $=0.529$ Å), energies in hartree (1 hartree $=27.2$ eV), $\hbar=m_e=1$. Equations stay in these units; the figures show lengths in ångström.
     """)
     return
 
@@ -1251,7 +1251,7 @@ def _(mo):
         equation: $u(0)=0$, because $R$ must stay finite at the nucleus, and the normalisation of the whole wave,
         $\int\lvert\psi\rvert^2dV=\int_0^\infty R^2r^2dr\int\lvert Y\rvert^2d\Omega=\int_0^\infty u^2\,dr=1$.
     
-        For hydrogen, in atomic units ($\hbar=m=1$, lengths in bohr, energies in hartree), $V=-1/r$ and the equation is
+        For hydrogen, in atomic units ($\hbar=m=1$, lengths in bohr, energies in hartree), $V=-1/r$ with $r$ in bohr and the equation is
     
         $$
         {}-\frac12\,\frac{d^2u}{dr^2}+\Big[\underbrace{-\frac{1}{r}}_{\text{pull of the nucleus}}
@@ -1271,7 +1271,7 @@ def _(mo):
     mo.accordion({
         "Details (optional): solving the radial equation for hydrogen exactly": mo.md(r"""
         Bound states have $E<0$. Write $E=-\kappa^2/2$ with $\kappa>0$ (the Greek letter kappa, a decay rate in units of inverse
-        bohr). The equation $-\frac12u''+V_{\text{eff}}u=Eu$ is
+        bohr, i.e. $1/0.529$ Å$^{-1}$). The equation $-\frac12u''+V_{\text{eff}}u=Eu$ is
     
         $$
         u''=\Bigl[\frac{\ell(\ell+1)}{r^2}-\frac{2}{r}+\kappa^2\Bigr]u .
@@ -1432,7 +1432,7 @@ def _(degeneracy, mo, quantum_numbers):
         mo.md("\n".join(_rows)),
         mo.md(r"""
         **Checked in the tests:** the exact radial functions solve the radial equation, are normalised and mutually
-        orthogonal, have $n_r=n-\ell-1$ nodes, and give $\langle r\rangle=\tfrac12\big(3n^2-\ell(\ell+1)\big)$ bohr. The
+        orthogonal, have $n_r=n-\ell-1$ nodes, and give $\langle r\rangle=\tfrac12\big(3n^2-\ell(\ell+1)\big)$ bohr ($\times\,0.529$ Å). The
         finite-difference matrix reproduces $-1/(2n^2)$ to better than $0.15\%$ for $n\le4$ and every allowed $\ell$,
         its eigenvectors have the right numbers of nodes and agree with the exact radial functions, and the number of
         numerical states (counting $2\ell+1$ for each $\ell$) at each of the first four levels is $n^2$. **Stated, not
@@ -1541,7 +1541,7 @@ def _(mo):
     mo.md(r"""
     **Checked in the tests:** the orbitals are orthonormal in three dimensions (integrated over all space); the
     $2p$ orbitals are proportional to $z$, $x$ and $y$ times a function of $r$; points drawn by the sampling code have the
-    mean distance $\langle r\rangle=5$ bohr and the mean $\langle r^2\rangle=30$ bohr$^2$ of the $2p$ orbital.
+    mean distance $\langle r\rangle=5$ bohr $=2.65$ Å and the mean $\langle r^2\rangle=30$ bohr$^2$ $=8.4$ Å$^2$ of the $2p$ orbital.
     """)
     return
 

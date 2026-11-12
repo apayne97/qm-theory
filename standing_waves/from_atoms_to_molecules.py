@@ -18,6 +18,7 @@ def _():
         helium_figure,
         hybrid_figure,
         methane_figure,
+        orbital_size_figure,
         screening_figure,
     )
 
@@ -30,6 +31,7 @@ def _():
         methane_figure,
         mo,
         mol,
+        orbital_size_figure,
         plt,
         screening_figure,
     )
@@ -63,7 +65,7 @@ def _(mo):
     5. Methane: one level, then three
     6. What was checked, and what was not
 
-    Atomic units throughout, as in `spherical_harmonics_and_hydrogen.py` and every later notebook: lengths in bohr, energies in
+    Atomic units throughout, as in `spherical_harmonics_and_hydrogen.py` and every later notebook: lengths in bohr (1 bohr $=0.529$ Å; the figures are drawn in Å), energies in
     hartree (1 hartree $=27.2$ eV), $\hbar=m_e=1$. Energies of the methane toy are in eV. Everything is computed in `molecules.py` and tested in `test_molecules.py`; the H$_2^+$ energies
     are the PySCF numbers of `data_basis_sets.json`.
     """)
@@ -174,7 +176,7 @@ def _(mo):
     mo.md(r"""
     **What the numbers say.**
 
-    - The minimum of the curve is at $R\approx 2.0$ bohr with a binding energy of about 2.8 eV below H + proton.
+    - The minimum of the curve is at $R\approx 1.06$ Å ($2.0$ bohr) with a binding energy of about 2.8 eV below H + proton.
     - The two lowest nuclear levels are $0.0100$ hartree $=0.27$ eV apart ($\approx 2190\ \text{cm}^{-1}$). This is about a tenth of the
       electron's binding energy, which is what "the electrons are fast" means in numbers.
     - The spacing falls as $1/\sqrt{M}$: lighter nuclei vibrate faster (the orange line, which is a straight line of slope $-\tfrac12$
@@ -281,7 +283,7 @@ def _(mo):
 
 @app.cell
 def _(mo):
-    decay = mo.ui.slider(0.1, 1.5, step=0.1, value=0.5, label=r"screening distance $a$ (bohr)", show_value=True)
+    decay = mo.ui.slider(0.05, 0.8, step=0.05, value=0.25, label=r"screening distance $a$ (Å)", show_value=True)
     return (decay,)
 
 
@@ -305,6 +307,85 @@ def _(mo):
 
     For the slides: in hydrogen the shapes ($s$, $p$, $d$) *and* the degeneracy in $\ell$ come from the same function; in an atom with
     several electrons the shapes survive, and the degeneracy in $\ell$ does not.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    **How big is an orbital, and what does a heavier nucleus do to it?** The hydrogen orbitals of
+    `spherical_harmonics_and_hydrogen.py` are large. One bohr is $0.529$ Å, and the mean distance of the electron from the nucleus is
+
+    $$
+    \langle r\rangle=\tfrac12\bigl[3n^{2}-\ell(\ell+1)\bigr]\ \text{bohr},
+    $$
+
+    where $n$ is the principal quantum number and $\ell$ the orbital angular momentum. For $1s$ this is $0.79$ Å ($1.5$ bohr); for $3s$ it is
+    $7.1$ Å ($13.5$ bohr), with $99\,\%$ of the probability inside $13.5$ Å. The size grows as $n^{2}$, which is why the $3s$ plot in the hydrogen notebook
+    reaches so far out. A molecule is a few Å across, so a hydrogen $3s$ orbital would not fit in it.
+
+    **A larger nuclear charge $Z$ squeezes the orbitals.** For one electron around a nucleus of charge $Z$ the pull is $-Z/r$ instead of
+    $-1/r$. Replacing $r$ by $Zr$ turns the radial equation back into hydrogen's, so the shapes are the same and only the scales change:
+
+    $$
+    \langle r\rangle=\frac{3n^{2}-\ell(\ell+1)}{2Z}\ \text{bohr},\qquad E_n=-\frac{Z^{2}}{2n^{2}}\ \text{hartree}.
+    $$
+
+    The radius falls as $1/Z$ and the energy rises in size as $Z^{2}$. The $1s$ orbital of the helium ion He$^{+}$ ($Z=2$) is half as large as hydrogen's
+    and four times as tightly bound; this is the $\zeta=Z=2$ orbital of the helium discussion above. For uranium ($Z=92$) the $1s$ orbital would have $\langle r\rangle=0.016$ bohr $=0.0086$ Å.
+
+    **Why atoms do not shrink to a point, or grow without limit.** Neither extreme happens, because the other electrons screen the
+    nucleus (the effect of $\zeta=Z-\tfrac5{16}$ above, and of $Z_{\text{eff}}(r)$ in the toy atom). An outer electron sees the nucleus
+    plus the inner electrons, a net charge $Z_{\text{eff}}$ that is only a little above $1$ for Li and Na and grows by roughly $0.6$ to $0.7$ for each
+    step along a row of the periodic table. The orbital size is then roughly $n^{2}/Z_{\text{eff}}$: a larger $n$ makes it larger, a larger $Z_{\text{eff}}$
+    makes it smaller, and the two partly cancel. The result is that the outermost orbitals of the atoms from H to Ar have mean radii
+    between about $0.5$ and $2.2$ Å, instead of the $7$ Å of a hydrogen $3s$ orbital. Use the slider to change $Z$ in the left panel; the right panel shows the
+    computed sizes of the neutral atoms.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    charge = mo.ui.slider(1, 18, step=1, value=1, label=r"nuclear charge $Z$", show_value=True)
+    return (charge,)
+
+
+@app.cell
+def _(charge, mo, orbital_size_figure, plt):
+    _fig = orbital_size_figure(charge.value)
+    _out = mo.vstack([charge, _fig])
+    plt.close(_fig)
+    _out
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    *Left:* the radial probability of the $1s$, $3s$ and $3d$ orbitals of a hydrogen-like ion (one electron, nuclear charge $Z$): each curve is
+    hydrogen's curve (dashed) squeezed towards the nucleus by the factor $Z$. *Right:* the mean distance $\langle r\rangle$ of the outermost occupied orbital of the
+    neutral atoms H to Ar, from Hartree-Fock calculations with the `def2-TZVP` basis set (`compute_atom_sizes.py`, a few seconds of PySCF);
+    the circle marks the atom with $Z$ from the slider. The grey lines show what a bare nucleus ($Z_{\text{eff}}=Z$) would give for $n=1,2,3$; the atoms lie well above them, the
+    amount of screening. Each new row (Li, Na) starts a new, larger shell, and within a row the orbital shrinks from Li ($2.0$ Å) to Ne ($0.51$ Å)
+    as $Z_{\text{eff}}$ rises. A noble gas has the smallest orbital of its row.
+
+    **Where this lives in a DFT calculation.** Nothing about screening is put in by hand. The Kohn-Sham operator
+    (`../dft/kohn_sham_matrix.py`) for each electron contains the full attraction $-Z_A/r_A$ to every nucleus $A$, plus the Hartree
+    potential (the average repulsion of all the electrons, which gives the screening) and the exchange-correlation potential (the
+    rest of the electron-electron effect). The self-consistent loop starts from a guess for the orbitals, builds these potentials,
+    finds new orbitals in them, and repeats; the shrunken, screened orbitals are what it converges to. What the user chooses is only
+    the **basis set**, which has to be able to represent what comes out:
+
+    - **Exponents per element.** A Gaussian $e^{-\alpha r^{2}}$ has a size $\sim\alpha^{-1/2}$. Each element has its own exponents, small for the diffuse valence
+      orbital and large for the tight inner ones, as for the Slater exponent $\zeta$ of `basis_sets_from_base_states.py`.
+    - **Tight core functions for heavy atoms.** The $1s$ orbital shrinks as $1/Z$ and needs exponents that grow as $Z^{2}$ (a $2\times$ smaller orbital needs
+      a $4\times$ larger $\alpha$). In `def2-TZVP` the tightest Gaussian has $\alpha=34$ on hydrogen and about $7\times10^{4}$ on chlorine.
+    - **Effective core potentials** for the heaviest elements. The core electrons of, for example, platinum (in the OPLS5 labels of
+      `../dft/reading_a_dft_label.py`) are both numerous and very compact; they are replaced by a fixed potential that acts on the
+      valence electrons, so that only the valence orbitals, with sizes like those in the right panel, are in the basis. (`def2-TZVP` does this for platinum:
+      its tightest Gaussian is $\alpha=30$, not tens of thousands.)
     """)
     return
 
@@ -454,16 +535,17 @@ def _(mo):
     mo.md(r"""
     ## 6 What was checked, and what was not
 
-    **Checked numerically** (`pixi run python -m pytest -q standing_waves/test_molecules.py`, 25 tests):
+    **Checked numerically** (`pixi run python -m pytest -q standing_waves/test_molecules.py`):
 
     - *Section 1.* The coordinate counts (6 for hydrogen, 45 for methane, 30 for its electrons with fixed nuclei).
     - *Section 2.* The fitted H$_2^+$ curve passes through the 14 PySCF points within $3\times10^{-4}$ hartree; its minimum is at
-      $R=1.99$ bohr and $E=-0.6026$ hartree, as the lowest PySCF point; the harmonic wavenumber is 2312 cm$^{-1}$ and the spacing of the two lowest
+      $R=1.99$ bohr ($1.05$ Å) and $E=-0.6026$ hartree, as the lowest PySCF point; the harmonic wavenumber is 2312 cm$^{-1}$ and the spacing of the two lowest
       nuclear levels 2189 cm$^{-1}$ (smaller than harmonic, as for an anharmonic well); the nuclear levels have $0,1,2,3$ nodes, are
       normalised, and the spacing scales as $1/\sqrt{\text{mass}}$; vibration quantum over electron binding energy is $0.097$.
     - *Section 3.* The minimum of $E(\zeta)$ is at $\zeta=1.6875$ with $E=-2.84766$; the term $\tfrac58\zeta$ against a direct numerical
       integration of $\langle1/r_{12}\rangle$ (agreement to 0.2 %); the ordering of exact $-2.9037$ < HF limit $-2.8617$ < the one-orbital $-2.8477$; the
       screened-potential levels: $2s=2p$ when the screening disappears (and $=-0.125$ hartree), and $s<p<d$ at each $n$ otherwise.
+      Orbital size: $\langle r\rangle=\tfrac12[3n^2-\ell(\ell+1)]/Z$ against numerical integration of the hydrogen-like radial density (six shells, $Z$ up to 18), the $1/Z$ scaling and normalisation of the squeezed density, and $13.5$ bohr $=7.14$ Å for $3s$. The H to Ar sizes are Hartree-Fock numbers read from `data_atom_sizes.json` (tests check hydrogen's $1.5$ bohr, the range, and the trend across row 2); the $99\,\%$ radius of $3s$ ($13.5$ Å) was computed once by integration and is not in a test.
     - *Section 4.* The angles $180^\circ,120^\circ,109.47^\circ$ and the tetrahedral angle between corner directions; the four sp$^3$ coefficient rows are
       orthonormal, each with $s$ weight $\tfrac14$; the same orthonormality by numerical integration over the sphere with the real $s$ and $p$ functions;
       the hybrid profile is normalised to 1 and largest along its axis.

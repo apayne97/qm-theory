@@ -28,10 +28,12 @@ def _():
         sto_fit_figure,
         water_basis_figure,
     )
+    from qmstyle import ANGSTROM_PER_BOHR
 
     data = load_data()
     water = load_water()
     return (
+        ANGSTROM_PER_BOHR,
         N_MAX,
         data,
         function_count,
@@ -79,7 +81,7 @@ def _(mo):
     6. Where this leads: the `def2` label
     7. What was checked, and what was not
 
-    Units are atomic units, as in `from_atoms_to_molecules.py` (bohr, hartree, $\hbar=m_e=1$). The numbers that need PySCF come from `compute_basis_sets.py`, which writes `data_basis_sets.json`;
+    Units are atomic units, as in `from_atoms_to_molecules.py` (bohr, hartree, $\hbar=m_e=1$; 1 bohr $=0.529$ Å), but the figures show lengths in ångström. The numbers that need PySCF come from `compute_basis_sets.py`, which writes `data_basis_sets.json`;
     the notebook only reads that file.
     """)
     return
@@ -183,7 +185,7 @@ def _(mo):
     particle (mass $1$) on a line in a **Morse well**,
 
     $$
-    V(x)=D\left(1-e^{-a x}\right)^2,\qquad D=6\ \text{hartree},\quad a=0.5\ \text{bohr}^{-1}.
+    V(x)=D\left(1-e^{-a x}\right)^2,\qquad D=6\ \text{hartree},\quad a=0.5\ \text{bohr}^{-1}=0.94\ \text{Å}^{-1}.
     $$
 
     It is the standard one-dimensional picture of a chemical bond: steep on the left where the atoms push apart,
@@ -289,20 +291,20 @@ def _(mo):
     E_{\text{total}}=E_\pm+\frac1R .
     $$
 
-    The last term is the repulsion of the two protons. Use the slider to change $R$.
+    The last term is the repulsion of the two protons. Use the slider to change $R$. The formulas are in atomic units, so $R$ and $r$ in them are in bohr; the slider and the figure show $R$ in ångström ($R_{\text{bohr}}=R_{\text{Å}}/0.529$).
     """)
     return
 
 
 @app.cell
 def _(mo):
-    r_h2 = mo.ui.slider(1.0, 6.0, step=0.25, value=2.0, label=r"$R$ (bohr)", show_value=True)
+    r_h2 = mo.ui.slider(0.55, 3.2, step=0.05, value=1.05, label=r"$R$ (Å)", show_value=True)
     return (r_h2,)
 
 
 @app.cell
-def _(h2plus_figure, mo, plt, r_h2):
-    _fig = h2plus_figure(r_h2.value)
+def _(ANGSTROM_PER_BOHR, h2plus_figure, mo, plt, r_h2):
+    _fig = h2plus_figure(r_h2.value / ANGSTROM_PER_BOHR)  # the figure function works in bohr
     _out = mo.vstack([r_h2, _fig])
     plt.close(_fig)
     _out
@@ -314,10 +316,10 @@ def _(mo):
     mo.md(r"""
     The sum $c_A=c_B$ puts extra amplitude between the protons (**bonding**), the difference puts a node there
     (**antibonding**). Only the bonding energy dips below the energy $-\tfrac12$ of a separated hydrogen atom and a
-    proton. Two functions give a minimum at $R\approx 2.49$ bohr and a binding energy of about 1.8 eV. The dots are
+    proton. Two functions give a minimum at $R\approx 1.32$ Å and a binding energy of about 1.8 eV. The dots are
     a calculation with a very large basis on each proton (PySCF, `aug-cc-pV5Z`; the same points as the energy curve of
     `from_atoms_to_molecules.py`, section 2): it has its minimum near
-    $R=2.0$ bohr and a binding energy of about 2.8 eV, so two functions give roughly 63 % of the bond energy. The 2-function curve lies above the dots at every $R$, as the variational principle
+    $R=1.06$ Å and a binding energy of about 2.8 eV, so two functions give roughly 63 % of the bond energy. The 2-function curve lies above the dots at every $R$, as the variational principle
     requires. **Making the basis richer on each atom is what the rest of the notebook is about.**
     """)
     return
@@ -451,7 +453,7 @@ def _(mo):
     | f | 3 | 7 |
 
     A common choice for the radial part of a function with angular momentum $\ell$ is $r^\ell e^{-\alpha r^2}$. The
-    figure shows cross sections through the nucleus: the s function is round, $p_z$ has one nodal plane and two
+    figure shows cross sections through the nucleus (for $\alpha=0.45$ bohr$^{-2}=1.6$ Å$^{-2}$, with lengths in ångström): the s function is round, $p_z$ has one nodal plane and two
     lobes of opposite sign, $d_{z^2}$ has two nodal cones. The right-hand panel shows what the p function is for. A
     pure s function gives a cloud that is round about the nucleus (dashed contours). Adding some $p_z$ shifts the cloud along the $z$ axis (solid contours).
     That is **polarization**: functions of higher angular momentum than the atom's occupied orbitals let the cloud move off-centre, as it must in a bond,
@@ -533,7 +535,7 @@ def _(mo):
 
     - **Left:** the polarizability $\alpha_{\text{pol}}$, how much dipole an electric field $F$ induces. The atom's
       energy in a weak field is $-\tfrac12\alpha_{\text{pol}}F^2$, and it was obtained here from small fields
-      $\pm0.002$. The exact value, $\tfrac92$ in atomic units, is the textbook value for hydrogen (from memory); a basis can only
+      $\pm0.002$. The exact value, $\tfrac92$ in atomic units (bohr$^3$), i.e. $0.67$ Å$^3$, is the textbook value for hydrogen (from memory); a basis can only
       give a value at or below it.
     - **Right:** the electron density along a line out from the nucleus, on a logarithmic scale, against the exact
       $e^{-2r}/\pi$.
@@ -559,8 +561,8 @@ def _(mo):
       (the two `def2-TZVP` energies agree), because the field-free atom is round. Polarization functions are for
       the *shape change*, not for the atom.
     - **A polarization function is not automatically a good one for every purpose.** The single p shell of `def2-TZVP` captures only
-      about $0.5$ of the exact $4.5$. The `D` version of the set, `def2-TZVPD`, adds one more, wide p function on
-      hydrogen and reaches about $4.3$: a field-distorted cloud reaches far from the nucleus, and only wide functions describe it. `def2-TZVPPD`, with two p shells and a d shell, gets about $4.4$.
+      about $0.07$ Å$^3$ of the exact $0.67$ Å$^3$. The `D` version of the set, `def2-TZVPD`, adds one more, wide p function on
+      hydrogen and reaches about $0.64$ Å$^3$: a field-distorted cloud reaches far from the nucleus, and only wide functions describe it. `def2-TZVPPD`, with two p shells and a d shell, gets about $0.65$ Å$^3$.
     - **Diffuse functions are about the far region.** The tails in the right panel fall away from the exact line at large $r$ for each basis, earlier for smaller
       sets. For hydrogen the D adds a p function only, so the spherical density of `def2-TZVPD` is identical to that of `def2-TZVP`
       (the two lines coincide; the notebook shows one). On oxygen the table above shows that the D adds one extra s, p and d
@@ -645,7 +647,7 @@ def _(mo):
       $\mathbf c^T\mathbf S\mathbf c=1$ are tested.
     - *Section 3.* The integrals $S$, $J$, $K$ and the matrix element $H_{AB}$ match numerical quadrature in spheroidal
       coordinates; the coefficients are $c_A=\pm c_B$ with the stated normalisation; the minimum of the two-function
-      curve is at $R\approx2.49$ bohr with $E\approx-0.5648$ hartree (binding about 1.76 eV); it lies above the PySCF
+      curve is at $R\approx1.32$ Å ($2.49$ bohr) with $E\approx-0.5648$ hartree (binding about 1.76 eV); it lies above the PySCF
       large-basis curve at all 14 distances; that curve gives about 2.79 eV.
     - *Section 4.* Normalisation of the Slater and Gaussian functions; the analytic Gaussian overlap, kinetic and
       attraction integrals against numerical radial integrals; the STO-3G and STO-6G exponents and coefficients against
@@ -654,14 +656,14 @@ def _(mo):
     - *Section 5.* Shell sizes $2\ell+1$ and the function counts, which reproduce every water basis size (7, 24, 43, 58,
       59, 74, 117); parity of the $s$, $p_z$, $d_{z^2}$ shell functions; the ordering of the split-valence errors and that the projections
       reproduce them; the PySCF hydrogen numbers (variational energies, polarizability zero without p, TZVPD much larger than TZVP, equal TZVP and TZVPD
-      densities, density tail at $r=10$ bohr); water energies falling with basis size.
+      densities, density tail at $r=5.3$ Å, 10 bohr); water energies falling with basis size.
 
     **Not checked here, or stated from memory.**
 
     - The cusp condition $\psi'(0)=-Z\psi(0)$ and the tail $e^{-\sqrt{2\lvert E\rvert}r}$ in general; only the hydrogen 1s case is tested.
     - That Gaussian integrals are analytic in general (for higher angular momentum and several centres); only the
       s-type integrals at one centre are tested, and the product theorem.
-    - The exact hydrogen polarizability $\tfrac92$ and the exact H$_2^+$ energy $-0.602634$ hartree at $R=2$ bohr (the latter agrees with the large-basis calculation within $3\times10^{-5}$).
+    - The exact hydrogen polarizability $\tfrac92$ and the exact H$_2^+$ energy $-0.602634$ hartree at $R=1.06$ Å, 2 bohr (the latter agrees with the large-basis calculation within $3\times10^{-5}$).
     - How the `def2` sets were designed (Weigend and Ahlrichs) and what each letter promises in general; only the shell counts for
       water and hydrogen are data.
     - The PySCF numbers are stored in `data_basis_sets.json` and were not recomputed by the tests; the water energies are

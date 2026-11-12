@@ -23,13 +23,14 @@ def _():
         scf_figure,
         split_figure,
     )
+    from qmstyle import ANGSTROM_PER_BOHR
 
     scf_data = load("scf")
     basis_data = load("basis")
     ladder_data = load("ladder")
     disp_data = load("dispersion")
     opls5_data = load("opls5")
-    return (mo, plt, np, load, shell_label, basis_figure, bsse_figure, damping_figure, dispersion_figure, eint_figure, grid_figure, homo_figure, line_fields_figure, scf_figure, split_figure, scf_data, basis_data, ladder_data, disp_data, opls5_data,)
+    return (ANGSTROM_PER_BOHR, mo, plt, np, load, shell_label, basis_figure, bsse_figure, damping_figure, dispersion_figure, eint_figure, grid_figure, homo_figure, line_fields_figure, scf_figure, split_figure, scf_data, basis_data, ladder_data, disp_data, opls5_data,)
 
 
 @app.cell
@@ -403,7 +404,7 @@ def _(mo):
     \tau(\mathbf r) = \frac12\sum_i \lvert\nabla\varphi_i(\mathbf r)\rvert^2 .
     $$
 
-    The figure shows the three ingredients on a line from the oxygen nucleus through one hydrogen. The reduced gradient
+    The figure shows the three ingredients on a line from the oxygen nucleus through one hydrogen (the O–H bond is 0.96 Å long; the figure shows lengths in ångström, while the program works in atomic units, where 1 bohr $=0.529$ Å). The reduced gradient
     $s$ tells the functional how rapidly the density changes (large in the tails, small in the bonding region). The
     kinetic energy density $\tau$, compared with its value $\tau_W$ for a single orbital, tells it what kind of region it
     is in: where a single orbital dominates (far outside the molecule, and in the 1s core of the oxygen) $\tau\approx\tau_W$;
@@ -436,7 +437,7 @@ def _(mo):
     $$
 
     where $\omega$ is the splitting parameter (the **ω in ωB97M-V**, unrelated to angular frequency) and $r$ is the
-    distance between the two electrons. Up close the density functional does the job; far away,
+    distance between the two electrons. Since $\omega r$ must be dimensionless, $\omega$ is an inverse length, quoted in bohr$^{-1}$ (1 bohr $=0.529$ Å, so 1 bohr$^{-1}=1.89$ Å$^{-1}$), and the figure shows $r$ in ångström. Up close the density functional does the job; far away,
     the exact $1/r$ tail matters, so the long-range part uses 100% exact exchange. The program reports the values
     for ωB97M-V directly.
     """)
@@ -444,9 +445,9 @@ def _(mo):
 
 
 @app.cell
-def _(mo, split_figure, scf_data):
+def _(ANGSTROM_PER_BOHR, mo, split_figure, scf_data):
     mo.vstack([
-        mo.md(f"For ωB97M-V PySCF reports: ω = **{scf_data['omega']:.1f}** bohr⁻¹, long-range exact exchange "
+        mo.md(f"For ωB97M-V PySCF reports: ω = **{scf_data['omega']:.1f}** bohr⁻¹ (= {scf_data['omega'] / ANGSTROM_PER_BOHR:.2f} Å⁻¹), long-range exact exchange "
               f"**{scf_data['long_range_exchange']:.0%}**, short-range exact exchange "
               f"**{scf_data['short_range_exchange']:.0%}**."),
         split_figure(scf_data["omega"], scf_data["short_range_exchange"], scf_data["long_range_exchange"]),
@@ -578,7 +579,7 @@ def _(mo):
 
     | Piece | OMol25 | SPICE II | What it means |
     |---|---|---|---|
-    | ω | yes | yes | range-separated hybrid: 15% exact exchange up close, 100% far away (ω = 0.3 bohr⁻¹) |
+    | ω | yes | yes | range-separated hybrid: 15% exact exchange up close, 100% far away (ω = 0.3 bohr⁻¹ = 0.57 Å⁻¹) |
     | B97 | yes | yes | Becke's 1997 flexible functional form, refitted with different coefficients in each member |
     | M | yes | yes | meta: also uses the kinetic energy density $\tau$ |
     | -V | yes | no | nonlocal VV10 dispersion built into the functional |
@@ -637,10 +638,10 @@ def _(mo):
 
 
 @app.cell
-def _(mo, opls5_data):
-    _rows = ["| Functional | $\\omega$ (bohr⁻¹) | exact exchange, short range | exact exchange, long range |", "|---|---|---|---|"]
+def _(ANGSTROM_PER_BOHR, mo, opls5_data):
+    _rows = ["| Functional | $\\omega$ (bohr⁻¹) | $\\omega$ (Å⁻¹) | exact exchange, short range | exact exchange, long range |", "|---|---|---|---|---|"]
     for _name, _v in opls5_data["rsh"].items():
-        _rows.append(f"| {_name} | {_v['omega']:.2f} | {_v['short_range']:.1%} | {_v['long_range']:.0%} |")
+        _rows.append(f"| {_name} | {_v['omega']:.2f} | {_v['omega'] / ANGSTROM_PER_BOHR:.2f} | {_v['short_range']:.1%} | {_v['long_range']:.0%} |")
     mo.vstack([
         mo.md("\n".join(_rows)),
         mo.md("These are the values PySCF (through the libxc library) reports for the functional part of each. The dispersion terms "

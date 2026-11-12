@@ -329,7 +329,7 @@ def _(mo):
     **$K^{\text{eff}}$, exact exchange.** The exact-exchange matrix is
     $K_{\mu\nu}=\sum_{\lambda\sigma}(\mu\lambda|\nu\sigma)\,D_{\lambda\sigma}$. A hybrid functional includes a fraction of it. A
     range-separated hybrid uses a different fraction for short and long distances between the electrons. For ωB97M-V the
-    fraction is 15 % at short distance and 100 % at long distance, with the crossover set by $\omega=0.3$ bohr$^{-1}$
+    fraction is 15 % at short distance and 100 % at long distance, with the crossover set by $\omega=0.3$ bohr$^{-1}$ ($=0.57$ Å$^{-1}$; 1 bohr $=0.529$ Å)
     (see section 6 of `reading_a_dft_label.py`). $K^{\text{eff}}$ is that weighted mixture; it is **linear** in $D$. The factor $-\tfrac12$
     belongs to the closed-shell form (each electron exchanges only with electrons of the same spin).
 

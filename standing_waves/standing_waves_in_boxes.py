@@ -61,7 +61,7 @@ def _(mo):
     7. From a box to an atom
 
     Energies are measured in units of $E_1$, the lowest energy in a one-dimensional box of length $L_x$, which is
-    $E_1 = \pi^2\hbar^2/(2 m_e L_x^2)$. For an electron in a box of side $L_x = 1$ nm, $E_1 = 0.376$ eV.
+    $E_1 = \pi^2\hbar^2/(2 m_e L_x^2)$. For an electron in a box of side $L_x = 10$ Å (1 nm), $E_1 = 0.376$ eV.
     """)
     return
 
@@ -330,13 +330,13 @@ def _(counting_figure, plt):
 
 @app.cell
 def _(box_energy_ev, mo):
-    _rows = ["| Box side $L$ (nm) | $E_1$ (eV) | Lowest 3D level $3E_1$ (eV) |", "|---|---|---|"]
-    for _L in (0.1, 0.3, 1.0, 3.0, 10.0):
+    _rows = ["| Box side $L$ (Å) | $E_1$ (eV) | Lowest 3D level $3E_1$ (eV) |", "|---|---|---|"]
+    for _L in (0.1, 0.3, 1.0, 3.0, 10.0):  # in nm; shown in ångström
         _e1 = float(box_energy_ev(1, _L))
-        _rows.append(f"| {_L:g} | {_e1:.4g} | {3 * _e1:.4g} |")
+        _rows.append(f"| {_L * 10:g} | {_e1:.4g} | {3 * _e1:.4g} |")
     mo.vstack([
         mo.md("**Sizes.** An electron in a cubic box: confinement energy scales as $1/L^2$, and at atomic sizes "
-              "(0.1 nm, about one bohr) it is tens of electronvolts."),
+              "(1 Å, the size of a chemical bond) it is tens of electronvolts."),
         mo.md("\n".join(_rows)),
     ])
     return

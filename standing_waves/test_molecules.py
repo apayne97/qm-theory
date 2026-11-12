@@ -199,3 +199,42 @@ def test_real_methane_numbers_are_consistent():
     r = m.METHANE_REAL
     assert len(r["orbital_energies"]) == 5 and r["orbital_energies"][2] == r["orbital_energies"][4]
     assert sum(r["bond_orbital_on_carbon"].values()) == pytest.approx(1.0, abs=2e-3)
+
+
+# ---- section 3: orbital size and nuclear charge
+
+@pytest.mark.parametrize("n,l", [(1, 0), (2, 0), (2, 1), (3, 0), (3, 1), (3, 2)])
+def test_mean_radius_formula_against_integration(n, l):
+    r = np.linspace(1e-4, 120, 240001)
+    p = hy.radial_probability(n, l, r)
+    assert np.trapezoid(p, r) == pytest.approx(1.0, abs=1e-6)
+    assert np.trapezoid(p * r, r) == pytest.approx(m.hydrogen_like_radius(n, l), rel=1e-6)
+
+
+def test_quoted_hydrogen_sizes():
+    assert m.hydrogen_like_radius(3, 0) == 13.5
+    assert m.hydrogen_like_radius(3, 0) * m.BOHR_ANGSTROM == pytest.approx(7.14, abs=0.01)
+    assert m.hydrogen_like_radius(1, 0) * m.BOHR_ANGSTROM == pytest.approx(0.79, abs=0.01)
+
+
+@pytest.mark.parametrize("z", [1.0, 2.0, 7.5, 18.0])
+def test_radius_scales_as_one_over_z_and_energy_as_z_squared(z):
+    assert m.hydrogen_like_radius(3, 1, z) == pytest.approx(m.hydrogen_like_radius(3, 1, 1.0) / z)
+    assert m.hydrogen_like_energy(2, z) == pytest.approx(z**2 * m.hydrogen_like_energy(2, 1.0))
+    r = np.linspace(1e-4, 150 / z, 150001)
+    p = m.hydrogen_like_density(3, 1, z, r)
+    assert np.trapezoid(p, r) == pytest.approx(1.0, abs=1e-5)
+    assert np.trapezoid(p * r, r) == pytest.approx(m.hydrogen_like_radius(3, 1, z), rel=1e-5)
+
+
+def test_helium_ion_orbital_is_half_the_size_of_hydrogen():
+    assert m.hydrogen_like_radius(1, 0, 2.0) == pytest.approx(0.75)  # He+ 1s, and zeta = 2 above
+
+
+def test_atom_sizes_data():
+    d = m.atom_sizes()
+    rr = dict(zip(d["symbols"], d["mean_radius_bohr"]))
+    assert rr["H"] == pytest.approx(1.5, abs=0.02)  # exact hydrogen value
+    assert all(0.8 < v < 4.5 for v in rr.values())  # valence orbitals stay between ~0.4 and ~2.3 angstrom
+    assert rr["Li"] > rr["Be"] > rr["B"] > rr["C"] > rr["N"] > rr["O"] > rr["F"] > rr["Ne"] - 0.1  # contraction across period 2
+    assert rr["Na"] > rr["Ne"] and rr["Li"] > rr["He"]  # a new shell makes the atom larger

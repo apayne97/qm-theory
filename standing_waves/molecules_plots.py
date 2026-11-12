@@ -14,6 +14,7 @@ from qmstyle import A_COLOR, H_COLOR, INK, K_COLOR, OMEGA_COLOR, PHASE_COLOR, PO
 
 PLUS, MINUS = H_COLOR, A_COLOR
 GREY = "0.55"
+AB = mol.BOHR_ANGSTROM  # angstrom per bohr; lengths are computed in bohr and drawn in angstrom
 STATE_MAX = 2  # highest nuclear level in the slider
 MASS_RANGE = (0.25, 4.0)  # nuclear mass in units of the real one
 
@@ -35,15 +36,15 @@ def born_oppenheimer_figure(state=0, mass_factor=1.0):
     r, levels, chi = mol.nuclear_levels(STATE_MAX + 1, fit, mass=mol.REDUCED_MASS_H2PLUS * mass_factor)
     fig, (ax, bx) = plt.subplots(1, 2, figsize=(11, 4.2), gridspec_kw={"width_ratios": [1.25, 1]})
 
-    ax.plot(r, fit(r), color=POT_COLOR, lw=2, label=r"$E_{\mathrm{el}}(R)+1/R$ (electron in the field of the fixed protons)")
-    ax.plot(r_pts, e_pts, "o", color=INK, ms=3.5)
+    ax.plot(r * AB, fit(r), color=POT_COLOR, lw=2, label=r"$E_{\mathrm{el}}(R)+1/R$ (electron in the field of the fixed protons)")
+    ax.plot(r_pts * AB, e_pts, "o", color=INK, ms=3.5)
     for k, e in enumerate(levels):
-        ax.plot([r[0], r[-1]], [e, e], color=GREY if k != state else OMEGA_COLOR, lw=0.8 if k != state else 1.6)
+        ax.plot([r[0] * AB, r[-1] * AB], [e, e], color=GREY if k != state else OMEGA_COLOR, lw=0.8 if k != state else 1.6)
     scale = 0.55 * (levels[1] - levels[0]) / np.abs(chi[:, state]).max()
-    ax.plot(r, levels[state] + scale * chi[:, state], color=OMEGA_COLOR, lw=2, label=f"nuclear wave, level {state}")
-    ax.set_xlim(r[0], r[-1])
+    ax.plot(r * AB, levels[state] + scale * chi[:, state], color=OMEGA_COLOR, lw=2, label=f"nuclear wave, level {state}")
+    ax.set_xlim(r[0] * AB, r[-1] * AB)
     ax.set_ylim(-0.625, -0.46)
-    ax.set_xlabel("proton separation $R$ (bohr)")
+    ax.set_xlabel("proton separation $R$ (Å)")
     ax.set_ylabel("energy (hartree)")
     ax.legend(frameon=False, fontsize=8, loc="upper right")
     _style(ax)
@@ -90,22 +91,23 @@ def helium_figure(zeta=1.6875):
     ax.legend(frameon=False, fontsize=8, loc="upper center", ncol=1)
     _style(ax)
 
-    r = np.linspace(0, 4, 400)
-    dens = lambda z: 4 * z**3 * r**2 * np.exp(-2 * z * r)  # 4 pi r^2 (z^3/pi) exp(-2 z r)
-    bx.plot(r, dens(2.0), color=GREY, lw=1.6, ls="--", label=r"$\zeta=2$ (bare nucleus)")
-    bx.plot(r, dens(zeta), color=PHASE_COLOR, lw=2.2, label=rf"$\zeta={zeta:.3f}$")
-    bx.set_xlabel("$r$ (bohr)")
-    bx.set_ylabel(r"probability per bohr, $4\pi r^2|\varphi|^2$")
+    r = np.linspace(0, 4, 400)  # bohr
+    dens = lambda z: 4 * z**3 * r**2 * np.exp(-2 * z * r) / AB  # 4 pi r^2 (z^3/pi) exp(-2 z r), per angstrom
+    bx.plot(r * AB, dens(2.0), color=GREY, lw=1.6, ls="--", label=r"$\zeta=2$ (bare nucleus)")
+    bx.plot(r * AB, dens(zeta), color=PHASE_COLOR, lw=2.2, label=rf"$\zeta={zeta:.3f}$")
+    bx.set_xlabel("$r$ (Å)")
+    bx.set_ylabel(r"probability per Å, $4\pi r^2|\varphi|^2$")
     bx.legend(frameon=False, fontsize=9)
     _style(bx)
     fig.tight_layout()
     return fig
 
 
-def screening_figure(decay=0.5):
-    """Energy levels of a toy atom with a filled 1s shell: s, p, d columns, against the hydrogen levels -1/(2 n^2)."""
+def screening_figure(decay=0.25):
+    """`decay` is the screening distance in angstrom. Energy levels of a toy atom with a filled 1s shell: s, p, d columns, against the hydrogen levels -1/(2 n^2)."""
     fig, (ax, bx) = plt.subplots(1, 2, figsize=(11, 4.0), gridspec_kw={"width_ratios": [1.5, 1]})
-    levels = mol.screened_levels(decay=decay)
+    decay_bohr = decay / AB
+    levels = mol.screened_levels(decay=decay_bohr)
     for l, name in enumerate("spd"):
         for n in range(l + 1, 5):
             e = levels[(n, l)]
@@ -122,16 +124,54 @@ def screening_figure(decay=0.5):
     _style(ax)
 
     r = np.linspace(0.02, 8, 400)
-    bx.plot(r, -mol.screened_potential(r, 3.0, decay) * r, color=POT_COLOR, lw=2)
+    bx.plot(r * AB, -mol.screened_potential(r, 3.0, decay_bohr) * r, color=POT_COLOR, lw=2)
     bx.axhline(1.0, color=GREY, lw=0.8, ls="--")
     bx.axhline(3.0, color=GREY, lw=0.8, ls="--")
-    bx.text(7.9, 3.05, "bare nucleus (charge 3)", ha="right", fontsize=8, color=INK)
-    bx.text(7.9, 0.95, "seen through the 1s shell (charge 1)", ha="right", va="top", fontsize=8, color=INK)
+    bx.text(7.9 * AB, 3.05, "bare nucleus (charge 3)", ha="right", fontsize=8, color=INK)
+    bx.text(7.9 * AB, 0.95, "seen through the 1s shell (charge 1)", ha="right", va="top", fontsize=8, color=INK)
     bx.set_ylim(0, 3.4)
-    bx.set_xlabel("$r$ (bohr)")
+    bx.set_xlabel("$r$ (Å)")
     bx.set_ylabel(r"effective charge $Z_{\mathrm{eff}}(r)$")
     _style(bx)
     fig.subplots_adjust(left=0.08, right=0.97, bottom=0.12, top=0.92, wspace=0.25)
+    return fig
+
+
+def orbital_size_figure(z=1.0):
+    """Left: radial probability of the hydrogen-like 1s, 3s and 3d orbitals for nuclear charge z, hydrogen's (z = 1) as thin lines.
+    Right: <r> of the highest occupied orbital of the neutral atoms H to Ar (PySCF), against the hydrogen-like value for n = 1, 2, 3 at the same Z."""
+    fig, (ax, bx) = plt.subplots(1, 2, figsize=(11, 4.0), gridspec_kw={"width_ratios": [1.2, 1]})
+    r = np.linspace(0, 24, 1200)  # bohr
+    for (n, l), colour in zip(((1, 0), (3, 0), (3, 2)), (H_COLOR, A_COLOR, OMEGA_COLOR)):
+        name = f"{n}{'spd'[l]}"
+        ax.plot(r * AB, mol.hydrogen_like_density(n, l, 1.0, r) / AB, color=colour, lw=0.9, ls="--", alpha=0.7)
+        ax.plot(r * AB, mol.hydrogen_like_density(n, l, z, r) / AB, color=colour, lw=2.2,
+                label=rf"{name}: $\langle r\rangle={mol.hydrogen_like_radius(n, l, z) * AB:.2f}$ Å")
+    ax.set_xlim(0, 24 * AB)
+    ax.set_xlabel("$r$ (Å)")
+    ax.set_ylabel("probability per Å, $r^2R^2$")
+    ax.set_title(f"nuclear charge $Z={z:g}$ (dashed: $Z=1$)", fontsize=9, color=INK)
+    ax.legend(frameon=False, fontsize=8)
+    _style(ax)
+
+    d = mol.atom_sizes()
+    zs = np.array(d["z"])
+    rr = np.array(d["mean_radius_bohr"]) * AB
+    zz = np.linspace(1, 18, 200)
+    for n, ls in ((1, ":"), (2, "-."), (3, "--")):
+        bx.plot(zz, mol.hydrogen_like_radius(n, 0, zz) * AB, color=GREY, lw=1, ls=ls, label=rf"bare nucleus, $n={n}$ ($\langle r\rangle=0.79\,n^2/Z$ Å)")
+    bx.plot(zs, rr, "o-", color=PHASE_COLOR, lw=1.6, ms=5, label="neutral atom, outermost orbital (PySCF)")
+    k = int(np.clip(round(z), 1, 18)) - 1
+    bx.plot([zs[k]], [rr[k]], "o", color=INK, ms=10, mfc="none", mew=1.5)
+    for zi, sym in zip(zs, d["symbols"]):
+        if sym in ("H", "He", "Li", "Ne", "Na", "Ar"):
+            bx.annotate(sym, (zi, rr[zi - 1]), textcoords="offset points", xytext=(4, 5), fontsize=8, color=INK)
+    bx.set_xlabel("nuclear charge $Z$")
+    bx.set_ylabel(r"mean distance $\langle r\rangle$ (Å)")
+    bx.set_ylim(0, 3.2)
+    bx.legend(frameon=False, fontsize=7, loc="upper right")
+    _style(bx)
+    fig.tight_layout()
     return fig
 
 
