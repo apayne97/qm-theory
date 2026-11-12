@@ -42,15 +42,18 @@ def _(mo):
     ran the calculation. This notebook takes the labels apart one piece at a time, and each piece comes with a real
     calculation on water, so that you can see what the choice does.
 
-    **Read first:** `../quantization` (sections 3 and 5) for the idea that boundary conditions give energy levels. The
-    worked PySCF examples in `../../qm-calculations` (water, basis functions, dimers) are what the numbers here extend.
+    **Read first:** `../standing_waves/basis_sets_from_base_states.py` (the previous notebook: base states, the matrix equation
+    $\mathbf H\mathbf c=E\mathbf S\mathbf c$, the variational principle, and what a basis set is) and, behind it,
+    `../standing_waves/from_atoms_to_molecules.py` (fixed nuclei, one orbital per electron, helium's correlation energy). Those two
+    notebooks explain the second half of the label; this one adds the first half and puts the pieces together. The worked PySCF
+    examples in `../../qm-calculations` (water, basis functions, dimers) are what the numbers here extend.
 
     **Contents**
 
     1. The label has three parts
     2. Before DFT: Hartree-Fock
     3. What the calculation solves: Kohn-Sham DFT
-    4. The basis set: def2, TZ, P, D
+    4. The basis set: def2, TZ, P, D (a short return to the previous notebook, plus counterpoise)
     5. The functional: Jacob's ladder, B97, M
     6. Exact exchange and range separation: ω
     7. Dispersion: -V against D3(BJ)
@@ -100,8 +103,9 @@ def _(mo):
     ## 2. Before DFT: Hartree-Fock
 
     With $N$ electrons the Schrödinger equation cannot be separated, because the repulsion $1/r_{12}$ between two electrons
-    depends on both positions at once. The first practical approximation is to give each electron **its own orbital**
-    $\psi_i$ and to let it feel only the *average* of the others. Two ideas turn this into a method.
+    depends on both positions at once. The first practical approximation is the **orbital approximation** of
+    `from_atoms_to_molecules.py`, section 3: give each electron its own orbital $\psi_i$ and let it feel only the *average* of
+    the others (helium was the worked example there). Two ideas turn this into a method.
 
     **Antisymmetry.** Electrons are fermions: swapping any two of them must flip the sign of the wave function (the
     spinor notebook shows where this comes from). A product of orbitals does not do this, but a determinant does:
@@ -119,8 +123,9 @@ def _(mo):
     Swapping two electrons swaps two rows, which flips the sign. Putting two electrons in the same orbital makes two
     columns equal, so $\Psi = 0$: that is the Pauli exclusion principle, and it comes out for free.
 
-    **The variational principle.** Any trial wave function has an energy at or above the true ground-state energy. So the
-    best orbitals are the ones that make the energy of the determinant as low as possible. Carrying this out gives the
+    **The variational principle** (`basis_sets_from_base_states.py`, section 1): any trial wave function has an energy at or above
+    the true ground-state energy, so the best orbitals are the ones that make the energy of the determinant as low as possible.
+    Carrying this out gives the
     **Hartree-Fock (HF) equations**, one equation per orbital:
 
     $$
@@ -134,14 +139,14 @@ def _(mo):
     repulsion of an electron with itself that $\hat J$ alone contains, and it keeps electrons of the same spin apart.
 
     Written in a basis set the HF equations become the matrix equation $\mathbf F\mathbf C = \mathbf S\mathbf C\boldsymbol\varepsilon$
-    of the next section, solved by the same self-consistent loop. **Kohn-Sham DFT keeps this whole structure.** The only
+    (the equation of `basis_sets_from_base_states.py`, section 1, with $\mathbf F$ in place of $\mathbf H$), solved by the self-consistent loop of the next section. **Kohn-Sham DFT keeps this whole structure.** The only
     difference is that the exchange term $\hat K$ (and what HF leaves out) is replaced, entirely or in part, by an
     approximate exchange-correlation term.
 
     ### What Hartree-Fock misses
 
     Each electron in HF sees only the *average* position of the others. Real electrons also dodge each other instantly,
-    and the energy this saves is the **correlation energy**. It is a small fraction of the total energy, but of the same size
+    and the energy this saves is the **correlation energy** (helium's was $1.1$ eV in `from_atoms_to_molecules.py`, section 3). It is a small fraction of the total energy, but of the same size
     as the energy differences chemistry cares about. Dispersion, the attraction between two molecules with no charge or
     hydrogen bond, is a pure correlation effect, so HF cannot produce it at all. The numbers below come from the
     calculations of this notebook (section 7 for the methane dimer, section 6 for the others).
@@ -180,7 +185,7 @@ def _(mo):
 
     - **Wave-function methods** (MP2, coupled cluster such as CCSD(T)) add correlation on top of the HF determinant. They
       can be very accurate, and CCSD(T) is the usual reference in this notebook, but their cost grows steeply with
-      system size.
+      system size. `coupled_cluster.py` (the last notebook) explains where CCSD(T) comes from.
     - **Density functional theory** drops the wave function and works with the density, keeping a cost close to
       Hartree-Fock's. The price is an *approximate* exchange-correlation term, and that approximation is what the
       letters of the label describe.
@@ -218,7 +223,7 @@ def _(mo):
 
     1. guess a density,
     2. build the Kohn-Sham matrix $F$ from it,
-    3. solve $F C = S C \varepsilon$ for the orbital coefficients $C$ and energies $\varepsilon$ ($S$ is the overlap of the basis functions),
+    3. solve $F C = S C \varepsilon$ for the orbital coefficients $C$ and energies $\varepsilon$ (the equation of `basis_sets_from_base_states.py`, section 1; $S$ is the overlap of the basis functions),
     4. form the new density, and repeat until the energy stops changing.
 
     ### What is in the matrix $\mathbf F$
@@ -241,7 +246,8 @@ def _(mo):
     - The $-\mathrm{V}$ in ωB97M-V adds one more, non-local term.
 
     Everything except $\mathbf T$ and $\mathbf V$ depends on $\mathbf D$, which comes from solving with $\mathbf F$. That
-    circularity is the reason the loop has to be repeated until it is self-consistent.
+    circularity is the reason the loop has to be repeated until it is self-consistent. `kohn_sham_matrix.py` (the next notebook)
+    derives the equation and builds each of these pieces for this same water calculation.
 
     For the first element $F_{11}$ of water at ωB97M-V/def2-TZVPD (hartree; a separate one-off PySCF check, not stored
     in the `data_*.json` files), the pieces are $T=+76.978$, $V=-99.580$, $J=+19.827$, $V^{xc}=-3.611$, VV10 $+0.005$ and
@@ -270,7 +276,7 @@ def _(mo, scf_figure, scf_data):
 def _(mo):
     mo.md(r"""
     Two sets of choices enter here that you will meet again in the labels: **how the orbitals are written down** (the
-    basis set, next section) and **which approximation to $E_{xc}$ is used** (sections 5 to 7).
+    basis set, next section, which builds on the previous notebook) and **which approximation to $E_{xc}$ is used** (sections 5 to 7).
     """)
     return
 
@@ -280,7 +286,10 @@ def _(mo):
     mo.md(r"""
     ## 4. The basis set: def2, TZ, P, D
 
-    The orbitals $\varphi_i$ are written as sums of fixed, atom-centred functions (the basis functions $\chi_\mu$):
+    The previous notebook, `basis_sets_from_base_states.py`, explained what a basis set is and where each letter of
+    `def2-TZVPD` comes from (its section 6 is the decoding table). Only what a DFT label adds is covered here: how the density is
+    written in the basis, the extra rows `SV`, `QZ` and `PP`, the basis sizes of the two datasets, and counterpoise. The orbitals
+    $\varphi_i$ are sums of the atom-centred basis functions $\chi_\mu$ (LCAO):
 
     $$
     \varphi_i(\mathbf r) = \sum_\mu C_{\mu i}\,\chi_\mu(\mathbf r),
@@ -289,7 +298,7 @@ def _(mo):
     $$
 
     where $P_{\mu\nu}$ is the density matrix built from the coefficients. The calculation only chooses the numbers
-    $C_{\mu i}$; a bigger basis gives it more freedom. The letters describe how that freedom was built.
+    $C_{\mu i}$; a bigger basis gives it more freedom.
 
     | Piece | Means | Why |
     |---|---|---|
@@ -299,9 +308,8 @@ def _(mo):
     | **PP** | a second set of polarization functions (on hydrogen too) | more freedom for the bond region |
     | **D** | diffuse functions: very wide, very low-exponent functions | anions, hydrogen bonds and dispersion all live far from the nuclei |
 
-    Each basis function is a *contracted* Gaussian, a fixed sum of several simple Gaussians
-    $e^{-\alpha r^2}$ with fixed coefficients, so that it has roughly the right shape. The table below counts contracted
-    shells **for one atom**; an $s$ shell is 1 function, $p$ is 3, $d$ is 5, $f$ is 7.
+    The basis functions are the contracted Gaussians of `basis_sets_from_base_states.py`, section 4. The table below counts contracted
+    shells **for one atom** (an $s$ shell is 1 function, $p$ is 3, $d$ is 5, $f$ is 7), with the same shell data as the water table there.
     """)
     return
 
@@ -338,7 +346,7 @@ def _(mo):
     but each extra function gains less energy. The figure below shows the effect: most of the drop from `def2-TZVP` to
     `def2-TZVPD`, where only diffuse functions are added, is the removal of borrowing.
 
-    **What a diffuse function is, and is not.** It is still centred on an atom: a Gaussian with a small exponent, so it
+    **What a diffuse function is, and is not.** As the previous notebook showed for hydrogen, it is still centred on an atom: a Gaussian with a small exponent, so it
     is very wide. It does not sit in the space between the molecules; it reaches that space from its own atom. On oxygen the
     widest Gaussian in `def2-TZVP` falls to $1/e$ of its height at about 1.3 Å, and the one that `def2-TZVPD` adds does
     so at about 2.3 Å, which at an O···O distance of 2.9 Å nearly reaches the neighbour. Little electron density sits
@@ -352,6 +360,8 @@ def _(mo):
 
     Anions need diffuse functions for the same reason: the extra electron is loosely bound, so its density extends far
     from the nuclei.
+
+    This is the point of the letter D in `def2-TZVPD`. The next sections leave the basis set and turn to the second ingredient of the label, the functional.
     """)
     return
 
@@ -836,6 +846,16 @@ def _(mo):
 
     **Computed here** (not from memory): all numbers and figures in sections 2 to 8 and the tables of section 9 marked as computed, from PySCF 2.14 on the rigid
     geometries in `compute_dft_data.py`.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    **Next.** Section 3 stated the equation $FC=SC\varepsilon$ and listed what is in $F$ without deriving either.
+    `kohn_sham_matrix.py` does that for the same water calculation, term by term. After it, `coupled_cluster.py` explains the
+    method that this notebook used as its reference (CCSD(T)).
     """)
     return
 

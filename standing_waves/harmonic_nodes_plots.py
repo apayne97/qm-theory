@@ -82,3 +82,23 @@ def harmonic_nodes_figure(l, m, show_nodes=True):
     )
     fig.tight_layout()
     return fig
+
+
+def harmonic_nodes_gallery_figure(l_max=3, show_nodes=True):
+    """All real harmonics up to l_max in rows (s, p, d, f), as harmonic_gallery_figure, with all their nodes drawn
+    (cones orange, planes green) when show_nodes is True."""
+    cols = 2 * l_max + 1
+    fig = plt.figure(figsize=(1.55 * cols, 1.65 * (l_max + 1)))
+    for l in range(l_max + 1):
+        for m in range(-l, l + 1):
+            ax = fig.add_subplot(l_max + 1, cols, l * cols + (m + l_max) + 1, projection="3d")
+            extent = _draw_shape(ax, l, m, 60, 120)
+            if show_nodes:
+                for artist in list(ax.collections):
+                    artist.set_alpha(0.55)
+                _draw_nodes(ax, l, m, 0.95 * extent)
+            ax.view_init(elev=VIEW_ELEV, azim=VIEW_AZIM)
+            ax.set_title(f"$m_\\ell={m}$", fontsize=8, pad=-6)
+        fig.text(0.005, 1 - (l + 0.5) / (l_max + 1), f"$\\ell={l}$\n{'spdf'[l]}", fontsize=10, va="center", color=INK)
+    fig.subplots_adjust(left=0.05, right=0.995, top=0.97, bottom=0.01, wspace=-0.12, hspace=0.05)
+    return fig

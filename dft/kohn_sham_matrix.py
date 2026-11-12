@@ -41,6 +41,11 @@ def _(mo):
     It uses one real calculation as the example: water at ωB97M-V/def2-TZVPD, the same calculation as in
     `reading_a_dft_label.py` (58 basis functions, 5 occupied orbitals, total energy $-76.4334$ Ha).
 
+    **Read first:** `reading_a_dft_label.py`, sections 2 and 3, which state this equation and list the pieces of $F$, and
+    `../standing_waves/basis_sets_from_base_states.py`, section 1, which derives the same matrix equation for a general
+    Hamiltonian $H$. Here $H$ is replaced by the Kohn-Sham operator and the derivation is redone slowly, with the matrices
+    of a real molecule in front of you.
+
     **Contents**
 
     1. Where the equation comes from
@@ -52,7 +57,7 @@ def _(mo):
     7. What is verified and what is not
 
     The numbers come from `compute_ks_matrix.py` (PySCF 2.14), which writes `data_ks.json`; this notebook only reads
-    that file. Energies are in hartree (Ha) unless stated. A hartree is the atomic unit of energy, 27.2114 eV.
+    that file. Energies are in hartree (Ha) unless stated (atomic units, as before; 1 Ha = 27.2114 eV).
     """)
     return
 
@@ -78,15 +83,16 @@ def _(mo):
     $\varepsilon_i$ is the energy of orbital $i$. This equation says: applying $\hat f$ to the orbital gives back the
     same orbital multiplied by a number.
 
-    **Writing the orbitals with a basis.** A computer cannot store a function of $\mathbf r$ exactly. Instead, each
-    orbital is written as a sum of $N$ fixed, known *basis functions* $\phi_\mu(\mathbf r)$ (Gaussian-type functions
+    **Writing the orbitals with a basis.** A computer cannot store a function of $\mathbf r$ exactly. Instead, as in
+    `basis_sets_from_base_states.py`, each orbital is written as a sum of $N$ fixed, known *basis functions* $\phi_\mu(\mathbf r)$ (Gaussian-type functions
     centred on the atoms), with unknown numbers $C_{\mu i}$ as the weights:
 
     $$
     \psi_i(\mathbf r) = \sum_{\mu=1}^{N} C_{\mu i}\,\phi_\mu(\mathbf r).
     $$
 
-    Now only the numbers $C_{\mu i}$ have to be found. The steps from the operator equation to a matrix equation are:
+    Now only the numbers $C_{\mu i}$ have to be found. The steps from the operator equation to a matrix equation are the ones of
+    `basis_sets_from_base_states.py`, section 1 (with $H$ replaced by $\hat f$), written out again with the matrix product made explicit:
 
     - **(a) Insert the sum.** Put the sum into $\hat f\psi_i=\varepsilon_i\psi_i$. The operator acts on each
       $\phi_\mu$ separately, because the weights $C_{\mu i}$ are just numbers:
@@ -209,7 +215,8 @@ def _(mo):
     The equation $FC=SC\varepsilon$ is called a *generalized eigenproblem*. If $S$ were the identity matrix it would
     be an ordinary eigenproblem $FC=C\varepsilon$: find the vectors that $F$ only stretches, and the stretch factors.
     The overlap $S$ is what makes it generalized. The smallest example has two basis functions that overlap,
-    and a symmetric $F$:
+    and a symmetric $F$. It is the H$_2^+$ calculation of `basis_sets_from_base_states.py`, section 3, with $a=H_{AA}$,
+    $b=H_{AB}$ and $s=S$ (the overlap integral there); the solution below is the same two-line argument:
 
     $$
     F=\begin{pmatrix}a&b\\ b&a\end{pmatrix},\qquad
@@ -323,7 +330,7 @@ def _(mo):
     $K_{\mu\nu}=\sum_{\lambda\sigma}(\mu\lambda|\nu\sigma)\,D_{\lambda\sigma}$. A hybrid functional includes a fraction of it. A
     range-separated hybrid uses a different fraction for short and long distances between the electrons. For ωB97M-V the
     fraction is 15 % at short distance and 100 % at long distance, with the crossover set by $\omega=0.3$ bohr$^{-1}$
-    (see section 5 of `reading_a_dft_label.py`). $K^{\text{eff}}$ is that weighted mixture; it is **linear** in $D$. The factor $-\tfrac12$
+    (see section 6 of `reading_a_dft_label.py`). $K^{\text{eff}}$ is that weighted mixture; it is **linear** in $D$. The factor $-\tfrac12$
     belongs to the closed-shell form (each electron exchanges only with electrons of the same spin).
 
     **$V^{\text{nlc}}$, the VV10 non-local term.** A correlation correction that mimics dispersion (the "V" in ωB97M-V). It
@@ -477,7 +484,7 @@ def _(mo):
     At the end, building $F$ from the final $D$ and solving gives back the same $D$: the density is *self-consistent*.
     Production programs mix with a smarter scheme than the simple average used below (DIIS), and so need fewer cycles.
 
-    **Hartree-Fock for comparison.** The loop and the equation $FC=SC\varepsilon$ are identical. Only the matrix differs:
+    **Hartree-Fock for comparison** (`reading_a_dft_label.py`, section 2). The loop and the equation $FC=SC\varepsilon$ are identical. Only the matrix differs:
     $F^{\text{HF}}=T+V+J-\tfrac12K$, with the full ($100\,\%$) exact exchange $K$ and no $V^{\text{xc}}$ or $V^{\text{nlc}}$. DFT replaces
     some or all of $K$ by $V^{\text{xc}}$, which also contains correlation.
     """)
@@ -606,6 +613,16 @@ def _(mo):
     reproduces $F$, which supports it but does not prove the physical argument); that triple products of basis functions appear in density fitting and higher-order response properties (mentioned in the counting section); that the first ionisation energy is approximated by $-\varepsilon_{\text{HOMO}}$ (not tested here).
 
     **Settings not stated by the label:** the VV10 non-local term used PySCF's default coarser grid, (50, 194), not (99, 590).
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    **Next.** This notebook took the exchange-correlation term as given. `coupled_cluster.py` goes the other way past
+    Hartree-Fock: it keeps the wave function and adds correlation excitation by excitation, which gives the CCSD(T) numbers that
+    `reading_a_dft_label.py` used as the reference for the water and methane dimers.
     """)
     return
 

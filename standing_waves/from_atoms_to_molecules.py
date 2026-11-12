@@ -44,11 +44,15 @@ def _(mo):
     several nuclei, and no exact solution. Chemistry gets by with three approximations that are made one after the other:
     **fixed nuclei** (Born-Oppenheimer), **one orbital per electron** (the orbital approximation), and **orbitals built from
     atom-centred functions** (LCAO). This notebook shows what each one assumes, what it costs, and how the resulting orbitals
-    (hybrids, bonds) look. It is the bridge between hydrogen (`spherical_harmonics_and_hydrogen.py`) and the Hartree-Fock and
-    DFT notebooks (`../dft/`).
+    (hybrids, bonds) look. It is the bridge between hydrogen (`spherical_harmonics_and_hydrogen.py`) and the rest of the path:
+    the third approximation, which functions to put on the atoms, is taken up in `basis_sets_from_base_states.py` (next),
+    and the Hartree-Fock and DFT notebooks (`../dft/`) follow after that.
 
-    **Read first:** `spherical_harmonics_and_hydrogen.py` (s, p shapes and the real spherical harmonics) and, for the
-    H$_2^+$ calculation that section 2 reuses, section 3 of `basis_sets_from_base_states.py`.
+    **Read first:** `spherical_harmonics_and_hydrogen.py` (s, p shapes and the real spherical harmonics). Section 2 plots
+    the H$_2^+$ energy curve that `basis_sets_from_base_states.py`, section 3, computes with two basis functions; here it is
+    used as given. Worked calculations that use these ideas are in `../../qm-calculations`: `carbon` (the carbon atom, its density and a p
+    orbital), `methane` (its molecular orbitals and a C-H bond orbital, used in section 5) and `basis-functions` (the shapes of the basis
+    functions on hydrogen and oxygen, as in the next notebook).
 
     **Contents**
 
@@ -59,8 +63,8 @@ def _(mo):
     5. Methane: one level, then three
     6. What was checked, and what was not
 
-    Atomic units throughout: lengths in bohr, energies in hartree (1 hartree $=27.2$ eV), $\hbar=m_e=1$. Energies of the
-    methane toy are in eV. Everything is computed in `molecules.py` and tested in `test_molecules.py`; the H$_2^+$ energies
+    Atomic units throughout, as in `spherical_harmonics_and_hydrogen.py` and every later notebook: lengths in bohr, energies in
+    hartree (1 hartree $=27.2$ eV), $\hbar=m_e=1$. Energies of the methane toy are in eV. Everything is computed in `molecules.py` and tested in `test_molecules.py`; the H$_2^+$ energies
     are the PySCF numbers of `data_basis_sets.json`.
     """)
     return
@@ -73,7 +77,7 @@ def _(mo):
         - **Born-Oppenheimer approximation**: solve for the electrons with the nuclei held at fixed positions, then let the
           nuclei move in the energy surface that results.
         - **Orbital**: a one-electron wave $\varphi(\mathbf r)$. The orbital approximation writes the many-electron wave as a
-          product (made antisymmetric, see the Hartree-Fock notebook) of one orbital per electron.
+          product (made antisymmetric in `../dft/reading_a_dft_label.py`, section 2) of one orbital per electron.
         - **Mean field**: each electron feels the nucleus plus the *average* charge cloud of the others, not their instantaneous positions.
         - **Screening**: the pull of the nucleus on an outer electron is reduced by the inner electrons.
         - **LCAO**: linear combination of atom-centred functions, $\psi=\sum_\mu c_\mu\chi_\mu$.
@@ -200,7 +204,7 @@ def _(mo):
     $$
 
     so that each electron moves in the field of the nucleus plus the *average* cloud of the other. (Two electrons may share the
-    same spatial orbital only if their spins are opposite; this is the Pauli principle, and the Hartree-Fock notebook
+    same spatial orbital only if their spins are opposite; this is the Pauli principle, and `reading_a_dft_label.py`, section 2,
     makes the product antisymmetric in general.)
 
     Take the hydrogen-like function $\varphi\propto e^{-\zeta r}$ and let $\zeta$ be the one free number. The energy in
@@ -435,9 +439,12 @@ def _(mo):
        electrons are fast (here by a factor of about ten in energy).
     3. **Orbital approximation:** one orbital per electron in the mean field of the others. In helium it recovers 98 % of the energy; the rest is
        the correlation energy, the target of DFT and coupled cluster. Screening splits $s<p<d$ at the same $n$.
-    4. **LCAO** (atom-centred functions, as in the basis-set notebook) gives molecular orbitals; the symmetry labels $a_1$ and $t_2$ say how
+    4. **LCAO** (atom-centred functions; which ones to choose is the next notebook) gives molecular orbitals; the symmetry labels $a_1$ and $t_2$ say how
        many levels there are at what energies. Hybrids are a rewriting of occupied orbitals, and $1+n\cos\theta=0$ gives the bond angles
        $180^\circ,120^\circ,109.47^\circ$.
+
+    **Next.** The third approximation, LCAO, was used here for methane with invented numbers. `basis_sets_from_base_states.py`
+    asks what the atom-centred functions should be, and ends at the `def2-TZVPD` label that the DFT notebooks decode.
     """)
     return
 
