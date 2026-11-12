@@ -54,13 +54,15 @@ def _(mo):
     mo.md(r"""
     # Coupled Cluster Theory: Why CCSD(T) Is the Reference
 
-    The Hartree-Fock section of the DFT notebook ends with two ways past Hartree-Fock: density functional theory, and
-    wave-function methods that add the missing electron correlation on top of the Hartree-Fock determinant. The DFT
-    notebook uses CCSD(T), a coupled cluster method, as the reference for the water dimer and the methane dimer. This
-    notebook explains what that name means: where the method comes from, the equations behind it (with the derivation
-    in small steps), a short working implementation, and what it costs.
+    The Hartree-Fock section of `reading_a_dft_label.py` (section 2) ends with two ways past Hartree-Fock: density functional theory,
+    which that notebook and `kohn_sham_matrix.py` followed, and wave-function methods that add the missing electron correlation on
+    top of the Hartree-Fock determinant. This last notebook takes the second way. `reading_a_dft_label.py` uses CCSD(T), a coupled
+    cluster method, as the reference for the water dimer and the methane dimer; here we explain what that name means: where the
+    method comes from, the equations behind it (with the derivation in small steps), a short working implementation, and what it costs.
 
-    **Read first:** `reading_a_dft_label.py`, section 2 (Hartree-Fock: Slater determinant, exchange, what HF misses).
+    **Read first:** `reading_a_dft_label.py`, section 2 (Hartree-Fock: Slater determinant, exchange, what HF misses), and
+    `../standing_waves/from_atoms_to_molecules.py`, section 3 (helium: the correlation energy as the gap between the best orbital
+    product and the exact energy).
 
     **Contents**
 
@@ -711,7 +713,7 @@ def _(disp_data, interaction_figure, ladder_data, mo):
         mo.md(r"""
         ### The dimers of the DFT notebook
 
-        The numbers below are the ones already in the DFT notebook (`data_ladder.json`, `data_dispersion.json`), all with the
+        The numbers below are the ones already in `reading_a_dft_label.py` (`data_ladder.json`, `data_dispersion.json`), all with the
         def2-TZVPD basis and counterpoise correction. The CCSD(T) column is the method of this notebook, run through the
         PySCF CCSD and `ccsd_t` calls; the DFT columns are from the functionals of that notebook.
         """),
@@ -727,7 +729,7 @@ def _(disp_data, interaction_figure, ladder_data, mo):
             f"because there is no charge, hydrogen bond or permanent moment to attract the molecules, and what holds them together "
             f"is the correlated motion of electrons in the two molecules, which a single determinant cannot describe. CCSD(T) gives "
             f"{disp_data['ccsdt']['cp']:+.2f} kcal/mol, attractive. The difference between a functional with a dispersion term and without, "
-            f"in the DFT notebook section 7, is the density-functional counterpart of what the doubles amplitudes of this notebook "
+            f"in `reading_a_dft_label.py`, section 7, is the density-functional counterpart of what the doubles amplitudes of this notebook "
             f"capture: an electron on one molecule and an electron on the other moving in step. In the amplitude "
             f"language of section 4 it is a *connected double excitation with one electron excited on each molecule*, which is already "
             f"present in the MP2 amplitudes. (The product of a double on each molecule, the quadruple of section 3, is the disconnected term "

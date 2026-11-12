@@ -60,11 +60,14 @@ def _(mo):
     The previous lecture ended with a promise: *identifying useful base states for electrons bound to a nucleus will be
     the goal of the next lecture*. The hydrogen notebook (`spherical_harmonics_and_hydrogen.py`) kept that promise for one
     electron and one nucleus. This notebook asks what to do when the exact base states are not available, which is the
-    case for every molecule. The answer, **a basis set**, is the thing named in the second half of a label such as
-    `def2-TZVPD`.
+    case for every molecule. The previous notebook (`from_atoms_to_molecules.py`) named LCAO, orbitals built from
+    atom-centred functions, as the third approximation of chemistry and used it for methane with invented numbers. This notebook
+    asks which functions to use and how the coefficients are found. The answer, **a basis set**, is the thing named in the
+    second half of a label such as `def2-TZVPD`, and the DFT notebooks that follow start from it.
 
     **Read first:** `spherical_harmonics_and_hydrogen.py` (this folder), for the hydrogen orbitals and the real spherical
-    harmonics that reappear in section 6.
+    harmonics that reappear in section 5, and `from_atoms_to_molecules.py`, sections 1 and 5, for why molecules have no
+    closed-form base states and what LCAO looks like.
 
     **Contents**
 
@@ -76,8 +79,7 @@ def _(mo):
     6. Where this leads: the `def2` label
     7. What was checked, and what was not
 
-    Units are atomic units: lengths in bohr ($a_0 = 0.0529$ nm), energies in hartree (1 hartree $=27.2$ eV),
-    $\hbar=m_e=1$. The numbers that need PySCF come from `compute_basis_sets.py`, which writes `data_basis_sets.json`;
+    Units are atomic units, as in `from_atoms_to_molecules.py` (bohr, hartree, $\hbar=m_e=1$). The numbers that need PySCF come from `compute_basis_sets.py`, which writes `data_basis_sets.json`;
     the notebook only reads that file.
     """)
     return
@@ -244,17 +246,10 @@ def _(mo):
     mo.md(r"""
     ## 3 Many nuclei: atom-centred functions and LCAO
 
-    Why not simply use the exact atomic eigenfunctions of the hydrogen notebook for every atom in every molecule?
-    The hydrogen orbitals exist in closed form only because the problem has one electron and one fixed centre of
-    force, so the potential depends on one distance $r$ and the variables separate (the hydrogen notebook, sections 1 and 4). Every complication breaks this:
-
-    - **Several electrons.** Each electron is also pushed by the others, through the term $1/\lvert\mathbf r_1-\mathbf r_2\rvert$, which
-      ties the positions together. The wave depends on all positions at once and no separation into one-electron
-      parts exists.
-    - **Several nuclei.** The potential is a sum of pulls from different centres. It has no spherical symmetry
-      around any single point, so the radial and angular parts no longer separate.
-
-    So there are no closed-form base states for a molecule, and the strategy of section 2 takes over: choose fixed
+    Why not simply use the exact hydrogen orbitals for every atom in every molecule? They exist in closed form only because
+    there is one electron and one centre of force. With several electrons pushing on each other and several nuclei pulling
+    from different centres, nothing separates (`from_atoms_to_molecules.py`, section 1). So there are no closed-form
+    base states for a molecule, and the strategy of section 2 takes over: choose fixed
     functions, build the matrices, and let the coefficients find the best combination. The choice made in chemistry is to centre
     the functions $\chi_\mu$ **on the atoms** and to let each molecular wave be
 
@@ -262,7 +257,7 @@ def _(mo):
     \psi(\mathbf r)=\sum_\mu c_\mu\,\chi_\mu(\mathbf r).
     $$
 
-    This is the **LCAO** idea. The functions on an atom look like atomic orbitals, because an electron near a
+    This is the **LCAO** idea, already used for methane in `from_atoms_to_molecules.py`, section 5. The functions on an atom look like atomic orbitals, because an electron near a
     nucleus mostly feels that nucleus, and the coefficients mix them into bonds. Whether the shapes are
     well chosen is checked by the variational principle: lower energy is better.
 
@@ -320,7 +315,8 @@ def _(mo):
     The sum $c_A=c_B$ puts extra amplitude between the protons (**bonding**), the difference puts a node there
     (**antibonding**). Only the bonding energy dips below the energy $-\tfrac12$ of a separated hydrogen atom and a
     proton. Two functions give a minimum at $R\approx 2.49$ bohr and a binding energy of about 1.8 eV. The dots are
-    a calculation with a very large basis on each proton (PySCF, `aug-cc-pV5Z`): it has its minimum near
+    a calculation with a very large basis on each proton (PySCF, `aug-cc-pV5Z`; the same points as the energy curve of
+    `from_atoms_to_molecules.py`, section 2): it has its minimum near
     $R=2.0$ bohr and a binding energy of about 2.8 eV, so two functions give roughly 63 % of the bond energy. The 2-function curve lies above the dots at every $R$, as the variational principle
     requires. **Making the basis richer on each atom is what the rest of the notebook is about.**
     """)
@@ -531,8 +527,9 @@ def _(mo):
     ### Polarization and diffuse functions: the hydrogen atom as a test
 
     Two more ingredients, **P** and **D**, can be tested on the hydrogen atom, where the exact answer is
-    known. With one electron, the lowest energy of the Hartree-Fock equations (the UHF energy) is exact *within* the basis, so
-    every difference from $-\tfrac12$ hartree is a basis-set error. The figure shows, for several basis sets (PySCF):
+    known. With one electron, the lowest energy of the Hartree-Fock equations (the UHF energy; the method is explained in
+    `../dft/reading_a_dft_label.py`, section 2, and for one electron it just solves the one-electron problem in the basis)
+    is exact *within* the basis, so every difference from $-\tfrac12$ hartree is a basis-set error. The figure shows, for several basis sets (PySCF):
 
     - **Left:** the polarizability $\alpha_{\text{pol}}$, how much dipole an electric field $F$ induces. The atom's
       energy in a weak field is $-\tfrac12\alpha_{\text{pol}}F^2$, and it was obtained here from small fields
@@ -618,9 +615,10 @@ def _(mo):
     (section 1), with the Fock or Kohn-Sham matrix in place of $\mathbf H$ (stated here, not derived). That matrix
     is the subject of the DFT notebooks.
 
-    **To continue:** `../dft/reading_a_dft_label.py`, section 4 ("The basis set: def2, TZ, P, D"), decodes `def2-TZVPD` and
-    `def2-TZVPPD` as used by OMol25 and SPICE II and shows, with counterpoise corrections on the water dimer, why the diffuse
-    functions matter between molecules. It is not repeated here.
+    **To continue:** `../dft/reading_a_dft_label.py` takes the other half of the label. Its section 2 introduces Hartree-Fock,
+    the first method that supplies that matrix; its sections 3 to 7 explain the functional and the dispersion term; and its
+    section 4 returns to `def2-TZVPD` and `def2-TZVPPD` as used by OMol25 and SPICE II, adding only the counterpoise
+    test of why the diffuse functions matter between molecules. What this notebook explains is not repeated there.
 
     **Takeaways for a slide**
 

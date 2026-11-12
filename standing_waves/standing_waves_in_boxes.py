@@ -45,7 +45,7 @@ def _(mo):
     A wave on a string fixed at both ends can only vibrate in certain patterns, and each pattern has its own
     frequency. The same is true of the wave that describes an electron confined to a region. This notebook follows
     that idea from a line, to a square, to a cube, and shows what changes at each step. The last section prepares the
-    step from a cube to a sphere, which is the shape of an atom.
+    step from a cube to a sphere, which is the shape of an atom (the next notebook, `spherical_harmonics_and_hydrogen.py`).
 
     **Read first:** `../quantization`, section 3 (the box in one dimension). This notebook repeats its main result
     briefly and then goes further.
@@ -105,6 +105,10 @@ def _(mo):
     Three things to take from this. The levels are labelled by a whole number because the wave has to fit. The levels
     are not evenly spaced: $E_n$ grows as $n^2$. And the lowest energy $E_1$ is not zero: squeezing the wave into a box
     forces it to curve, and the curvature costs energy. It also grows as the box gets smaller ($E_1\propto 1/L^2$).
+
+    One more fact is used later. These waves are enough to build any shape of the string that is zero at both ends: every such
+    shape is a sum $\sum_n c_n\sin(n\pi x/L)$ (a Fourier series). The drumhead and sphere sections of the next notebook
+    extend this to round membranes and to the sphere.
     """)
     return
 

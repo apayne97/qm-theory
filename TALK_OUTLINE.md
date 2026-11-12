@@ -62,16 +62,22 @@ y dark cyan, z teal; positive blue, negative red.
 - Orbital approximation: helium with one shared 1s orbital (E(ζ), ζ = Z − 5/16), correlation energy, screening so 2s < 2p — §3
 - Hybrids sp, sp², sp³ and the angles from 1 + n cos θ = 0 — §4
 - Methane: LCAO symmetry toy (a1 + 3 t2), four equivalent bond orbitals, link to carbon/methane in `~/science/qm-calculations` — §5
-- Short bridge also in `spherical_harmonics_and_hydrogen.py` §7. Takeaways for a slide are at the end of §5; basis sets themselves follow in Part 5
-  (`basis_sets_from_base_states.py` §3 has the H2+ LCAO calculation with two functions).
+- Short bridge also in `spherical_harmonics_and_hydrogen.py` §7. Takeaways for a slide are at the end of §5.
+
+## Part 3b. Basis sets: which functions on the atoms (gallery 04, directly after Part 3)
+- Base states, the matrix equation HC = ESC, the variational principle; truncated expansion on a toy well — `standing_waves/basis_sets_from_base_states.py` §1–2
+- Atom-centred functions and LCAO, H2+ with two functions (the LCAO calculation behind Part 3's third approximation) — §3
+- Slater vs Gaussian, contraction STO-nG — §4
+- Shells, zeta, polarization P, diffuse D, water vs basis size — §5
+- The `def2-TZVPD` label decoded — §6; leads into Part 4/5
 
 ## Part 4. Hartree-Fock: the bridge to DFT
-- Slater determinant, J and K, what HF misses — `dft/reading_a_dft_label.py` §2
+- Slater determinant, J and K, what HF misses — `dft/reading_a_dft_label.py` §2 (needs Part 3 §3 orbital approximation and Part 3b §1 variational principle)
 
 ## Part 5. DFT and the labels (longest part)
 - The label has three parts — `reading_a_dft_label.py` §1
 - Kohn-Sham equations, what is in F — §3; derivation in `dft/kohn_sham_matrix.py` §1–5, numerics §6
-- Basis sets (def2, TZ, P, D), counterpoise — §4
+- Basis sets in the label (sizes of the two datasets, counterpoise) — §4; the content is Part 3b
 - Jacob's ladder, B97, meta — §5
 - Range separation ω — §6
 - Dispersion: -V vs D3(BJ) — §7

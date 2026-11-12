@@ -113,7 +113,8 @@ def _(mo):
     nodes of each kind.
 
     **Read first:** `standing_waves_in_boxes.py` (this folder), and `../quantization`, section 5, which states the hydrogen
-    quantum numbers without deriving them. This notebook supplies the reasons.
+    quantum numbers without deriving them. This notebook supplies the reasons, and the later notebooks (`from_atoms_to_molecules.py`,
+    `basis_sets_from_base_states.py`, `../dft/`) use $n$, $\ell$, $m_\ell$ and the orbital shapes unchanged.
 
     **Contents**
 
@@ -127,8 +128,8 @@ def _(mo):
 
     **How much is derived.** The full separation of the Schrödinger equation is not repeated here. The equations
     that come out of it are stated, and each statement is checked numerically in `test_hydrogen.py` (the list is at
-    the end of section 7). Units are atomic units: lengths in bohr ($a_0 = 0.0529$ nm), energies in hartree
-    (1 hartree $=27.2$ eV), $\hbar=m_e=1$.
+    the end of section 7). The box notebook measured energy in units of $E_1$; from here on units are atomic units, here and
+    in every later notebook: lengths in bohr ($a_0 = 0.0529$ nm), energies in hartree (1 hartree $=27.2$ eV), $\hbar=m_e=1$.
     """)
     return
 
@@ -151,7 +152,7 @@ def _(mo):
           them. The polar and azimuthal nodes together are the **angular nodes**, $\ell=n_\vartheta+n_\varphi$ in number, and
           all the nodes are $N_{\text{nodes}}=n-1=n_r+n_\vartheta+n_\varphi$.
         - **Drumhead mode**: a standing wave of a circular membrane held fixed at its rim.
-        - **Hartree**: the atomic unit of energy, $27.211$ eV; hydrogen's lowest level is $-\tfrac12$ hartree.
+        - Hydrogen's lowest level is $-\tfrac12$ hartree.
         - We write $m_\ell$ for the whole number that counts turns around the axis, because the plain letter $m$ is
           used for mass.
         """)
@@ -179,13 +180,9 @@ def _(mo):
     a **radial** wave $R$ that depends only on the distance, and an **angular** wave $Y$ that depends only on the direction,
     that is, on the position on a sphere around the nucleus. The two parts are linked by a single number. The angular
     wave contributes an energy that depends on how much it curves over the sphere; we will see that this number is
-    $\ell(\ell+1)$, and it enters the radial equation as a repulsive term. So the plan is:
-
-    1. Learn to describe a position by a distance and angles instead of $x$, $y$, $z$ (section 2).
-    2. Look at the nodes of a string and of a drumhead, to learn what a node is and which way it can point (section 3).
-    3. Find all the waves on a sphere and the number $\ell(\ell+1)$ that goes with each (section 4).
-    4. Put that number into the radial equation and find its allowed energies (section 5).
-    5. Multiply the two parts and read the shapes (section 6).
+    $\ell(\ell+1)$, and it enters the radial equation as a repulsive term. Sections 2 to 6 follow the order of the contents above:
+    coordinates, nodes, the waves on a sphere and their number $\ell(\ell+1)$, the radial equation with that number in it, and the
+    product of the two parts.
 
     The kinetic energy in these coordinates, the **Laplacian** $\nabla^2$, is derived at the end of section 2. How the
     equation then splits into an angular and a radial part, what the effective potential is, and how the hydrogen
@@ -370,7 +367,7 @@ def _(mo):
     $$
 
     The three directions are perpendicular, so the small cell in the figure is nearly a box, and its volume is
-    $h_rh_\vartheta h_\varphi\,dr\,d\vartheta\,d\varphi=r^2\sin\vartheta\,dr\,d\vartheta\,d\varphi$, as before.
+    $dV$ above.
     """)
     return
 
@@ -626,9 +623,8 @@ def _(mo):
 
     **What $n$ does and does not order.** $n=n_r+\ell+1$ counts all the nodes, but it does not order the energies of
     the drum. The frequencies go as $j_{0,1}=2.405$, $j_{1,1}=3.832$, $j_{2,1}=5.136$ and $j_{0,2}=5.520$, so the mode with
-    two nodes ($\ell=2$, $n_r=0$) lies below the mode with one node ($\ell=0$, $n_r=1$). In hydrogen, the levels
-    with the same $n$ and different $\ell$ have the same energy, but this accidental degeneracy is a special property of
-    the Coulomb pull, and not a general property of standing waves.
+    two nodes ($\ell=2$, $n_r=0$) lies below the mode with one node ($\ell=0$, $n_r=1$). Hydrogen is different: there the levels
+    with the same $n$ do have the same energy (section 5, "What it says").
 
     **Three dimensions: an atom.** The atom has one more direction, the polar angle $\vartheta$, and so one more
     family of nodes. In three dimensions a node is a surface, and the three kinds are the three-dimensional versions
@@ -845,6 +841,27 @@ def _(harmonic_gallery_figure, plt):
 
 @app.cell
 def _(mo):
+    show_gallery_nodes = mo.ui.switch(value=True, label="show nodes")
+    return (show_gallery_nodes,)
+
+
+@app.cell
+def _(mo, plt, show_gallery_nodes):
+    from harmonic_nodes_plots import harmonic_nodes_gallery_figure as _gallery_figure
+
+    _fig = _gallery_figure(3, show_nodes=show_gallery_nodes.value)
+    _out = mo.vstack([
+        mo.md(r"The same shapes with all their nodes: cones (constant $\vartheta$) and planes through the $z$ axis."),
+        show_gallery_nodes,
+        _fig,
+    ])
+    plt.close(_fig)
+    _out
+    return
+
+
+@app.cell
+def _(mo):
     _rows = [
         "| $\\ell$ | name | $2\\ell+1$ harmonics | $\\ell(\\ell+1)$ | angular nodes (total $\\ell$) |",
         "|---|---|---|---|---|",
@@ -949,10 +966,8 @@ def _(mo):
 
     **Three more things to notice.**
 
-    - *Complex harmonics have fewer visible nodes.* The complex $Y_{\ell m_\ell}$ contains $e^{im_\ell\varphi}$, whose size is
-      $1$ everywhere: it never vanishes, it only winds its phase $m_\ell$ times round the axis. So the complex harmonic
-      vanishes only on the $n_\vartheta=\ell-\lvert m_\ell\rvert$ cones. The $n_\varphi=\lvert m_\ell\rvert$ planes appear when
-      two of them ($\pm m_\ell$) are combined into the real $\cos$ or $\sin$ form, which is the form used in the figures.
+    - *Complex harmonics have fewer visible nodes.* The complex $Y_{\ell m_\ell}$ never vanishes on the $n_\varphi$ planes; they appear in
+      the real $\cos$ or $\sin$ form used in the figures (see "Complex waves and real waves" below).
     - *The $z$ axis is a choice.* The $2\ell+1$ harmonics of one $\ell$ have the same energy, so any combination of them
       is an equally good standing wave, and so is the same pattern turned to point along another axis. What is fixed is
       the total: always $\ell$ angular nodes, split differently. At one extreme ($m_\ell=0$) all of them are cones
@@ -1053,17 +1068,16 @@ def _(mo):
     The harmonics have a second job besides describing electrons: they are the natural building blocks for **any**
     shape on a circle or a sphere, in the same way that sines are the building blocks for any shape along a line.
 
-    - **On a line** (the string), any shape that is zero at the ends is a sum of the standing waves
-      $\sin(n\pi x/L)$. That is a Fourier series.
-    - **Around a circle**, any shape is a sum of the ring waves $\cos(m_\ell\varphi)$ and $\sin(m_\ell\varphi)$. That is
-      the Fourier series on a circle, and it is the angular factor of the drum.
+    - **On a line** (the string, `standing_waves_in_boxes.py` section 1) and **in a drum** (section 3 above), the standing waves are the building blocks.
+    - **Around a circle**, any shape is a sum of the ring waves $\cos(m_\ell\varphi)$ and $\sin(m_\ell\varphi)$, the Fourier series
+      on a circle and the angular factor of the drum.
     - **On a sphere**, any shape is a sum of spherical harmonics, $f(\vartheta,\varphi)=\sum a_{\ell m_\ell}Y_{\ell m_\ell}$.
       It is the Fourier series for a sphere.
 
     In each case the number of nodes plays the part of frequency: $m_\ell$ counts the periods round the circle, and
     $\ell$ counts the angular nodes of a wave on the sphere. A smooth shape needs only a few low harmonics; a sharp feature needs many
-    high ones. The weight of each harmonic is found by **projection**: multiply the shape by that harmonic and add up the
-    result over the whole circle or sphere,
+    high ones. As for the drum in section 3, the weight of each harmonic is found by **projection**: multiply the shape by that
+    harmonic and add up the result over the whole circle or sphere,
 
     $$
     a_{\ell m_\ell}=\int f(\vartheta,\varphi)\,Y_{\ell m_\ell}(\vartheta,\varphi)\,d\Omega ,
@@ -1326,7 +1340,7 @@ def _(mo):
     n = n_r + \ell + 1,\qquad n=\ell+1,\ \ell+2,\ \dots,
     $$
 
-    which is the third condition of `../quantization`: more nodes along $r$ means more energy, as for the box.
+    which is the labelling of section 3: more nodes along $r$ means more energy, as for the box.
 
     The energies that come out are
 
@@ -1411,9 +1425,8 @@ def _(degeneracy, mo, quantum_numbers):
         \sum_{\ell=0}^{n-1}(2\ell+1) = n^2
         $$
 
-        orbitals. The degeneracy in $m_\ell$ comes from the symmetry of the sphere (every direction is equivalent). The
-        degeneracy in $\ell$ is **not** explained by that symmetry: it is special to the $-1/r$ attraction, and it is
-        removed as soon as the potential differs from $-1/r$, as it does in every atom with more than one electron.
+        orbitals. The degeneracy in $m_\ell$ comes from the symmetry of the sphere (every direction is equivalent); the
+        degeneracy in $\ell$ is not, as "What it says" below explains.
         Counting each electron's spin doubles the numbers to $2n^2$.
         """),
         mo.md("\n".join(_rows)),
@@ -1437,13 +1450,13 @@ def _(mo):
 
     - **Hydrogen's energy counts nodes.** Since $n_r+\ell=n-1=N_{\text{nodes}}$, the energy $E_n=-1/(2n^2)$ depends only on the
       total number of nodes, and not on how they divide between $n_r$ radial nodes and $\ell$ angular ones. That is the
-      degeneracy in $\ell$ found above ($n^2$ states in a level), and it is special to the $-1/r$ attraction. Other central
+      degeneracy in $\ell$ found above ($n^2$ states in a level). It is not explained by the symmetry of the sphere, it is special to the
+      $-1/r$ attraction, and it is removed as soon as the potential differs from it, as in every atom with more than one electron. Other central
       potentials do not have it: the drum has $E\propto j_{\ell,\,n_r+1}^2$, where a radial node and an angular node cost
       different energy, and the three-dimensional harmonic oscillator has $E=\hbar\omega\bigl(2n_r+\ell+\tfrac32\bigr)$ (stated,
       not derived here), where a radial node costs twice as much as an angular one.
-    - **The centrifugal barrier.** Near the nucleus $u\sim r^{\ell+1}$, so $R\sim r^{\ell}$: the larger $\ell$ is, the more the
-      barrier $\ell(\ell+1)/(2r^2)$ pushes the wave away from the nucleus. Only $\ell=0$ has $\psi\neq0$ at the nucleus; all
-      other orbitals are zero there.
+    - **At the nucleus.** Near it $u\sim r^{\ell+1}$, so $R\sim r^{\ell}$ (the centrifugal barrier above at work): only $\ell=0$ has
+      $\psi\neq0$ at the nucleus; all other orbitals are zero there.
     - **Only $R$ changes.** For any central potential the angular part is the same $Y_{\ell m_\ell}$, with the same
       angular nodes; only the radial function $R(r)$, and with it the energies, depends on $V(r)$. The shapes of
       sections 4 and 6 are therefore not special to hydrogen.
@@ -1622,31 +1635,11 @@ def _(mo):
     mo.md(r"""
     ## 7 A short bridge to molecules
 
-    Hydrogen is one of the very few problems in chemistry that can be solved exactly. What goes wrong with anything
-    larger, and what is done about it?
-
-    - **Many electrons.** With two or more electrons, each electron is pushed by the others as well as pulled by the
-      nucleus, and the wave function depends on all the positions at once. It no longer separates into a radial and an
-      angular part. The standard step is the **orbital (mean-field) idea**: give each electron its own orbital, and let it
-      feel the nucleus plus the average push of the others. The orbitals keep the angular shapes of this notebook
-      (s, p, d, ...), but the energies now depend on $\ell$ as well as on $n$, because the electrons shield the nucleus
-      differently. Density functional theory is a more refined version of the same idea (see the
-      decoder notebook).
-    - **Moving nuclei.** The nuclei are thousands of times heavier than the electrons, so they move slowly. The
-      **Born-Oppenheimer approximation** treats them as fixed points while the electrons find their lowest
-      state, and then repeats this for each arrangement of the nuclei. In this notebook the nucleus was a fixed point
-      from the start.
-    - **More than one centre.** In a molecule the potential no longer has spherical symmetry, so the orbitals cannot be
-      found by separating variables. The practical method, **LCAO** (linear combination of atomic-like orbitals), builds each
-      molecular orbital as a sum of functions centred on the atoms. Each of these basis functions has the form
-      (radial function) $\times$ (real spherical harmonic), as in section 6. The radial function is replaced by a sum of
-      Gaussians, which makes the integrals fast, and the sum is made large enough to be accurate. Mixing s and p functions on
-      carbon gives the $sp^3$ hybrids that point to the corners of a tetrahedron in methane.
-
-    Each of the three steps is worked out in `from_atoms_to_molecules.py` (this folder). Worked calculations that use these ideas are in `../../qm-calculations`: `carbon` (the carbon atom, its density
-    and a p orbital), `methane` (its molecular orbitals and a C-H bond orbital) and `basis-functions` (the shapes of the
-    basis functions on hydrogen and oxygen). How the labels of a modern calculation, such as the functional and the basis set, are read is explained in
-    `../dft/reading_a_dft_label.py`.
+    Hydrogen is one of the very few problems in chemistry that can be solved exactly, because there is one electron and one
+    centre of force. Anything larger loses the separation into a radial and an angular part. The next notebooks take the path
+    from here to the labels of modern calculations: `from_atoms_to_molecules.py` (fixed nuclei, one orbital per electron,
+    hybrids, methane), then `basis_sets_from_base_states.py` (which functions to put on the atoms), then the DFT notebooks
+    starting with `../dft/reading_a_dft_label.py`.
 
     **Takeaways for a slide**
 
@@ -1658,8 +1651,8 @@ def _(mo):
        harmonics of one $\ell$ share the angular energy $\ell(\ell+1)$.
     3. The radial wave sees the pull $-1/r$ plus a push away from the centre; the energy $-13.6\ \text{eV}/n^2$ depends
        on $n$ only, so each level holds $n^2$ orbitals ($2n^2$ with spin).
-    4. Atoms and molecules reuse these shapes: many electrons need orbitals in an average field, fixed nuclei, and
-       atom-centred basis functions.
+    4. The separation into $R\,Y$ needs one centre and a potential that depends on $r$ only. Atoms and molecules reuse the shapes but not the
+       exact solution; `from_atoms_to_molecules.py` is next.
 
     **What was checked, and what was not.** All the numerical statements marked above are tested in `test_hydrogen.py`.
     The restriction $\lvert m_\ell\rvert\le\ell$, the full separation of the Schrödinger equation and the whole of
