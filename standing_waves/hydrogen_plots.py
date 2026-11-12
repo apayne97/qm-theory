@@ -51,6 +51,7 @@ from hydrogen import (  # noqa: E402
     solve_radial,
 )
 from qmstyle import (  # noqa: E402
+    ANGSTROM_PER_BOHR as AB,
     ANGULAR_COLOR,
     A_COLOR,
     H_COLOR,
@@ -254,15 +255,15 @@ def veff_figure():
     r = np.linspace(0.12, 24, 1500)
     fig, ax = plt.subplots(figsize=(8.4, 4.2))
     for l, ls in zip((0, 1, 2), ("-", "--", ":")):
-        ax.plot(r, np.clip(effective_potential(r, l), -1.2, 1.0), color=POT_COLOR, lw=2, ls=ls, label=rf"$\ell={l}$")
+        ax.plot(r * AB, np.clip(effective_potential(r, l), -1.2, 1.0), color=POT_COLOR, lw=2, ls=ls, label=rf"$\ell={l}$")
     for n in range(1, 6):
         ax.axhline(hydrogen_energy(n), color=OMEGA_COLOR, lw=1)
         if n <= 3:
-            ax.text(23.8, hydrogen_energy(n) + 0.012, f"$n={n}$", color=INK, fontsize=8, ha="right")
+            ax.text(23.8 * AB, hydrogen_energy(n) + 0.012, f"$n={n}$", color=INK, fontsize=8, ha="right")
     ax.axhline(0, color="black", lw=0.7)
-    ax.set_xlim(0, 24)
+    ax.set_xlim(0, 24 * AB)
     ax.set_ylim(-0.75, 0.2)
-    ax.set_xlabel(r"distance $r$ (bohr)")
+    ax.set_xlabel(r"distance $r$ (Å)")
     ax.set_ylabel("energy (hartree)")
     ax.set_title(r"effective potential $-1/r+\ell(\ell+1)/(2r^2)$ and the levels $E_n=-1/(2n^2)$", fontsize=10)
     ax.legend(loc="lower right")
@@ -282,11 +283,11 @@ def central_levels_figure(l=0, slide=False):
     with _rc(slide):
         fig = plt.figure(figsize=(8 * sc if slide else 8, 6 * sc if slide else 4.4))
         ax = fig.add_axes([0.17, 0.15, 0.8, 0.78])
-        ax.plot(r, np.clip(-1.0 / r, -0.7, None), color=POT_COLOR, lw=2.2 * sc, alpha=0.55, label=r"$-1/r$")
+        ax.plot(r * AB, np.clip(-1.0 / r, -0.7, None), color=POT_COLOR, lw=2.2 * sc, alpha=0.55, label=r"$-1/r$")
         if l > 0:
-            ax.plot(r, np.clip(l * (l + 1) / (2 * r**2), None, 0.5), color=KIN_COLOR, lw=2.2 * sc, ls="--",
+            ax.plot(r * AB, np.clip(l * (l + 1) / (2 * r**2), None, 0.5), color=KIN_COLOR, lw=2.2 * sc, ls="--",
                     label=r"$\ell(\ell+1)/(2r^2)$")
-        ax.plot(r, np.clip(effective_potential(r, l), -0.7, 0.5), color=POT_COLOR, lw=3.2 * sc,
+        ax.plot(r * AB, np.clip(effective_potential(r, l), -0.7, 0.5), color=POT_COLOR, lw=3.2 * sc,
                 label=r"$V_{\mathrm{eff}}$")
         ax.axhline(0, color="black", lw=0.8)
         for n in range(1, n_max + 1):
@@ -295,14 +296,14 @@ def central_levels_figure(l=0, slide=False):
             ax.axhline(e, color=OMEGA_COLOR, lw=(2.0 if allowed else 0.8) * sc, alpha=1.0 if allowed else 0.25,
                        ls="-" if allowed else ":", zorder=1)
             if n <= 3:
-                ax.text(33.7, e + 0.012, f"$n={n}$", color=INK, fontsize=(15 if slide else 9), ha="right", va="bottom")
+                ax.text(33.7 * AB, e + 0.012, f"$n={n}$", color=INK, fontsize=(15 if slide else 9), ha="right", va="bottom")
             if allowed:
                 u = radial_u(n, l, r)
                 scale = 0.05 / np.abs(u).max()
-                ax.plot(r, e + scale * u, color=H_COLOR, lw=2.6 * sc)
-        ax.set_xlim(0, 34)
+                ax.plot(r * AB, e + scale * u, color=H_COLOR, lw=2.6 * sc)
+        ax.set_xlim(0, 34 * AB)
         ax.set_ylim(-0.7, 0.2)
-        ax.set_xlabel(r"distance $r$ (bohr)")
+        ax.set_xlabel(r"distance $r$ (Å)")
         ax.set_ylabel("energy (hartree)")
         ax.spines[["top", "right"]].set_visible(False)
         ax.legend(loc="upper right", frameon=False, fontsize=(15 if slide else 9))
@@ -324,17 +325,17 @@ def radial_state_figure(n, l):
     rmax = 2.2 * n * n + 4
     mask = r < rmax
     scale = 0.12 / np.abs(u_ex).max()  # height of the wave drawn on the energy axis, in hartree
-    ax.plot(r[mask], np.clip(effective_potential(r[mask], l), -1.5, 1.0), color=POT_COLOR, lw=2, label="effective potential")
+    ax.plot(r[mask] * AB, np.clip(effective_potential(r[mask], l), -1.5, 1.0), color=POT_COLOR, lw=2, label="effective potential")
     ax.axhline(e[k], color=OMEGA_COLOR, lw=1.2, label=rf"numerical $E={e[k]:.5f}$ hartree")
-    ax.plot(r[mask], e[k] + scale * u_num[mask], color=H_COLOR, lw=2.4, label=r"radial wave $u=rR$ (numerical)")
-    ax.plot(r[mask][::25], e[k] + scale * u_ex[mask][::25], "o", color=A_COLOR, ms=3.5, label="exact")
+    ax.plot(r[mask] * AB, e[k] + scale * u_num[mask], color=H_COLOR, lw=2.4, label=r"radial wave $u=rR$ (numerical)")
+    ax.plot(r[mask][::25] * AB, e[k] + scale * u_ex[mask][::25], "o", color=A_COLOR, ms=3.5, label="exact")
     ax.axhline(0, color="black", lw=0.7)
     nodes = r[:-1][(u_num[:-1] * u_num[1:] < 0)]
-    ax.plot(nodes, np.full_like(nodes, e[k]), "o", color=INK, ms=6, zorder=6)
-    ax.set_xlim(0, rmax)
+    ax.plot(nodes * AB, np.full_like(nodes, e[k]), "o", color=INK, ms=6, zorder=6)
+    ax.set_xlim(0, rmax * AB)
     lo = min(-0.6, e[k] - 0.2) if n == 1 else -0.3
     ax.set_ylim(max(lo, -0.7), 0.15)
-    ax.set_xlabel(r"distance $r$ (bohr)")
+    ax.set_xlabel(r"distance $r$ (Å)")
     ax.set_ylabel("energy (hartree)")
     ax.set_title(
         rf"$n={n},\ \ell={l}$: $n_r={n - l - 1}$ radial node{'s' if n - l - 1 != 1 else ''} (black dots);  "
@@ -343,9 +344,9 @@ def radial_state_figure(n, l):
     )
     ax.legend(fontsize=7.5, loc="upper right")
     ax = axes[1]
-    ax.plot(r[mask], (u_num - u_ex)[mask], color=KIN_COLOR, lw=1.8)
+    ax.plot(r[mask] * AB, (u_num - u_ex)[mask], color=KIN_COLOR, lw=1.8)
     ax.axhline(0, color="black", lw=0.7)
-    ax.set_xlabel(r"distance $r$ (bohr)")
+    ax.set_xlabel(r"distance $r$ (Å)")
     ax.set_title(rf"numerical $-$ exact $u$ (largest: {np.abs(u_num - u_ex).max():.1e}; $u$ peaks near {np.abs(u_ex).max():.2f})", fontsize=8.5)
     fig.tight_layout()
     return fig
@@ -379,9 +380,9 @@ def orbital_figure(n, l, m, n_points=3500):
     psi = psi_real(n, l, m, x, y, z)
     top = max(np.abs(psi).max(), 1e-12)
     fig, axes = plt.subplots(1, 4, figsize=(14.2, 3.7), gridspec_kw={"width_ratios": [1, 1, 1, 1.15]})
-    box = [-ext, ext, -ext, ext]
+    box = [-ext * AB, ext * AB, -ext * AB, ext * AB]
     axes[0].imshow(psi, origin="lower", extent=box, cmap=WAVE_CMAP, vmin=-top, vmax=top)
-    axes[0].contour(s[0], z[:, 0], psi, levels=[0], colors=[INK], linewidths=1.0)
+    axes[0].contour(s[0] * AB, z[:, 0] * AB, psi, levels=[0], colors=[INK], linewidths=1.0)
     axes[0].set_title(r"wave $\psi$ in a plane through the axis" "\n" "(blue +, red −, black = nodes)", fontsize=8.5)
     axes[1].imshow(psi**2, origin="lower", extent=box, cmap=PROB_CMAP, norm=PowerNorm(0.5, vmin=0, vmax=top**2))
     axes[1].set_title(r"density $|\psi|^2$, same plane" "\n" "(square-root shading)", fontsize=8.5)
@@ -390,24 +391,25 @@ def orbital_figure(n, l, m, n_points=3500):
     # side view: horizontal axis is the in-plane direction, depth is ignored
     horiz = pts[:, 0] * np.cos(phi0) + pts[:, 1] * np.sin(phi0)
     sign = psi_real(n, l, m, *pts.T) > 0
-    axes[2].scatter(horiz[sign], pts[sign, 2], s=1.2, color=PLUS, alpha=0.5, linewidths=0)
-    axes[2].scatter(horiz[~sign], pts[~sign, 2], s=1.2, color=MINUS, alpha=0.5, linewidths=0)
-    axes[2].set_xlim(-ext, ext)
-    axes[2].set_ylim(-ext, ext)
+    axes[2].scatter(horiz[sign] * AB, pts[sign, 2] * AB, s=1.2, color=PLUS, alpha=0.5, linewidths=0)
+    axes[2].scatter(horiz[~sign] * AB, pts[~sign, 2] * AB, s=1.2, color=MINUS, alpha=0.5, linewidths=0)
+    axes[2].set_xlim(-ext * AB, ext * AB)
+    axes[2].set_ylim(-ext * AB, ext * AB)
     axes[2].set_title(f"{n_points} points drawn with probability $|\\psi|^2$\n(side view, all depths)", fontsize=8.5)
     for ax in axes[:3]:
         ax.set_aspect("equal")
-        ax.set_xlabel(r"in-plane distance from axis (bohr)")
-    axes[0].set_ylabel(r"$z$ (bohr)")
+        ax.set_xlabel(r"in-plane distance from axis (Å)")
+    axes[0].set_ylabel(r"$z$ (Å)")
     rr = np.linspace(0, ext * 1.1, 800)
     ax = axes[3]
-    ax.fill_between(rr, radial_u(n, l, rr) ** 2, color=PROB_COLOR, alpha=0.8)
-    ax.plot(rr, radial_u(n, l, rr) ** 2, color=R_COLOR, lw=2)
-    ax.axvline(mean_radius(n, l), color=A_COLOR, ls="--", lw=1.2, label=rf"mean $\langle r\rangle={mean_radius(n, l):g}$")
-    ax.set_xlabel(r"distance $r$ (bohr)")
-    ax.set_title(r"probability per bohr, $r^2R^2$" "\n" rf"$n_r={n - l - 1}$ radial node{'s' if n - l - 1 != 1 else ''}", fontsize=8.5)
+    ax.fill_between(rr * AB, radial_u(n, l, rr) ** 2 / AB, color=PROB_COLOR, alpha=0.8)
+    ax.plot(rr * AB, radial_u(n, l, rr) ** 2 / AB, color=R_COLOR, lw=2)
+    ax.axvline(mean_radius(n, l) * AB, color=A_COLOR, ls="--", lw=1.2,
+               label=rf"mean $\langle r\rangle={mean_radius(n, l) * AB:.2f}$ Å")
+    ax.set_xlabel(r"distance $r$ (Å)")
+    ax.set_title(r"probability per Å, $r^2R^2$" "\n" rf"$n_r={n - l - 1}$ radial node{'s' if n - l - 1 != 1 else ''}", fontsize=8.5)
     ax.legend(fontsize=8)
-    ax.set_xlim(0, ext * 1.1)
+    ax.set_xlim(0, ext * 1.1 * AB)
     fig.suptitle(
         rf"{orbital_name(n, l, m)}: $n={n},\ \ell={l},\ m_\ell={m}$;  $E=-1/(2n^2)={hydrogen_energy(n):.4f}$ hartree "
         rf"$={hydrogen_energy_ev(n):.2f}$ eV",
@@ -430,19 +432,19 @@ def orbital_gallery_figure():
         psi = psi_real(n, l, m, x, y, z)
         top = np.abs(psi).max()
         ax = axes[0, j]
-        ax.imshow(np.sign(psi) * np.abs(psi) ** 0.5, origin="lower", extent=[-ext, ext, -ext, ext],
+        ax.imshow(np.sign(psi) * np.abs(psi) ** 0.5, origin="lower", extent=[-ext * AB, ext * AB, -ext * AB, ext * AB],
                   cmap=WAVE_CMAP, vmin=-top**0.5, vmax=top**0.5)
-        ax.contour(s[0], z[:, 0], psi, levels=[0], colors=[INK], linewidths=0.8)
+        ax.contour(s[0] * AB, z[:, 0] * AB, psi, levels=[0], colors=[INK], linewidths=0.8)
         ax.set_title(f"{orbital_name(n, l, m)}  (" + (rf"$n_r={n - l - 1}$, $\ell={l}$") + ")", fontsize=8.5)
         ax.set_xticks([])
         ax.set_yticks([])
         rr = np.linspace(0, ext * 1.1, 600)
         axb = axes[1, j]
-        axb.fill_between(rr, radial_u(n, l, rr) ** 2, color=PROB_COLOR, alpha=0.8)
-        axb.plot(rr, radial_u(n, l, rr) ** 2, color=R_COLOR, lw=1.8)
-        axb.set_xlabel("$r$ (bohr)", fontsize=8)
+        axb.fill_between(rr * AB, radial_u(n, l, rr) ** 2, color=PROB_COLOR, alpha=0.8)
+        axb.plot(rr * AB, radial_u(n, l, rr) ** 2, color=R_COLOR, lw=1.8)
+        axb.set_xlabel("$r$ (Å)", fontsize=8)
         axb.set_yticks([])
-        axb.set_xlim(0, ext * 1.1)
+        axb.set_xlim(0, ext * 1.1 * AB)
         axb.tick_params(labelsize=7)
     axes[0, 0].set_ylabel(r"$\psi$ (plane through the $z$ axis)", fontsize=8)
     axes[1, 0].set_ylabel(r"$r^2R^2$", fontsize=8)
@@ -567,7 +569,8 @@ def node_anatomy_figure(n, l, m):
     psi_b = psi_real(n, l, m, sx + 0 * sy, sy + 0 * sx, z0 + 0 * sx + 0 * sy)
     fig, axes = plt.subplots(1, 2, figsize=(9.8, 4.4))
     t = np.linspace(0, 2 * np.pi, 400)
-    box = [-ext, ext, -ext, ext]
+    E = ext * AB  # half-width of the displayed plane, in ångström
+    box = [-E, E, -E, E]
     for ax, psi in zip(axes, (psi_a, psi_b)):
         top = max(np.abs(psi).max(), 1e-12)
         ax.imshow(psi, origin="lower", extent=box, cmap=WAVE_CMAP, vmin=-top, vmax=top, alpha=0.8)
@@ -575,38 +578,38 @@ def node_anatomy_figure(n, l, m):
     ax = axes[0]
     phi0 = 0.0 if m >= 0 else np.pi / (2 * abs(m))
     for rad in g["spheres"]:
-        ax.plot(rad * np.cos(t), rad * np.sin(t), color=RADIAL_NODE, lw=2.4)
+        ax.plot(rad * AB * np.cos(t), rad * AB * np.sin(t), color=RADIAL_NODE, lw=2.4)
     for th in g["cones"]:
         if abs(th - np.pi / 2) < 1e-9:   # the flat plane z = 0
-            ax.plot([-ext, ext], [0, 0], color=POLAR_NODE, lw=2.4)
+            ax.plot([-E, E], [0, 0], color=POLAR_NODE, lw=2.4)
         else:                            # a cone cuts the plane in two straight lines through the centre
             for sgn in (1, -1):
-                ax.plot([0, sgn * 1.5 * ext * np.sin(th)], [0, sgn * 1.5 * ext * np.cos(th)], color=POLAR_NODE, lw=2.4)
+                ax.plot([0, sgn * 1.5 * E * np.sin(th)], [0, sgn * 1.5 * E * np.cos(th)], color=POLAR_NODE, lw=2.4)
     if len(g["planes"]):
-        ax.plot([0, 0], [-ext, ext], color=AZIMUTH_NODE, lw=2.4)
-    ax.set_xlim(-ext, ext)
-    ax.set_ylim(-ext, ext)
-    ax.set_xlabel("distance from the axis (bohr)")
-    ax.set_ylabel("$z$ (bohr)")
+        ax.plot([0, 0], [-E, E], color=AZIMUTH_NODE, lw=2.4)
+    ax.set_xlim(-E, E)
+    ax.set_ylim(-E, E)
+    ax.set_xlabel("distance from the axis (Å)")
+    ax.set_ylabel("$z$ (Å)")
     ax.set_title("plane through the $z$ axis", fontsize=9)
     ax = axes[1]
     for rad in g["spheres"]:
         if rad > abs(z0):
-            rho = np.sqrt(rad**2 - z0**2)
+            rho = np.sqrt(rad**2 - z0**2) * AB
             ax.plot(rho * np.cos(t), rho * np.sin(t), color=RADIAL_NODE, lw=2.4)
     for th in g["cones"]:
         if abs(th - np.pi / 2) > 1e-9 and z0 > 0 and th < np.pi / 2:
-            rho = z0 * np.tan(th)
+            rho = z0 * AB * np.tan(th)
             ax.plot(rho * np.cos(t), rho * np.sin(t), color=POLAR_NODE, lw=2.4)
     for a in g["planes"]:
-        ax.plot([-1.5 * ext * np.cos(a), 1.5 * ext * np.cos(a)], [-1.5 * ext * np.sin(a), 1.5 * ext * np.sin(a)],
+        ax.plot([-1.5 * E * np.cos(a), 1.5 * E * np.cos(a)], [-1.5 * E * np.sin(a), 1.5 * E * np.sin(a)],
                 color=AZIMUTH_NODE, lw=2.4)
-    ax.set_xlim(-ext, ext)
-    ax.set_ylim(-ext, ext)
-    ax.set_xlabel("$x$ (bohr)")
-    ax.set_ylabel("$y$ (bohr)")
+    ax.set_xlim(-E, E)
+    ax.set_ylim(-E, E)
+    ax.set_xlabel("$x$ (Å)")
+    ax.set_ylabel("$y$ (Å)")
     ax.set_title("horizontal slice, $z=0$ (seen from above, like the drum)" if not flat
-                 else rf"horizontal slice at $z={z0:.1f}$ bohr (the plane $z=0$ is itself a node)", fontsize=9)
+                 else rf"horizontal slice at $z={z0 * AB:.1f}$ Å (the plane $z=0$ is itself a node)", fontsize=9)
     ns, nc, npl = len(g["spheres"]), len(g["cones"]), len(g["planes"])
     fig.suptitle(
         rf"{orbital_name(n, l, m)}:  $n_r={ns}$ sphere{'s' if ns != 1 else ''} (pink) + $n_\vartheta={nc}$ cone{'s' if nc != 1 else ''} "

@@ -7,6 +7,9 @@ Import the constants from here; do not copy hex values into a notebook or a plot
 definitions for the knowledge-base chapter are generated from the same table by `latex_definitions()`.
 """
 
+# Display-only length conversion: computations stay in atomic units (bohr), plots and quoted numbers use ångström.
+ANGSTROM_PER_BOHR = 0.529177210903  # CODATA 2018; 1 bohr = 0.529 Å
+
 # name -> (hex, LaTeX colour name, meaning)
 _TABLE = {
     "H_COLOR": ("#4E67C8", "qmH", "height H; real part of psi"),

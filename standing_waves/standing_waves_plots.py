@@ -43,7 +43,7 @@ def line_figure(n):
     ax.set_yticks([])
     ax.set_title(
         rf"$n={n}$: {n} half-wavelength{'s' if n > 1 else ''} fit, {n - 1} node{'s' if n != 2 else ''} inside; "
-        rf"$E = {n * n}\,E_1$  ({float(box_energy_ev(n, 1.0)):.2f} eV for $L=1$ nm)",
+        rf"$E = {n * n}\,E_1$  ({float(box_energy_ev(n, 1.0)):.2f} eV for $L=10$ Å)",
         fontsize=10,
     )
     fig.tight_layout()

@@ -11,6 +11,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import basis_sets as bs  # noqa: E402
 from qmstyle import (  # noqa: E402
+    ANGSTROM_PER_BOHR as AB,
     A_COLOR,
     H2_COLOR,
     H_COLOR,
@@ -38,17 +39,17 @@ def morse_figure(n_basis):
     fig, axes = plt.subplots(1, 3, figsize=(12.5, 3.9), gridspec_kw={"width_ratios": [1.25, 0.9, 1.0]})
     ax, bx, cx = axes
     x = bs.X_GRID
-    ax.plot(x, bs.morse_potential(x), color=POT_COLOR, lw=2)
+    ax.plot(x * AB, bs.morse_potential(x), color=POT_COLOR, lw=2)
     for n in range(bs.morse_bound_states()):
         ax.axhline(bs.morse_energy(n), color=GREY, lw=0.6, xmin=0.12, xmax=0.95)
     e, _ = bs.variational_levels(n_basis)
     scale = 1.6
-    ax.plot(x, bs.morse_energy(0) + scale * bs.morse_psi0(), color=INK, lw=1.6, ls="--", label="exact")
-    ax.plot(x, e[0] + scale * bs.expansion_wavefunction(n_basis, 0), color=H_COLOR, lw=2,
+    ax.plot(x * AB, bs.morse_energy(0) + scale * bs.morse_psi0(), color=INK, lw=1.6, ls="--", label="exact")
+    ax.plot(x * AB, e[0] + scale * bs.expansion_wavefunction(n_basis, 0), color=H_COLOR, lw=2,
             label=f"{n_basis} function{'s' if n_basis > 1 else ''}")
-    ax.set_xlim(-2.0, 13.0)
+    ax.set_xlim(-2.0 * AB, 13.0 * AB)
     ax.set_ylim(0, 7.0)
-    ax.set_xlabel("$x$ (bohr)")
+    ax.set_xlabel("$x$ (Å)")
     ax.set_ylabel("energy (hartree)")
     ax.set_title("ground state: exact and expanded", color=INK, fontsize=10)
     ax.legend(frameon=False, loc="center right", fontsize=9)
@@ -88,31 +89,31 @@ def h2plus_figure(r):
     z = np.linspace(-6.5, 6.5, 600)
     fa, fb = bs.slater_1s(np.abs(z + r / 2)), bs.slater_1s(np.abs(z - r / 2))
     _, c = bs.h2plus_lcao(r)
-    ax.plot(z, fa, color=GREY, lw=1.2, ls="--")
-    ax.plot(z, fb, color=GREY, lw=1.2, ls="--")
-    ax.plot(z, c[0, 0] * fa + c[1, 0] * fb, color=H_COLOR, lw=2.2, label="bonding $c_A=c_B$")
-    ax.plot(z, c[0, 1] * fa + c[1, 1] * fb, color=A_COLOR, lw=2.2, label="antibonding $c_A=-c_B$")
+    ax.plot(z * AB, fa, color=GREY, lw=1.2, ls="--")
+    ax.plot(z * AB, fb, color=GREY, lw=1.2, ls="--")
+    ax.plot(z * AB, c[0, 0] * fa + c[1, 0] * fb, color=H_COLOR, lw=2.2, label="bonding $c_A=c_B$")
+    ax.plot(z * AB, c[0, 1] * fa + c[1, 1] * fb, color=A_COLOR, lw=2.2, label="antibonding $c_A=-c_B$")
     ax.axhline(0, color=INK, lw=0.6)
     for pos in (-r / 2, r / 2):
-        ax.plot([pos], [0], "o", color=INK, ms=6)
-    ax.set_xlim(-6.5, 6.5)
+        ax.plot([pos * AB], [0], "o", color=INK, ms=6)
+    ax.set_xlim(-6.5 * AB, 6.5 * AB)
     ax.set_ylim(-0.7, 0.8)
-    ax.set_xlabel("position along the axis (bohr)")
+    ax.set_xlabel("position along the axis (Å)")
     ax.set_ylabel(r"$\psi$")
     ax.legend(frameon=False, fontsize=9, loc="upper right")
     _style(ax)
 
     rs = np.linspace(0.9, 8.0, 300)
-    bx.plot(rs, bs.h2plus_total(rs, 0), color=H_COLOR, lw=2, label="bonding (2 functions)")
-    bx.plot(rs, bs.h2plus_total(rs, 1), color=A_COLOR, lw=2, label="antibonding (2 functions)")
+    bx.plot(rs * AB, bs.h2plus_total(rs, 0), color=H_COLOR, lw=2, label="bonding (2 functions)")
+    bx.plot(rs * AB, bs.h2plus_total(rs, 1), color=A_COLOR, lw=2, label="antibonding (2 functions)")
     d = bs.load_data()["h2plus"]
-    bx.plot(d["R"], d["energy"], "o", color=INK, ms=4, label="large basis (PySCF)")
+    bx.plot(np.array(d["R"]) * AB, d["energy"], "o", color=INK, ms=4, label="large basis (PySCF)")
     bx.axhline(-0.5, color=GREY, lw=0.8, ls="--")
-    bx.text(7.9, -0.485, "H + proton", ha="right", va="bottom", fontsize=8, color=INK)
-    bx.axvline(r, color=PHASE_COLOR, lw=1.1, ls=":")
-    bx.set_xlim(0.9, 8.0)
+    bx.text(7.9 * AB, -0.485, "H + proton", ha="right", va="bottom", fontsize=8, color=INK)
+    bx.axvline(r * AB, color=PHASE_COLOR, lw=1.1, ls=":")
+    bx.set_xlim(0.9 * AB, 8.0 * AB)
     bx.set_ylim(-0.7, -0.2)
-    bx.set_xlabel("$R$ (bohr)")
+    bx.set_xlabel("$R$ (Å)")
     bx.set_ylabel("total energy (hartree)")
     bx.legend(frameon=False, fontsize=8, loc="lower right")
     _style(bx)
@@ -130,22 +131,22 @@ def sto_fit_figure(n):
     fit = bs.contracted_radial(r, alphas, coeffs)
     for a_, lim in ((ax, 4.0), (bx, 0.6)):
         m = r <= lim
-        a_.plot(r[m], slater[m], color=INK, lw=2, ls="--", label="Slater $e^{-r}$")
-        a_.plot(r[m], fit[m], color=H_COLOR, lw=2, label=f"{n} Gaussian{'s' if n > 1 else ''}")
-        a_.set_xlim(0, lim)
+        a_.plot(r[m] * AB, slater[m], color=INK, lw=2, ls="--", label="Slater $e^{-r}$")
+        a_.plot(r[m] * AB, fit[m], color=H_COLOR, lw=2, label=f"{n} Gaussian{'s' if n > 1 else ''}")
+        a_.set_xlim(0, lim * AB)
         _style(a_)
     ax.set_ylim(0, 0.6)
     ax.set_title("the whole function", color=INK, fontsize=10)
-    ax.set_xlabel("$r$ (bohr)")
+    ax.set_xlabel("$r$ (Å)")
     ax.legend(frameon=False, fontsize=9)
     bx.set_ylim(0.3, 0.6)
     bx.set_title("at the nucleus", color=INK, fontsize=10)
-    bx.set_xlabel("$r$ (bohr)")
-    cx.semilogy(r, slater, color=INK, lw=2, ls="--")
-    cx.semilogy(r, np.maximum(fit, 1e-30), color=H_COLOR, lw=2)
-    cx.set_xlim(0, 10)
+    bx.set_xlabel("$r$ (Å)")
+    cx.semilogy(r * AB, slater, color=INK, lw=2, ls="--")
+    cx.semilogy(r * AB, np.maximum(fit, 1e-30), color=H_COLOR, lw=2)
+    cx.set_xlim(0, 10 * AB)
     cx.set_ylim(1e-8, 1)
-    cx.set_xlabel("$r$ (bohr)")
+    cx.set_xlabel("$r$ (Å)")
     cx.set_title("far from the nucleus (log scale)", color=INK, fontsize=10)
     _style(cx)
     ns = np.arange(1, 7)
@@ -204,7 +205,7 @@ def shells_figure():
     for ax, (_, ell, title) in zip(axes[:3], names):
         f = bs.gaussian_shell(ell, alpha, xx, zz)
         f = f / np.abs(f).max()
-        ax.contourf(xx, zz, f, levels=np.linspace(-1, 1, 21), cmap=_cmap(), vmin=-1, vmax=1)
+        ax.contourf(xx * AB, zz * AB, f, levels=np.linspace(-1, 1, 21), cmap=_cmap(), vmin=-1, vmax=1)
         ax.set_title(title, color=INK, fontsize=10)
     s = bs.gaussian_shell(0, alpha, xx, zz)
     p = bs.gaussian_shell(1, alpha, xx, zz)
@@ -213,18 +214,18 @@ def shells_figure():
     rho1 = (s + 0.5 * p) ** 2
     ax = axes[3]
     levels = np.linspace(0.05, 1.0, 8) * rho1.max()
-    ax.contour(xx, zz, rho0, levels=levels, colors=GREY, linewidths=1.0, linestyles="--")
-    ax.contour(xx, zz, rho1, levels=levels, colors=PLUS, linewidths=1.4)
+    ax.contour(xx * AB, zz * AB, rho0, levels=levels, colors=GREY, linewidths=1.0, linestyles="--")
+    ax.contour(xx * AB, zz * AB, rho1, levels=levels, colors=PLUS, linewidths=1.4)
     ax.plot([0], [0], "o", color=INK, ms=4)
     ax.set_title("density of $s$ (dashed) and $s+\\frac{1}{2} p_z$", color=INK, fontsize=10)
     for ax in axes:
         ax.set_aspect("equal")
-        ax.set_xlabel("$x$")
-        ax.set_xticks([-2, 0, 2])
-        ax.set_yticks([-2, 0, 2])
-        ax.set_xlim(-3, 3)
-        ax.set_ylim(-3, 3)
-    axes[0].set_ylabel("$z$")
+        ax.set_xlabel("$x$ (Å)")
+        ax.set_xticks([-1, 0, 1])
+        ax.set_yticks([-1, 0, 1])
+        ax.set_xlim(-3 * AB, 3 * AB)
+        ax.set_ylim(-3 * AB, 3 * AB)
+    axes[0].set_ylabel("$z$ (Å)")
     fig.tight_layout()
     return fig
 
@@ -240,14 +241,14 @@ def split_valence_figure(zeta):
     fig, (ax, bx) = plt.subplots(1, 2, figsize=(10.5, 3.7))
     r = np.linspace(0, 4, 600)
     a, _, _ = bs.sto_ng_fit(3)
-    ax.plot(r, bs.slater_1s(r, zeta), color=INK, lw=2.2, ls="--", label=f"target $e^{{-{zeta:.2f}\\,r}}$")
+    ax.plot(r * AB, bs.slater_1s(r, zeta), color=INK, lw=2.2, ls="--", label=f"target $e^{{-{zeta:.2f}\\,r}}$")
     styles = {"single": (A_COLOR, "single zeta (weights frozen)"), "double": (OMEGA_COLOR, "double zeta (2 weights free)"),
               "triple": (H_COLOR, "3 weights free")}
     for kind, (col, lab) in styles.items():
-        ax.plot(r, bs.contracted_radial(r, a, bs.split_valence_coefficients(zeta, kind)), color=col, lw=1.6, label=lab)
-    ax.set_xlim(0, 4)
+        ax.plot(r * AB, bs.contracted_radial(r, a, bs.split_valence_coefficients(zeta, kind)), color=col, lw=1.6, label=lab)
+    ax.set_xlim(0, 4 * AB)
     ax.set_ylim(0, 1.3)
-    ax.set_xlabel("$r$ (bohr)")
+    ax.set_xlabel("$r$ (Å)")
     ax.legend(frameon=False, fontsize=8)
     _style(ax)
     zs = np.linspace(0.6, 2.0, 57)
@@ -270,26 +271,26 @@ def hydrogen_basis_figure(data):
     rows = data["hydrogen"]
     fig, (ax, bx) = plt.subplots(1, 2, figsize=(12, 4.0), gridspec_kw={"width_ratios": [1.05, 1]})
     labels = [r["label"].replace(", without its p shell", "\n(p removed)").replace("def2-", "") for r in rows]
-    alphas = [r["polarizability"] for r in rows]
+    alphas = [r["polarizability"] * AB**3 for r in rows]  # bohr^3 -> Å^3
     ax.barh(range(len(rows)), alphas, color=H_COLOR)
-    ax.axvline(4.5, color=A_COLOR, lw=1.4, ls="--")
-    ax.text(4.45, -0.45, "exact $\\frac{9}{2}$", color=INK, ha="right", va="bottom", fontsize=9)
+    ax.axvline(4.5 * AB**3, color=A_COLOR, lw=1.4, ls="--")
+    ax.text(4.45 * AB**3, -0.45, "exact $\\frac{9}{2}$", color=INK, ha="right", va="bottom", fontsize=9)
     ax.set_yticks(range(len(rows)))
     ax.set_yticklabels(labels, fontsize=8)
     ax.invert_yaxis()
-    ax.set_xlim(0, 5)
-    ax.set_xlabel(r"polarizability $\alpha$ of the H atom (bohr$^3$)")
+    ax.set_xlim(0, 5 * AB**3)
+    ax.set_xlabel(r"polarizability $\alpha$ of the H atom (Å$^3$)")
     _style(ax)
     r = np.array(rows[0]["r"])
-    bx.semilogy(r, bs.density_slater(r), color=INK, lw=2.2, ls="--", label="exact")
+    bx.semilogy(r * AB, bs.density_slater(r) / AB**3, color=INK, lw=2.2, ls="--", label="exact")
     for row, col in zip(rows, (GREY, A_COLOR, None, H_COLOR, None, None, K_COLOR)):
         if col is None:
             continue
-        bx.semilogy(r, np.maximum(row["density"], 1e-30), color=col, lw=1.6, label=row["label"])
-    bx.set_xlim(0, 12)
-    bx.set_ylim(1e-11, 1)
-    bx.set_xlabel("distance from the nucleus $r$ (bohr)")
-    bx.set_ylabel(r"electron density $\rho$")
+        bx.semilogy(r * AB, np.maximum(np.array(row["density"]) / AB**3, 1e-30), color=col, lw=1.6, label=row["label"])
+    bx.set_xlim(0, 12 * AB)
+    bx.set_ylim(1e-11 / AB**3, 1 / AB**3)
+    bx.set_xlabel("distance from the nucleus $r$ (Å)")
+    bx.set_ylabel(r"electron density $\rho$ (Å$^{-3}$)")
     bx.legend(frameon=False, fontsize=8, loc="upper right")
     _style(bx)
     fig.tight_layout()
