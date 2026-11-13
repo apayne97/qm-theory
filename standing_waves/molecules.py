@@ -103,6 +103,39 @@ def timescale_ratio(fit=None):
     return float(vibrational_spacing_cm(fit) / HARTREE_CM / binding)
 
 
+def h2plus_force(r, fit=None):
+    """Force on the bond length, F(R) = -dE/dR (hartree/bohr), from the fitted H2+ curve. Positive F pushes the protons apart."""
+    fit = fit if fit is not None else h2plus_fit()
+    return -fit.deriv(1)(r)
+
+
+def optimise_bond_length(r0, fit=None, hessian0=0.3, force_tol=1e-4, max_step=0.5, max_iter=30):
+    """Geometry optimisation of the H2+ bond length with a quasi-Newton (BFGS-type) step, the one-coordinate version of the real loop.
+
+    Each iteration: energy E and force F at R (one 'SCF' here is one evaluation of the fitted curve), step dR = F / h with the
+    approximate second derivative h, limited to max_step (bohr), then h is updated from the change of force (secant rule, which is BFGS
+    in one dimension). Stops when |F| < force_tol (hartree/bohr). Returns a dict of lists: 'r', 'energy', 'force', 'hessian'.
+    """
+    fit = fit if fit is not None else h2plus_fit()
+    r, h = float(r0), float(hessian0)
+    out = {"r": [], "energy": [], "force": [], "hessian": []}
+    f_prev = r_prev = None
+    for _ in range(max_iter):
+        f = float(h2plus_force(r, fit))
+        if f_prev is not None and r != r_prev:
+            secant = -(f - f_prev) / (r - r_prev)  # d2E/dR2 = -dF/dR
+            h = secant if secant > 1e-3 else h  # keep the Hessian positive, as BFGS does
+        for key, val in (("r", r), ("energy", float(fit(r))), ("force", f), ("hessian", h)):
+            out[key].append(val)
+        if abs(f) < force_tol:
+            break
+        step = float(np.clip(f / h, -max_step, max_step))
+        while fit(r + step) > fit(r) and abs(step) > 1e-6:  # backtracking: never accept a step that raises the energy
+            step /= 2
+        r_prev, f_prev, r = r, f, r + step
+    return out
+
+
 # ---------------------------------------------------------------------------------------------------------------
 # Section 3: the orbital approximation
 
