@@ -68,7 +68,7 @@ def _(mo):
 def _(mo):
     mo.accordion({
         "Terms used in this notebook": mo.md(r"""
-        - **Orbital** $\varphi_i(\mathbf r)$: a one-electron wave in space. A **spin orbital** $\psi_i(\mathbf x)=\varphi_i(\mathbf r)\,\alpha$ or $\varphi_i(\mathbf r)\,\beta$ adds the spin; $\mathbf x=\{\mathbf r,\omega\}$ stands for position and spin together.
+        - **Orbital** $\varphi_i(\mathbf r)$: a one-electron wave in space. A **spin orbital** $\psi_i(\mathbf x)$, a spatial orbital times the spin function $\alpha$ (up) or $\beta$ (down), adds the spin; $\mathbf x=\{\mathbf r,\sigma\}$ with $\sigma\in\{\alpha,\beta\}$ stands for position and spin together.
         - **Hartree product**: the product of one orbital per electron. **Orbital approximation**: the many-electron wave is built from one orbital per electron and nothing else.
         - **Density** $\rho(\mathbf r)$: the electron charge per unit volume, the sum of $\lvert\varphi_i\rvert^2$ over the occupied orbitals.
         - **Average (mean) field**: the potential energy of one electron in the *averaged* charge cloud of the others, not in their instantaneous positions.
@@ -378,8 +378,8 @@ def _(mo):
     mo.md(r"""
     ## 5 Why the product fails: spin orbitals, the Slater determinant and the Pauli principle
 
-    **Spin orbitals.** Electrons have a spin coordinate $\omega$ (two values, called $\alpha$ and $\beta$) besides their position $\mathbf r$. Write $\mathbf x=\{\mathbf r,\omega\}$ for both together, and replace the spatial
-    orbital $\varphi(\mathbf r)$ by a **spin orbital** $\psi(\mathbf x)=\varphi(\mathbf r)\,\alpha$ or $\varphi(\mathbf r)\,\beta$. The Hartree product becomes $\psi_1(\mathbf x_1)\,\psi_2(\mathbf x_2)\cdots\psi_N(\mathbf x_N)$.
+    **Spin orbitals.** An electron has a spin as well as a position $\mathbf r$, and the spin has two possible states, described by the spin functions $\alpha$ (up) and $\beta$ (down). Write $\mathbf x=\{\mathbf r,\sigma\}$ for position and spin together, with $\sigma\in\{\alpha,\beta\}$, and replace the spatial
+    orbital $\varphi(\mathbf r)$ by a **spin orbital** $\psi(\mathbf x)$: a spatial orbital times either the spin function $\alpha$ or $\beta$. The Hartree product becomes $\psi_1(\mathbf x_1)\,\psi_2(\mathbf x_2)\cdots\psi_N(\mathbf x_N)$.
 
     **The failure.** Electrons are fermions: the wave must change sign when the space-spin coordinates of any two electrons are swapped (the spinor notebook shows where this comes from). Take two electrons.
     The product $\psi_1(\mathbf x_1)\psi_2(\mathbf x_2)$ becomes $\psi_1(\mathbf x_2)\psi_2(\mathbf x_1)$ after the swap, and that is the *negative* of the original only for special orbitals; in general it is
