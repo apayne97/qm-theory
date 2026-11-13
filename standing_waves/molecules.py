@@ -1,11 +1,12 @@
 """Numerics for the bridge notebook `from_atoms_to_molecules.py`. Atomic units (hartree, bohr) unless a name says otherwise.
 
-Parts, in the order of the notebook:
+Parts (sections 1, 2, 4, 5 of `from_atoms_to_molecules.py`; the third is now `hartree_fock_mean_field.py`):
   * counting coordinates: why a molecule has no closed-form solution (section 1),
   * Born-Oppenheimer: the electronic energy of H2+ as a potential for the nuclei, and the nuclear levels in it (section 2),
-  * the orbital approximation: helium with one shared 1s orbital, and a screened potential that splits 2s from 2p (section 3),
-  * hybrid orbitals s + sqrt(n) p and the angle between them (section 4),
-  * a symmetry toy for methane: 8 functions, an a1 level and a triply degenerate t2 level (section 5).
+  * hybrid orbitals s + sqrt(n) p and the angle between them (section 3),
+  * a symmetry toy for methane: 8 functions, an a1 level and a triply degenerate t2 level (section 4),
+and, for `hartree_fock_mean_field.py`: helium with one shared 1s orbital, the average field v_J(r) of a 1s density, Zeff(r) of lithium,
+a screened potential that splits 2s from 2p, and the size of an orbital against the nuclear charge.
 Everything is plain numpy and is tested in `test_molecules.py`. The H2+ energies are read from `data_basis_sets.json`.
 """
 
@@ -25,7 +26,7 @@ PROTON_MASS = 1836.15267343  # in electron masses
 BOHR_ANGSTROM = 0.529177210903  # one bohr in angstrom
 
 # ---------------------------------------------------------------------------------------------------------------
-# Section 1: how many coordinates?
+# from_atoms_to_molecules.py, section 1: how many coordinates?
 
 
 def coordinate_count(n_nuclei, n_electrons):
@@ -39,7 +40,7 @@ def grid_values(n_coordinates, points_per_axis=10):
 
 
 # ---------------------------------------------------------------------------------------------------------------
-# Section 2: Born-Oppenheimer for H2+
+# from_atoms_to_molecules.py, section 2: Born-Oppenheimer for H2+
 
 REDUCED_MASS_H2PLUS = PROTON_MASS / 2  # two protons
 
@@ -137,7 +138,7 @@ def optimise_bond_length(r0, fit=None, hessian0=0.3, force_tol=1e-4, max_step=0.
 
 
 # ---------------------------------------------------------------------------------------------------------------
-# Section 3: the orbital approximation
+# hartree_fock_mean_field.py, sections 2 to 4: the orbital approximation (helium, the average field v_J, screening)
 
 HELIUM_EXACT = -2.90372  # hartree, non-relativistic ground state (Pekeris; literature value, not computed here)
 HELIUM_HF_LIMIT = -2.86168  # hartree, Hartree-Fock limit (literature value)
@@ -150,6 +151,13 @@ def helium_energy(zeta, z=2.0):
     return zeta**2 - 2 * z * zeta + 5 * zeta / 8
 
 
+def helium_orbital_energy(zeta, z=2.0):
+    """Orbital energy epsilon = <phi| f |phi> of the shared 1s orbital: kinetic zeta^2/2, attraction -z zeta, and the field of the other electron 5 zeta / 8.
+    The total energy is 2 epsilon - 5 zeta / 8: the sum of the two orbital energies counts the repulsion twice."""
+    zeta = np.asarray(zeta, dtype=float)
+    return zeta**2 / 2 - z * zeta + 5 * zeta / 8
+
+
 def helium_best_zeta(z=2.0):
     """Minimum of helium_energy: zeta = z - 5/16 (the nucleus as seen through the other electron)."""
     return z - 5 / 16
@@ -160,13 +168,39 @@ def helium_best_energy(z=2.0):
     return -((z - 5 / 16) ** 2)
 
 
-def screened_potential(r, z=3.0, decay=0.5):
-    """Toy for an atom with a filled 1s shell: charge z seen close in, z - 2 seen far out (V = -Zeff(r)/r).
+def coulomb_potential_1s(r, zeta):
+    """Potential energy v_J(r) = int rho(r') / |r - r'| dr' of one electron in the density rho = |phi|^2, phi = sqrt(zeta^3/pi) exp(-zeta r).
 
-    Zeff(r) = (z - 2) + 2 exp(-r / decay) : the two core electrons screen the nucleus outside `decay` bohr.
+    Closed form (shell theorem: charge inside r acts from the centre, charge outside r acts as a constant):
+    v_J(r) = [1 - exp(-2 zeta r) (1 + zeta r)] / r. It tends to zeta at r = 0 and to 1/r far out.
     """
     r = np.asarray(r, dtype=float)
-    return -((z - 2.0) + 2.0 * np.exp(-r / decay)) / r
+    x = zeta * r
+    small = x < 1e-4  # series zeta - (2/3) zeta^3 r^2 avoids 0/0 and cancellation
+    safe = np.where(small, 1.0, r)
+    exact = (1.0 - np.exp(-2.0 * x) * (1.0 + x)) / safe
+    return np.where(small, zeta - (2.0 / 3.0) * zeta**3 * r**2, exact)
+
+
+def effective_charge(r, z=3.0, zeta_core=None, n_core=2):
+    """Zeff(r) = z - n_core r v_J(r): the nuclear charge seen at distance r through a core of n_core electrons in 1s orbitals exp(-zeta_core r).
+
+    zeta_core defaults to the helium-like value z - 5/16. Zeff(0) = z; far out Zeff = z - n_core.
+    For lithium (z = 3, two 1s electrons): Zeff(r) = 1 + 2 exp(-2 zeta r) (1 + zeta r).
+    """
+    zeta_core = helium_best_zeta(z) if zeta_core is None else zeta_core
+    r = np.asarray(r, dtype=float)
+    return z - n_core * r * coulomb_potential_1s(r, zeta_core)
+
+
+def screened_potential(r, z=3.0, decay=0.5):
+    """V = -Zeff(r)/r for an atom with a filled 1s shell, the core being two electrons in exp(-zeta r) with zeta = 1 / (2 decay).
+
+    Zeff(r) = (z - 2) + 2 exp(-r / decay) (1 + r / (2 decay)): charge z close in, z - 2 outside about `decay` bohr.
+    `decay` is the distance over which the core screens; lithium's own core (zeta = 2.6875) is decay = 0.186 bohr = 0.099 angstrom.
+    """
+    zeta = 1.0 / (2.0 * decay)
+    return -effective_charge(r, z, zeta_core=zeta, n_core=2) / np.asarray(r, dtype=float)
 
 
 def radial_levels(l, potential, h=0.02, n_grid=3000, n_states=4):
@@ -189,7 +223,7 @@ def screened_levels(decay=0.5, z=3.0):
 
 
 # ---------------------------------------------------------------------------------------------------------------
-# Section 3, continued: how the size of an orbital depends on the nuclear charge
+# hartree_fock_mean_field.py, section 4: how the size of an orbital depends on the nuclear charge
 
 
 def hydrogen_like_radius(n, l, z=1.0):
@@ -217,7 +251,7 @@ def atom_sizes():
 
 
 # ---------------------------------------------------------------------------------------------------------------
-# Section 4: hybrid orbitals
+# from_atoms_to_molecules.py, section 3: hybrid orbitals
 
 def hybrid_angle_degrees(n):
     """Angle between two hybrids (s + sqrt(n) p along a direction): they are orthogonal when 1 + n cos(angle) = 0."""
@@ -247,7 +281,7 @@ def tetrahedral_angle_degrees():
 
 
 # ---------------------------------------------------------------------------------------------------------------
-# Section 5: methane, a symmetry toy
+# from_atoms_to_molecules.py, section 4: methane, a symmetry toy
 # Basis: C 2s, C 2px, 2py, 2pz, then H1s on each corner of the tetrahedron. The numbers below are illustrative
 # (valence-orbital energies of the right size, a coupling of a few eV); the pattern of levels does not depend on them.
 

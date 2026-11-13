@@ -1,4 +1,4 @@
-"""PySCF numbers behind the orbital-size figure in `from_atoms_to_molecules.py`; writes data_atom_sizes.json next to this file.
+"""PySCF numbers behind the orbital-size figure in `hartree_fock_mean_field.py`; writes data_atom_sizes.json next to this file.
 
 For each neutral atom H to Ar (ground-state spin, UHF, def2-TZVP) the mean distance <r> of the highest occupied spin orbital
 from the nucleus, in bohr, by numerical integration of |phi|^2 r on PySCF's atomic grid. The notebook only reads the JSON.

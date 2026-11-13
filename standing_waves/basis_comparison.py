@@ -1,4 +1,4 @@
-"""Numerics for section 3b of `basis_sets_from_base_states.py`: why atom-centred functions? Atomic units throughout.
+"""Numerics for section 5b of `basis_sets_from_base_states.py`: why atom-centred functions? Atomic units throughout.
 
 One electron, the hydrogen atom (exact energy -1/2 hartree) and H2+ (exact -0.602634 hartree at R = 2 bohr), solved
 variationally in two kinds of basis:

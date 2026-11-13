@@ -56,36 +56,39 @@ git-ignored); GIFs are `drum_fourier_*_build_up.gif` there and `standing_waves/g
 Colour keys for the figures: r pink, ϑ orange (cones), φ green (planes), ℓ purple (all angular nodes); Cartesian cell: x blue,
 y dark cyan, z teal; positive blue, negative red.
 
-## Part 3. From atoms to organic molecules (approximations)
+## Part 3. From atoms to organic molecules (gallery 03; two approximations and the orbitals they give)
 - Why hydrogen's recipe stops (3(N_nuc+N_el) coordinates) — `standing_waves/from_atoms_to_molecules.py` §1
 - Born-Oppenheimer: H2+ energy curve as the nuclear potential, vibration as a 1D standing wave, mass slider — §2
-- Orbital approximation: helium with one shared 1s orbital (E(ζ), ζ = Z − 5/16), correlation energy, screening so 2s < 2p — §3
-- Hybrids sp, sp², sp³ and the angles from 1 + n cos θ = 0 — §4
-- Methane: LCAO symmetry toy (a1 + 3 t2), four equivalent bond orbitals, link to carbon/methane in `~/science/qm-calculations` — §5
-- Short bridge also in `spherical_harmonics_and_hydrogen.py` §7. Takeaways for a slide are at the end of §5.
+- How a geometry optimisation uses Born-Oppenheimer (inner SCF loop, outer loop, single point / optimisation / AIMD, 1D BFGS toy) — §2.1
+- Hybrids sp, sp², sp³ and the angles from 1 + n cos θ = 0 — §3
+- Methane: LCAO symmetry toy (a1 + 3 t2), four equivalent bond orbitals, link to carbon/methane in `~/science/qm-calculations` — §4
+- Takeaways for a slide are at the end of §4. Short bridge also in `spherical_harmonics_and_hydrogen.py` §7. The third approximation of the old Part 3, one orbital per electron, is now Part 4 (gallery 05).
 
 ## Part 3b. Basis sets: which functions on the atoms (gallery 04, directly after Part 3)
 - Base states, the matrix equation HC = ESC, the variational principle; truncated expansion on a toy well — `standing_waves/basis_sets_from_base_states.py` §1–2
-- Atom-centred functions and LCAO, H2+ with two functions (the LCAO calculation behind Part 3's third approximation) — §3
+- Atom-centred functions and LCAO, H2+ with two functions; basis functions are not orbitals — §3
 - Slater vs Gaussian, contraction STO-nG — §4
-- Shells, zeta, polarization P, diffuse D, water vs basis size — §5
+- Shells, zeta, polarization P, diffuse D, water vs basis size, orbital sizes and exponents — §5
+- Why atom-centred functions: box waves against Gaussians for H and H2+ (was §3b; needs the cusp of §4 and the polarization functions of §5) — §5b
 - The `def2-TZVPD` label decoded — §6; leads into Part 4/5
 
-## Part 4. Hartree-Fock: the bridge to DFT
-- Slater determinant, J and K, what HF misses — `dft/reading_a_dft_label.py` §2 (needs Part 3 §3 orbital approximation and Part 3b §1 variational principle)
+## Part 4. Hartree-Fock: one orbital per electron in the field of the others (gallery 05, `standing_waves/hartree_fock_mean_field.py`)
+- Core: the orbital approximation (§1), helium E(ζ) with the ⟨1/r12⟩ = 5ζ/8 term (§2), the average field v_J(r) of the other electron and lithium Z_eff(r) (§3)
+- Slater determinant and Pauli (§5, after the product ansatz and why it fails); the energy of a determinant (§6); the Fock operator f̂ = −½∇² + v_nuc + Ĵ − K̂ as the one-electron effective Hamiltonian, eigenvalue equation, Kohn-Sham as the same form (§7.1), Roothaan matrix form FC = SCε (§7.2), the SCF flowchart (§7.3); what HF misses, correlation energy 1.1 eV in helium, the two ways past HF (§8)
+- Screening so 2s < 2p (toy) and orbital size against Z, with the basis-set consequences (§4)
 
-## Part 5. DFT and the labels (longest part)
-- The label has three parts — `reading_a_dft_label.py` §1
+## Part 5. DFT and the labels (longest part; gallery 06 `reading_a_dft_label.py`, 07 `kohn_sham_matrix.py`)
+- The label has three parts — `reading_a_dft_label.py` §1; HF against DFT and CCSD(T) in numbers — §2
 - Kohn-Sham equations, what is in F — §3; derivation in `dft/kohn_sham_matrix.py` §1–5, numerics §6
 - Basis sets in the label (sizes of the two datasets, counterpoise) — §4; the content is Part 3b
 - Jacob's ladder, B97, meta — §5
 - Range separation ω — §6
 - Dispersion: -V vs D3(BJ) — §7
 - Grid and settings not in the label — §8
-- Both labels decoded (OMol25, SPICE II) — §9
+- Both labels decoded (OMol25, SPICE II), the OPLS5 labels, which calculations optimise the geometry — §9
 - What is verified and what is not — §10
 
-## Part 6. Reference: coupled cluster
+## Part 6. Reference: coupled cluster (gallery 08)
 - Why CCSD(T) is the benchmark, size consistency, accuracy ladder, link back to DFT dimers — `dft/coupled_cluster.py` §1, §6–8 (derivation §4 as backup slides)
 
 ## Open before the talk

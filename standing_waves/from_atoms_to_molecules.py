@@ -1,7 +1,7 @@
 import marimo
 
 __generated_with = "0.25.1"
-app = marimo.App(width="medium", app_title="From Atoms to Molecules: Three Approximations")
+app = marimo.App(width="medium", app_title="From Atoms to Molecules: Fixed Nuclei, Hybrids, Methane")
 
 
 @app.cell
@@ -16,13 +16,9 @@ def _():
         STATE_MAX,
         born_oppenheimer_figure,
         geometry_optimization_figure,
-        helium_figure,
         hybrid_figure,
         methane_figure,
         optimisation_toy_figure,
-        orbital_size_figure,
-        scf_loop_figure,
-        screening_figure,
         surface_uses_figure,
     )
 
@@ -31,16 +27,12 @@ def _():
         STATE_MAX,
         born_oppenheimer_figure,
         geometry_optimization_figure,
-        helium_figure,
         hybrid_figure,
         methane_figure,
         mo,
         mol,
         optimisation_toy_figure,
-        orbital_size_figure,
         plt,
-        scf_loop_figure,
-        screening_figure,
         surface_uses_figure,
     )
 
@@ -48,30 +40,32 @@ def _():
 @app.cell
 def _(mo):
     mo.md(r"""
-    # From Atoms to Molecules: Three Approximations
+    # From Atoms to Molecules: Fixed Nuclei, Hybrids, Methane
 
     The hydrogen notebook solved one electron around one fixed nucleus exactly. A molecule has several electrons and
     several nuclei, and no exact solution. Chemistry gets by with three approximations that are made one after the other:
     **fixed nuclei** (Born-Oppenheimer), **one orbital per electron** (the orbital approximation), and **orbitals built from
-    atom-centred functions** (LCAO). This notebook shows what each one assumes, what it costs, and how the resulting orbitals
-    (hybrids, bonds) look. It is the bridge between hydrogen (`spherical_harmonics_and_hydrogen.py`) and the rest of the path:
-    the third approximation, which functions to put on the atoms, is taken up in `basis_sets_from_base_states.py` (next),
-    and the Hartree-Fock and DFT notebooks (`../dft/`) follow after that.
+    atom-centred functions** (LCAO). This notebook takes the first (section 2) and shows what the orbitals that the other two produce look like
+    (hybrids and bond orbitals, sections 3 and 4). Here **two approximations** are worked out; the third, one orbital per electron, is
+    the subject of the Hartree-Fock notebook (`hartree_fock_mean_field.py`), and which functions to put on the atoms is taken up in
+    `basis_sets_from_base_states.py` (next). It is the bridge between hydrogen (`spherical_harmonics_and_hydrogen.py`) and the rest of the path.
+
+    An **orbital** is a one-electron wave $\varphi(\mathbf r)$. The orbital approximation gives each electron its own orbital (two electrons, of opposite spin, to an orbital),
+    each moving in the field of the nuclei plus the average cloud of the others; why this is a good idea, and what it costs, is in `hartree_fock_mean_field.py`.
 
     **Read first:** `spherical_harmonics_and_hydrogen.py` (s, p shapes and the real spherical harmonics). Section 2 plots
     the H$_2^+$ energy curve that `basis_sets_from_base_states.py`, section 3, computes with two basis functions; here it is
     used as given. Worked calculations that use these ideas are in `../../qm-calculations`: `carbon` (the carbon atom, its density and a p
-    orbital), `methane` (its molecular orbitals and a C-H bond orbital, used in section 5) and `basis-functions` (the shapes of the basis
+    orbital), `methane` (its molecular orbitals and a C-H bond orbital, used in section 4) and `basis-functions` (the shapes of the basis
     functions on hydrogen and oxygen, as in the next notebook).
 
     **Contents**
 
     1. Why hydrogen's recipe stops
     2. Fixed nuclei: the Born-Oppenheimer approximation (2.1: how a geometry optimization uses it)
-    3. One orbital per electron: helium, and why $2s$ lies below $2p$
-    4. Hybrid orbitals: how many $p$ in an $s$-$p$ mixture, and the angle
-    5. Methane: one level, then three
-    6. What was checked, and what was not
+    3. Hybrid orbitals: how many $p$ in an $s$-$p$ mixture, and the angle
+    4. Methane: one level, then three
+    5. What was checked, and what was not
 
     Atomic units throughout, as in `spherical_harmonics_and_hydrogen.py` and every later notebook: lengths in bohr (1 bohr $=0.529$ Å; the figures are drawn in Å), energies in
     hartree (1 hartree $=27.2$ eV), $\hbar=m_e=1$. Energies of the methane toy are in eV. Everything is computed in `molecules.py` and tested in `test_molecules.py`; the H$_2^+$ energies
@@ -86,10 +80,7 @@ def _(mo):
         "Terms used in this notebook": mo.md(r"""
         - **Born-Oppenheimer approximation**: solve for the electrons with the nuclei held at fixed positions, then let the
           nuclei move in the energy surface that results.
-        - **Orbital**: a one-electron wave $\varphi(\mathbf r)$. The orbital approximation writes the many-electron wave as a
-          product (made antisymmetric in `../dft/reading_a_dft_label.py`, section 2) of one orbital per electron.
-        - **Mean field**: each electron feels the nucleus plus the *average* charge cloud of the others, not their instantaneous positions.
-        - **Screening**: the pull of the nucleus on an outer electron is reduced by the inner electrons.
+        - **Orbital**: a one-electron wave $\varphi(\mathbf r)$; the orbital approximation builds the many-electron wave from one orbital per electron (`hartree_fock_mean_field.py`).
         - **LCAO**: linear combination of atom-centred functions, $\psi=\sum_\mu c_\mu\chi_\mu$.
         - **Hybrid orbital**: a mixture of $s$ and $p$ functions on one atom that points in one direction.
         - **Symmetry labels** $a_1$, $t_2$: the names of the levels of a tetrahedral molecule; $a_1$ is one function, $t_2$ is three that
@@ -208,25 +199,14 @@ def _(mo):
 
     A geometry optimization asks: for which nuclear positions $\mathbf R$ is the energy $E(\mathbf R)$ lowest? Born-Oppenheimer
     is what makes the question well posed, because it turns the energy into a function of the nuclear positions alone. The
-    calculation is two loops, one inside the other. In both figures, $\mathbf R$ stands for all nuclear positions at once, $E$ is the
+    calculation is two loops, one inside the other. In the figure below, $\mathbf R$ stands for all nuclear positions at once, $E$ is the
     Born-Oppenheimer energy of section 2 (electrons plus nuclear repulsion), and $\mathbf F=-\partial E/\partial\mathbf R$ is the
     **force** on the nuclei: the negative slope of the energy surface, one vector per nucleus.
 
-    **Inner loop: the electrons, at fixed $\mathbf R$.** The Kohn-Sham operator $\hat f$ (decoded in `../dft/kohn_sham_matrix.py`)
-    contains the potential of the nuclei, which are fixed charges at $\mathbf R$, and the potentials of the electron density $n(\mathbf r)$ itself
-    (the Hartree repulsion $V_{\mathrm H}$ and the exchange-correlation potential $V_{\mathrm{xc}}$). The density is
-    needed to build the operator and the operator gives the orbitals that make the density, so one iterates until the density stops changing.
-    This is the **self-consistent field** (SCF) loop.
+    **Inner loop: the electrons, at fixed $\mathbf R$.** The nuclei are fixed charges at $\mathbf R$, and the electrons are solved in their field by the
+    **self-consistent field** (SCF) loop, which is described once, in `hartree_fock_mean_field.py`, section 7 (the orbitals and the field they make are iterated until they agree).
+    It returns $E(\mathbf R)$.
     """)
-    return
-
-
-@app.cell
-def _(mo, plt, scf_loop_figure):
-    _fig = scf_loop_figure()
-    _out = mo.as_html(_fig)
-    plt.close(_fig)
-    _out
     return
 
 
@@ -329,26 +309,10 @@ def _(mo, mol):
 @app.cell
 def _(mo):
     mo.md(r"""
-    **Which calculations optimize the geometry?** The labels decoded in `../dft/reading_a_dft_label.py` say which method and basis were used,
-    not whether the geometry was optimized. The two are separate choices: a dataset of energies and forces needs only single points, whereas
-    a geometry for a force-field fit needs the loop above. What the sources say (read on 2026-11-12, short quotes in quotation marks):
-
-    | Calculation | Geometry optimized in the calculation? | What the source says |
-    |---|---|---|
-    | any single point | no: one SCF at the given $\mathbf R$ | gives $E$, and $\mathbf F$ almost for free; $\mathbf R$ is an input |
-    | any optimization | yes: many SCFs, one per step | gives $\mathbf R_{\mathrm{opt}}$ and its energy |
-    | **SPICE** (original paper, Eastman et al., *Sci. Data* 10, 11, 2023) | no DFT optimization is stated; energies and gradients are computed on given structures | "Forces and energies for all conformations were calculated" with Psi4. Structures: 10 RDKit conformers, then "100 ps of molecular dynamics at a temperature of 500 K" (force-field MD, OpenMM/Amber14) for the high-energy set; "five iterations of L-BFGS energy minimization" (partial, "did not fully minimize it") plus 1 ps at 100 K for the low-energy partner; ion pairs on a grid of distances |
-    | **SPICE II** (Eastman et al., arXiv 2406.13112) | not stated in the source | I could read only the abstract of this paper. Whether its sampling differs from SPICE 1 is unchecked |
-    | **OMol25** (the dataset paper, arXiv 2505.08762) | mostly no, but not all subsets | "over 140 million DFT single-point calculations". Structures come from MD (classical and machine-learned potentials), ring-polymer MD, docking followed by MD, generated metal complexes, reaction paths and a few "rattled" structures. Some subsets were "optimized for up to five steps" (metal complexes, 3 Å electrolyte clusters, small-molecule combinations); the text I read does not say with which method |
-    | **OPLS5** (a) | yes: "optimise the geometries" of about 500 metal complexes | as in `reading_a_dft_label.py` section 9 |
-    | **OPLS5** (b) | energy scans of metal-ligand distance and ligand rotations | scan points are prescribed geometries; whether the other coordinates were relaxed at each point is not stated in the source I read |
-    | **OPLS5** (c) | no optimization of the probe: a $+1$ point charge placed $3.5$ Å and $4.0$ Å above the ring centre | fixed, prescribed positions; how the benzene geometry was obtained is not stated in the source I read |
-    | **OPLS5** (d) | not stated in the source | reference interaction energies, CCSD(T)/CBS; the origin of the geometries is not stated in the source I read |
-
-    So the usual picture, that SPICE and OMol25 are energies and forces on structures made elsewhere (by force-field or machine-learned MD, conformer
-    generators and reaction-path tools), holds, with one correction: the OMol25 paper describes short optimizations of at most five steps for some of
-    its subsets. Neither dataset is a set of relaxed minima, and that is deliberate: a force field or a machine-learned potential has to be accurate away from
-    the minimum too, because MD visits strained geometries.
+    **Which calculations optimize the geometry?** The label of a dataset (`../dft/reading_a_dft_label.py`) says which method and basis were used,
+    not whether the geometry was optimized; the two are separate choices. A dataset of energies and forces needs only single points, whereas
+    a geometry for a force-field fit needs the loop above. Which of the datasets (SPICE, OMol25) and force-field jobs (OPLS5) optimize the geometry
+    is tabulated next to their labels, in section 9 of that notebook.
     """)
     return
 
@@ -356,204 +320,7 @@ def _(mo):
 @app.cell
 def _(mo):
     mo.md(r"""
-    ## 3 One orbital per electron: helium, and why $2s$ lies below $2p$
-
-    Fixed nuclei leave the electron-electron term. For helium the exact wave depends on the two positions
-    $\mathbf r_1,\mathbf r_2$ jointly. The **orbital approximation** takes a product of one-electron waves,
-
-    $$
-    \Psi(\mathbf r_1,\mathbf r_2)\approx\varphi(\mathbf r_1)\,\varphi(\mathbf r_2),
-    $$
-
-    so that each electron moves in the field of the nucleus plus the *average* cloud of the other. (Two electrons may share the
-    same spatial orbital only if their spins are opposite; this is the Pauli principle, and `reading_a_dft_label.py`, section 2,
-    makes the product antisymmetric in general.)
-
-    Take the hydrogen-like function $\varphi\propto e^{-\zeta r}$ and let $\zeta$ be the one free number. The energy in
-    hartree is a sum of three terms,
-
-    $$
-    E(\zeta)=\underbrace{\zeta^{2}}_{\text{kinetic}}\;\underbrace{-\,2Z\zeta}_{\text{attraction to the nucleus}}\;
-    {}+\underbrace{\tfrac58\zeta}_{\text{repulsion of the two electrons}},\qquad Z=2 .
-    $$
-
-    Without the last term the minimum is at $\zeta=Z=2$ (the helium ion's orbital, twice over) and the energy is $-4$ hartree.
-    With it, the minimum moves to $\zeta=Z-\tfrac5{16}=1.6875$ and the energy is $-2.8477$ hartree. The repulsion works
-    as a **screening**: each electron sees a nucleus whose charge is reduced by a bit under one third of an electron
-    charge, because the other electron sits partly between it and the nucleus. The orbital swells (right panel).
-    """)
-    return
-
-
-@app.cell
-def _(mo):
-    zeta = mo.ui.slider(1.0, 2.6, step=0.025, value=1.6875, label=r"$\zeta$", show_value=True)
-    return (zeta,)
-
-
-@app.cell
-def _(helium_figure, mo, plt, zeta):
-    _fig = helium_figure(zeta.value)
-    _out = mo.vstack([zeta, _fig])
-    plt.close(_fig)
-    _out
-    return
-
-
-@app.cell
-def _(mo):
-    mo.accordion({
-        "Details: where the three terms come from": mo.md(r"""
-        For $\varphi=\sqrt{\zeta^3/\pi}\,e^{-\zeta r}$ the kinetic energy of one electron is $\tfrac12\zeta^2$ and the attraction to
-        a nucleus of charge $Z$ is $-Z\zeta$ (both are the hydrogen-like values with $Z\to\zeta$ and the pull $Z$); two electrons double
-        them. The repulsion $\langle 1/r_{12}\rangle$ for two electrons in this orbital is $\tfrac58\zeta$, which is checked by direct
-        integration in `test_molecules.py`. Setting $dE/d\zeta=2\zeta-2Z+\tfrac58=0$ gives $\zeta=Z-\tfrac5{16}$ and
-        $E=-(Z-\tfrac5{16})^2$.
-        """)
-    })
-    return
-
-
-@app.cell
-def _(mo):
-    mo.md(r"""
-    **How good is it?** Against the exact non-relativistic energy of helium, $-2.9037$ hartree:
-
-    | wave function | energy (hartree) |
-    |---|---|
-    | no repulsion between the electrons | $-4$ (not an approximation of anything: the term is missing) |
-    | one orbital, bare nucleus, $\zeta=2$ | $-2.75$ |
-    | one orbital with the best $\zeta=1.6875$ | $-2.8477$ |
-    | best possible orbital product (Hartree-Fock limit) | $-2.8617$ |
-    | exact | $-2.9037$ |
-
-    The one-orbital picture recovers 98 % of the exact energy, but the missing $0.042$ hartree ($1.1$ eV) is larger than most
-    chemical energy differences. That gap is the **correlation energy**: the electrons dodge each other, which no
-    product of orbitals can express. Hartree-Fock stops at the orbital product; DFT and coupled cluster (Parts 4 to 6) are
-    different ways of recovering some or all of the gap.
-
-    **Why $2s$ is lower than $2p$.** In hydrogen the energy depends on $n$ only (section 5 of the hydrogen notebook), because the
-    potential is exactly $-1/r$. In an atom with several electrons, an inner electron screens the nucleus, so the charge
-    seen by an outer electron is large close in and small far out. The toy below models an atom with a filled $1s$ shell: the
-    effective charge is $Z_{\text{eff}}(r)=1+2e^{-r/a}$ (nucleus 3, minus the two $1s$ electrons seen from outside), and $a$ is the
-    distance over which the core screens. The radial equation of the hydrogen notebook is solved with this potential.
-    """)
-    return
-
-
-@app.cell
-def _(mo):
-    decay = mo.ui.slider(0.05, 0.8, step=0.05, value=0.25, label=r"screening distance $a$ (Å)", show_value=True)
-    return (decay,)
-
-
-@app.cell
-def _(decay, mo, plt, screening_figure):
-    _fig = screening_figure(decay.value)
-    _out = mo.vstack([decay, _fig])
-    plt.close(_fig)
-    _out
-    return
-
-
-@app.cell
-def _(mo):
-    mo.md(r"""
-    An $s$ wave is large near the nucleus (it has no centrifugal barrier), so it lies partly *inside* the screening cloud and feels the
-    strong pull there. A $p$ wave is kept away from the nucleus by the barrier $\ell(\ell+1)/2r^2$, feels the screened charge, and lies
-    higher. The order of each shell is $s<p<d$ at the same $n$, and the splitting grows with the screening distance. This is the origin of the
-    familiar filling order $1s,2s,2p,3s,3p,4s,3d\dots$ (the $4s$ before $3d$ is the same effect, a bit stronger). The toy
-    potential has one parameter, set by hand rather than fitted to any atom, so only the ordering is a result.
-
-    For the slides: in hydrogen the shapes ($s$, $p$, $d$) *and* the degeneracy in $\ell$ come from the same function; in an atom with
-    several electrons the shapes survive, and the degeneracy in $\ell$ does not.
-    """)
-    return
-
-
-@app.cell
-def _(mo):
-    mo.md(r"""
-    **How big is an orbital, and what does a heavier nucleus do to it?** The hydrogen orbitals of
-    `spherical_harmonics_and_hydrogen.py` are large. One bohr is $0.529$ Å, and the mean distance of the electron from the nucleus is
-
-    $$
-    \langle r\rangle=\tfrac12\bigl[3n^{2}-\ell(\ell+1)\bigr]\ \text{bohr},
-    $$
-
-    where $n$ is the principal quantum number and $\ell$ the orbital angular momentum. For $1s$ this is $0.79$ Å ($1.5$ bohr); for $3s$ it is
-    $7.1$ Å ($13.5$ bohr), with $99\,\%$ of the probability inside $13.5$ Å. The size grows as $n^{2}$, which is why the $3s$ plot in the hydrogen notebook
-    reaches so far out. A molecule is a few Å across, so a hydrogen $3s$ orbital would not fit in it.
-
-    **A larger nuclear charge $Z$ squeezes the orbitals.** For one electron around a nucleus of charge $Z$ the pull is $-Z/r$ instead of
-    $-1/r$. Replacing $r$ by $Zr$ turns the radial equation back into hydrogen's, so the shapes are the same and only the scales change:
-
-    $$
-    \langle r\rangle=\frac{3n^{2}-\ell(\ell+1)}{2Z}\ \text{bohr},\qquad E_n=-\frac{Z^{2}}{2n^{2}}\ \text{hartree}.
-    $$
-
-    The radius falls as $1/Z$ and the energy rises in size as $Z^{2}$. The $1s$ orbital of the helium ion He$^{+}$ ($Z=2$) is half as large as hydrogen's
-    and four times as tightly bound; this is the $\zeta=Z=2$ orbital of the helium discussion above. For uranium ($Z=92$) the $1s$ orbital would have $\langle r\rangle=0.016$ bohr $=0.0086$ Å.
-
-    **Why atoms do not shrink to a point, or grow without limit.** Neither extreme happens, because the other electrons screen the
-    nucleus (the effect of $\zeta=Z-\tfrac5{16}$ above, and of $Z_{\text{eff}}(r)$ in the toy atom). An outer electron sees the nucleus
-    plus the inner electrons, a net charge $Z_{\text{eff}}$ that is only a little above $1$ for Li and Na and grows by roughly $0.6$ to $0.7$ for each
-    step along a row of the periodic table. The orbital size is then roughly $n^{2}/Z_{\text{eff}}$: a larger $n$ makes it larger, a larger $Z_{\text{eff}}$
-    makes it smaller, and the two partly cancel. The result is that the outermost orbitals of the atoms from H to Ar have mean radii
-    between about $0.5$ and $2.2$ Å, instead of the $7$ Å of a hydrogen $3s$ orbital. Use the slider to change $Z$ in the left panel; the right panel shows the
-    computed sizes of the neutral atoms.
-    """)
-    return
-
-
-@app.cell
-def _(mo):
-    charge = mo.ui.slider(1, 18, step=1, value=1, label=r"nuclear charge $Z$", show_value=True)
-    return (charge,)
-
-
-@app.cell
-def _(charge, mo, orbital_size_figure, plt):
-    _fig = orbital_size_figure(charge.value)
-    _out = mo.vstack([charge, _fig])
-    plt.close(_fig)
-    _out
-    return
-
-
-@app.cell
-def _(mo):
-    mo.md(r"""
-    *Left:* the radial probability of the $1s$, $3s$ and $3d$ orbitals of a hydrogen-like ion (one electron, nuclear charge $Z$): each curve is
-    hydrogen's curve (dashed) squeezed towards the nucleus by the factor $Z$. *Right:* the mean distance $\langle r\rangle$ of the outermost occupied orbital of the
-    neutral atoms H to Ar, from Hartree-Fock calculations with the `def2-TZVP` basis set (`compute_atom_sizes.py`, a few seconds of PySCF);
-    the circle marks the atom with $Z$ from the slider. The grey lines show what a bare nucleus ($Z_{\text{eff}}=Z$) would give for $n=1,2,3$; the atoms lie well above them, the
-    amount of screening. Each new row (Li, Na) starts a new, larger shell, and within a row the orbital shrinks from Li ($2.0$ Å) to Ne ($0.51$ Å)
-    as $Z_{\text{eff}}$ rises. A noble gas has the smallest orbital of its row.
-
-    **Where this lives in a DFT calculation.** Nothing about screening is put in by hand. The Kohn-Sham operator
-    (`../dft/kohn_sham_matrix.py`) for each electron contains the full attraction $-Z_A/r_A$ to every nucleus $A$, plus the Hartree
-    potential (the average repulsion of all the electrons, which gives the screening) and the exchange-correlation potential (the
-    rest of the electron-electron effect). The self-consistent loop starts from a guess for the orbitals, builds these potentials,
-    finds new orbitals in them, and repeats; the shrunken, screened orbitals are what it converges to. What the user chooses is only
-    the **basis set**, which has to be able to represent what comes out:
-
-    - **Exponents per element.** A Gaussian $e^{-\alpha r^{2}}$ has a size $\sim\alpha^{-1/2}$. Each element has its own exponents, small for the diffuse valence
-      orbital and large for the tight inner ones, as for the Slater exponent $\zeta$ of `basis_sets_from_base_states.py`.
-    - **Tight core functions for heavy atoms.** The $1s$ orbital shrinks as $1/Z$ and needs exponents that grow as $Z^{2}$ (a $2\times$ smaller orbital needs
-      a $4\times$ larger $\alpha$). In `def2-TZVP` the tightest Gaussian has $\alpha=34$ on hydrogen and about $7\times10^{4}$ on chlorine.
-    - **Effective core potentials** for the heaviest elements. The core electrons of, for example, platinum (in the OPLS5 labels of
-      `../dft/reading_a_dft_label.py`) are both numerous and very compact; they are replaced by a fixed potential that acts on the
-      valence electrons, so that only the valence orbitals, with sizes like those in the right panel, are in the basis. (`def2-TZVP` does this for platinum:
-      its tightest Gaussian is $\alpha=30$, not tens of thousands.)
-    """)
-    return
-
-
-@app.cell
-def _(mo):
-    mo.md(r"""
-    ## 4 Hybrid orbitals: how many $p$ in an $s$-$p$ mixture, and the angle
+    ## 3 Hybrid orbitals: how many $p$ in an $s$-$p$ mixture, and the angle
 
     In a molecule an atom's orbitals are rearranged by its neighbours. A carbon atom bonded to four others has four
     equivalent bonds, but the atom's own $s$ and $p$ orbitals are not equivalent. Any mixture of orbitals of one atom is as
@@ -597,7 +364,7 @@ def _(hybrid_figure, mo, plt):
 def _(mo):
     mo.md(r"""
     Hybrids are a **choice of description**, not a physical effect that happens to an atom: the same set of occupied orbitals can be
-    written either way, and section 5 shows that for methane.
+    written either way, and section 4 shows that for methane.
     """)
     return
 
@@ -605,11 +372,11 @@ def _(mo):
 @app.cell
 def _(mo):
     mo.md(r"""
-    ## 5 Methane: one level, then three
+    ## 4 Methane: one level, then three
 
     **LCAO for a molecule.** Methane has a carbon atom with four hydrogens at the corners of a tetrahedron. Take as basis the
     carbon $2s$ and three $2p$ functions and one $1s$ function on each hydrogen: eight functions, so eight molecular orbitals
-    $\psi=\sum_\mu c_\mu\chi_\mu$. The $1s$ core of carbon is left out; it is an orbital by itself and not involved in the
+    $\psi=\sum_\mu c_\mu\chi_\mu$ (orbitals in the sense of `hartree_fock_mean_field.py`: each holds two electrons of opposite spin). The $1s$ core of carbon is left out; it is an orbital by itself and not involved in the
     bonding. To see the pattern without a calculation, build the simplest possible Hamiltonian: one energy for each kind of
     function (C $2s$, C $2p$, H $1s$), and one coupling strength $c$ between a function on carbon and a hydrogen $1s$ function. The coupling of
     a carbon $p$ function to a hydrogen is proportional to the cosine of the angle between the $p$ direction and the C-H direction. The
@@ -678,14 +445,13 @@ def _(mo):
     2. **Born-Oppenheimer:** fix the nuclei, solve the electrons, and let the energy as a function of the positions be the potential for the
        nuclei. The nuclear problem is another standing-wave problem; its level spacing is the vibration. It works because the
        electrons are fast (here by a factor of about ten in energy).
-    3. **Orbital approximation:** one orbital per electron in the mean field of the others. In helium it recovers 98 % of the energy; the rest is
-       the correlation energy, the target of DFT and coupled cluster. Screening splits $s<p<d$ at the same $n$.
-    4. **LCAO** (atom-centred functions; which ones to choose is the next notebook) gives molecular orbitals; the symmetry labels $a_1$ and $t_2$ say how
+    3. **LCAO** (atom-centred functions; which ones to choose is the next notebook) gives molecular orbitals; the symmetry labels $a_1$ and $t_2$ say how
        many levels there are at what energies. Hybrids are a rewriting of occupied orbitals, and $1+n\cos\theta=0$ gives the bond angles
        $180^\circ,120^\circ,109.47^\circ$.
 
     **Next.** The third approximation, LCAO, was used here for methane with invented numbers. `basis_sets_from_base_states.py`
-    asks what the atom-centred functions should be, and ends at the `def2-TZVPD` label that the DFT notebooks decode.
+    asks what the atom-centred functions should be. After it, `hartree_fock_mean_field.py` justifies the second approximation, one orbital per electron
+    in the average field of the others (helium, screening, the Fock operator), and the DFT notebooks then decode the `def2-TZVPD` label.
     """)
     return
 
@@ -693,7 +459,7 @@ def _(mo):
 @app.cell
 def _(mo):
     mo.md(r"""
-    ## 6 What was checked, and what was not
+    ## 5 What was checked, and what was not
 
     **Checked numerically** (`pixi run python -m pytest -q standing_waves/test_molecules.py`):
 
@@ -702,38 +468,42 @@ def _(mo):
       $R=1.99$ bohr ($1.05$ Å) and $E=-0.6026$ hartree, as the lowest PySCF point; the harmonic wavenumber is 2312 cm$^{-1}$ and the spacing of the two lowest
       nuclear levels 2189 cm$^{-1}$ (smaller than harmonic, as for an anharmonic well); the nuclear levels have $0,1,2,3$ nodes, are
       normalised, and the spacing scales as $1/\sqrt{\text{mass}}$; vibration quantum over electron binding energy is $0.097$.
-    - *Section 3.* The minimum of $E(\zeta)$ is at $\zeta=1.6875$ with $E=-2.84766$; the term $\tfrac58\zeta$ against a direct numerical
-      integration of $\langle1/r_{12}\rangle$ (agreement to 0.2 %); the ordering of exact $-2.9037$ < HF limit $-2.8617$ < the one-orbital $-2.8477$; the
-      screened-potential levels: $2s=2p$ when the screening disappears (and $=-0.125$ hartree), and $s<p<d$ at each $n$ otherwise.
-      Orbital size: $\langle r\rangle=\tfrac12[3n^2-\ell(\ell+1)]/Z$ against numerical integration of the hydrogen-like radial density (six shells, $Z$ up to 18), the $1/Z$ scaling and normalisation of the squeezed density, and $13.5$ bohr $=7.14$ Å for $3s$. The H to Ar sizes are Hartree-Fock numbers read from `data_atom_sizes.json` (tests check hydrogen's $1.5$ bohr, the range, and the trend across row 2); the $99\,\%$ radius of $3s$ ($13.5$ Å) was computed once by integration and is not in a test.
-    - *Section 4.* The angles $180^\circ,120^\circ,109.47^\circ$ and the tetrahedral angle between corner directions; the four sp$^3$ coefficient rows are
+    - *Section 2.1.* The force $F=-dE/dR$ against a finite difference of the fitted curve; the toy optimization reaches the minimum
+      of the curve ($R=1.99$ bohr) from four starting separations, never raises the energy, ends with $|F|<10^{-4}$ hartree/bohr in at most 12 SCFs, and stops at once if it starts at the minimum.
+    - *Section 3.* The angles $180^\circ,120^\circ,109.47^\circ$ and the tetrahedral angle between corner directions; the four sp$^3$ coefficient rows are
       orthonormal, each with $s$ weight $\tfrac14$; the same orthonormality by numerical integration over the sphere with the real $s$ and $p$ functions;
       the hybrid profile is normalised to 1 and largest along its axis.
-    - *Section 5.* The eight toy levels equal the eigenvalues of the two-by-two blocks (one $a_1$ pair, three identical $t_2$ pairs) for three values of the
+    - *Section 4.* The eight toy levels equal the eigenvalues of the two-by-two blocks (one $a_1$ pair, three identical $t_2$ pairs) for three values of the
       coupling; the four bond orbitals are orthonormal, span the occupied space exactly, put the largest weight on their own hydrogen and point
       along the corners; the carbon $s{:}p$ ratio is not exactly $1{:}3$.
 
-    - *Section 2.1.* The force $F=-dE/dR$ against a finite difference of the fitted curve; the toy optimization reaches the minimum
-      of the curve ($R=1.99$ bohr) from four starting separations, never raises the energy, ends with $|F|<10^{-4}$ hartree/bohr in at most 12 SCFs, and stops at once if it starts at the minimum.
-      The datasets in the table were read on 2026-11-12: the SPICE paper (PMC full text) and the OMol25 paper (arXiv HTML version 2), each quoted
-      above. The OPLS5 rows repeat the notebook-05 reading of the preprint.
+    The helium, screening and orbital-size checks that used to be here are in `hartree_fock_mean_field.py`, section 9.
 
     **Not checked here, or stated from memory.**
 
-    - *Section 2.1.* The flowcharts are textbook descriptions (not computed): the Hellmann-Feynman and Pulay terms, BFGS, internal coordinates and the
-      convergence criteria are stated from general knowledge. For SPICE II the sampling is not stated in any source I could read. For OMol25 I could not read
-      the appendix, so which method does the five-step optimizations is open; OPLS5 (b) to (d) were not re-read in the preprint.
-
+    - *Section 2.1.* The flowchart is a textbook description (not computed): the Hellmann-Feynman and Pulay terms, BFGS, internal coordinates and the
+      convergence criteria are stated from general knowledge. The table of which datasets optimize the geometry is in `../dft/reading_a_dft_label.py`, sections 9 and 10.
     - The numbers of the real methane calculation (orbital energies, the $20/76/4$ composition) are copied from
       `qm-calculations/methane/methane_output.txt`, not recomputed here.
-    - The helium values $-2.9037$ and $-2.8617$ hartree (exact and Hartree-Fock limit) are literature values, not computed.
     - The vibrational numbers for H$_2^+$ can be compared with experiment ($\omega_e\approx2321$ cm$^{-1}$, fundamental $\approx2191$ cm$^{-1}$, from
       memory), not tested.
-    - That the $4s$ before $3d$ filling order is "the same effect"; the screening toy has only one parameter and shows only the
-      ordering.
     - The toy for methane uses invented numbers, shows the pattern only, and ignores overlap between functions and any hydrogen-hydrogen coupling, which is why its
       bond orbitals are cleaner (almost no weight on other hydrogens, 0.15 %) than those of the real calculation (12 %).
     - The failure of Born-Oppenheimer near surfaces and at crossings of electronic states is stated, not shown.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    ## Further reading
+
+    Free sources, checked on 2026-11-13 (the full table, with what each covers, is in `SOURCES.md`).
+
+    - [The H$_2^+$ prototypical species (LibreTexts, *Physical Chemistry* 9.2)](https://chem.libretexts.org/Bookshelves/Physical_and_Theoretical_Chemistry_Textbook_Maps/Physical_Chemistry_%28LibreTexts%29/09%3A_Chemical_Bonding_in_Diatomic_Molecules/9.02%3A_The_H_Prototypical_Species): Born-Oppenheimer and LCAO for H$_2^+$ (intro).
+    - [sp$^3$ hybrid orbitals and methane (LibreTexts, *Organic Chemistry* 1.6)](https://chem.libretexts.org/Bookshelves/Organic_Chemistry/Organic_Chemistry_%28Morsch_et_al.%29/01:_Structure_and_Bonding/1.06:_sp_Hybrid_Orbitals_and_the_Structure_of_Methane): the textbook hybrid picture (intro).
+    - [Methane as molecular orbitals (LibreTexts, Rioux, 3.18)](https://chem.libretexts.org/Bookshelves/Physical_and_Theoretical_Chemistry_Textbook_Maps/Quantum_Tutorials_%28Rioux%29/03:_Chemical_Bonding/3.18:_A_Molecular_Orbital_Approach_to_Bonding_in_Methane) and [ligand group orbitals, the symmetry-adapted combinations (LibreTexts, Ursinus College, 5.4.1)](https://chem.libretexts.org/Courses/Ursinus_College/CHEM322:_Inorganic_Chemistry/05:_Molecular_Orbitals/5.04:_Polyatomic_MO_Diagrams/5.4.01:_Ligand_Group_Orbitals_and_Generator_Functions) (intro to derivation).
     """)
     return
 

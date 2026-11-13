@@ -43,23 +43,23 @@ def _(mo):
     ran the calculation. This notebook takes the labels apart one piece at a time, and each piece comes with a real
     calculation on water, so that you can see what the choice does.
 
-    **Read first:** `../standing_waves/basis_sets_from_base_states.py` (the previous notebook: base states, the matrix equation
-    $\mathbf H\mathbf c=E\mathbf S\mathbf c$, the variational principle, and what a basis set is) and, behind it,
-    `../standing_waves/from_atoms_to_molecules.py` (fixed nuclei, one orbital per electron, helium's correlation energy). Those two
-    notebooks explain the second half of the label; this one adds the first half and puts the pieces together. The worked PySCF
+    **Read first:** `../standing_waves/hartree_fock_mean_field.py` (the previous notebook: one orbital per electron in the average field of the others, the Fock
+    operator $\hat f$, the SCF loop and what Hartree-Fock misses) and, behind it, `../standing_waves/basis_sets_from_base_states.py` (base states, the matrix
+    equation $\mathbf H\mathbf c=E\mathbf S\mathbf c$, the variational principle, and what a basis set is). Those two
+    notebooks explain the method that DFT modifies and the second half of the label; this one adds the first half and puts the pieces together. The worked PySCF
     examples in `../../qm-calculations` (water, basis functions, dimers) are what the numbers here extend.
 
     **Contents**
 
     1. The label has three parts
-    2. Before DFT: Hartree-Fock
+    2. Before DFT: Hartree-Fock (what it misses, in numbers)
     3. What the calculation solves: Kohn-Sham DFT
     4. The basis set: def2, TZ, P, D (a short return to the previous notebook, plus counterpoise)
     5. The functional: Jacob's ladder, B97, M
     6. Exact exchange and range separation: ω
     7. Dispersion: -V against D3(BJ)
     8. Settings that are not in the label: the grid
-    9. Putting the two labels together (and a third source, the labels in the OPLS5 paper)
+    9. Putting the two labels together (and a third source, the labels in the OPLS5 paper; which calculations optimise the geometry)
     10. What was checked, and what was not
 
     All numbers in the figures were computed with PySCF 2.14 (`compute_dft_data.py`, which writes the `data_*.json` files
@@ -103,51 +103,16 @@ def _(mo):
     mo.md(r"""
     ## 2. Before DFT: Hartree-Fock
 
-    With $N$ electrons the Schrödinger equation cannot be separated, because the repulsion $1/r_{12}$ between two electrons
-    depends on both positions at once. The first practical approximation is the **orbital approximation** of
-    `from_atoms_to_molecules.py`, section 3: give each electron its own orbital $\psi_i$ and let it feel only the *average* of
-    the others (helium was the worked example there). Two ideas turn this into a method.
-
-    **Antisymmetry.** Electrons are fermions: swapping any two of them must flip the sign of the wave function (the
-    spinor notebook shows where this comes from). A product of orbitals does not do this, but a determinant does:
-
-    $$
-    \Psi(1,2,\dots,N) = \frac{1}{\sqrt{N!}}
-    \begin{vmatrix}
-    \psi_1(1) & \psi_2(1) & \cdots & \psi_N(1)\\
-    \psi_1(2) & \psi_2(2) & \cdots & \psi_N(2)\\
-    \vdots & & & \vdots\\
-    \psi_1(N) & \psi_2(N) & \cdots & \psi_N(N)
-    \end{vmatrix} .
-    $$
-
-    Swapping two electrons swaps two rows, which flips the sign. Putting two electrons in the same orbital makes two
-    columns equal, so $\Psi = 0$: that is the Pauli exclusion principle, and it comes out for free.
-
-    **The variational principle** (`basis_sets_from_base_states.py`, section 1): any trial wave function has an energy at or above
-    the true ground-state energy, so the best orbitals are the ones that make the energy of the determinant as low as possible.
-    Carrying this out gives the
-    **Hartree-Fock (HF) equations**, one equation per orbital:
-
-    $$
-    \hat f\,\psi_i = \varepsilon_i\,\psi_i,
-    \qquad
-    \hat f = -\tfrac12\nabla^2 + v_{\text{nuc}} + \hat J - \hat K .
-    $$
-
-    Here $\hat J$ is the classical repulsion from the average density of all electrons, and $\hat K$ is **exchange**: a
-    correction, with no classical counterpart, that comes entirely from the antisymmetry. It removes the unphysical
-    repulsion of an electron with itself that $\hat J$ alone contains, and it keeps electrons of the same spin apart.
-
-    Written in a basis set the HF equations become the matrix equation $\mathbf F\mathbf C = \mathbf S\mathbf C\boldsymbol\varepsilon$
-    (the equation of `basis_sets_from_base_states.py`, section 1, with $\mathbf F$ in place of $\mathbf H$), solved by the self-consistent loop of the next section. **Kohn-Sham DFT keeps this whole structure.** The only
-    difference is that the exchange term $\hat K$ (and what HF leaves out) is replaced, entirely or in part, by an
+    The method that DFT modifies is Hartree-Fock (HF), explained in the previous notebook, `hartree_fock_mean_field.py`: one orbital per electron in the average field of
+    the others, the determinant that makes the product antisymmetric, the Fock operator $\hat f=-\tfrac12\nabla^2+v_{\text{nuc}}+\hat J-\hat K$ whose eigenfunctions are the orbitals
+    (in a basis, $\mathbf F\mathbf C=\mathbf S\mathbf C\boldsymbol\varepsilon$), and the self-consistent loop that solves it. **Kohn-Sham DFT keeps this whole structure.**
+    The only difference is that the exchange term $\hat K$ (and what HF leaves out) is replaced, entirely or in part, by an
     approximate exchange-correlation term.
 
-    ### What Hartree-Fock misses
+    ### What Hartree-Fock misses, in numbers
 
-    Each electron in HF sees only the *average* position of the others. Real electrons also dodge each other instantly,
-    and the energy this saves is the **correlation energy** (helium's was $1.1$ eV in `from_atoms_to_molecules.py`, section 3). It is a small fraction of the total energy, but of the same size
+    Each electron in HF sees only the *average* position of the others. The energy that real electrons save by dodging each other is the **correlation energy**
+    (helium's was $1.1$ eV in `hartree_fock_mean_field.py`, section 8). It is a small fraction of the total energy, but of the same size
     as the energy differences chemistry cares about. Dispersion, the attraction between two molecules with no charge or
     hydrogen bond, is a pure correlation effect, so HF cannot produce it at all. The numbers below come from the
     calculations of this notebook (section 7 for the methane dimer, section 6 for the others).
@@ -182,14 +147,8 @@ def _(disp_data, ladder_data, mo):
 @app.cell
 def _(mo):
     mo.md(r"""
-    ### Two ways past Hartree-Fock
-
-    - **Wave-function methods** (MP2, coupled cluster such as CCSD(T)) add correlation on top of the HF determinant. They
-      can be very accurate, and CCSD(T) is the usual reference in this notebook, but their cost grows steeply with
-      system size. `coupled_cluster.py` (the last notebook) explains where CCSD(T) comes from.
-    - **Density functional theory** drops the wave function and works with the density, keeping a cost close to
-      Hartree-Fock's. The price is an *approximate* exchange-correlation term, and that approximation is what the
-      letters of the label describe.
+    The two ways past Hartree-Fock, wave-function methods and density functional theory, are described in `hartree_fock_mean_field.py`, section 8. This notebook follows the
+    second; `coupled_cluster.py` (the last notebook) explains where the CCSD(T) reference of the table comes from.
     """)
     return
 
@@ -220,12 +179,8 @@ def _(mo):
     that makes electrons avoid each other (exchange and correlation), is gathered in $E_{xc}[\rho]$.
 
     **The "functional" in a DFT label is a specific approximation to $E_{xc}$.** Everything else in the sum is exact.
-    The orbitals are found by the self-consistent-field (SCF) loop:
-
-    1. guess a density,
-    2. build the Kohn-Sham matrix $F$ from it,
-    3. solve $F C = S C \varepsilon$ for the orbital coefficients $C$ and energies $\varepsilon$ (the equation of `basis_sets_from_base_states.py`, section 1; $S$ is the overlap of the basis functions),
-    4. form the new density, and repeat until the energy stops changing.
+    The orbitals are found by the self-consistent-field (SCF) loop of `hartree_fock_mean_field.py`, section 7: build the Kohn-Sham matrix $F$ from a density, solve
+    $F C = S C \varepsilon$ for the coefficients $C$ and energies $\varepsilon$ ($S$ is the overlap of the basis functions), form the new density, and repeat until it stops changing.
 
     ### What is in the matrix $\mathbf F$
 
@@ -248,12 +203,8 @@ def _(mo):
 
     Everything except $\mathbf T$ and $\mathbf V$ depends on $\mathbf D$, which comes from solving with $\mathbf F$. That
     circularity is the reason the loop has to be repeated until it is self-consistent. `kohn_sham_matrix.py` (the next notebook)
-    derives the equation and builds each of these pieces for this same water calculation.
-
-    For the first element $F_{11}$ of water at ωB97M-V/def2-TZVPD (hartree; a separate one-off PySCF check, not stored
-    in the `data_*.json` files), the pieces are $T=+76.978$, $V=-99.580$, $J=+19.827$, $V^{xc}=-3.611$, VV10 $+0.005$ and
-    exact exchange $-1.024$, adding up to $-7.404$. The big terms $T$, $V$ and $J$ nearly cancel; exchange-correlation is a
-    small correction on top, which is why its approximation matters so much for energy *differences*.
+    derives the equation and builds each of these pieces for this same water calculation, with the numbers of one matrix element; there the big terms $T$, $V$ and $J$
+    nearly cancel and exchange-correlation is a small correction on top, which is why its approximation matters so much for energy *differences*.
     """)
     return
 
@@ -287,40 +238,34 @@ def _(mo):
     mo.md(r"""
     ## 4. The basis set: def2, TZ, P, D
 
-    The previous notebook, `basis_sets_from_base_states.py`, explained what a basis set is and where each letter of
-    `def2-TZVPD` comes from (its section 6 is the decoding table). Only what a DFT label adds is covered here: how the density is
-    written in the basis, the extra rows `SV`, `QZ` and `PP`, the basis sizes of the two datasets, and counterpoise. The orbitals
-    $\varphi_i$ are sums of the atom-centred basis functions $\chi_\mu$ (LCAO):
+    `basis_sets_from_base_states.py` explained what a basis set is and where each letter of `def2-TZVPD` comes from (its section 6 is the decoding table, and its
+    section 5 counts the functions of water). Only what a DFT label adds is covered here: how the density is written in the basis, the rows `SV`, `QZ` and `PP`,
+    the basis sizes of the two datasets, and counterpoise. The orbitals $\varphi_i$ are sums of the atom-centred basis functions $\chi_\mu$ (LCAO), and the density is built from the
+    density matrix $P_{\mu\nu}$ of the coefficients:
 
     $$
     \varphi_i(\mathbf r) = \sum_\mu C_{\mu i}\,\chi_\mu(\mathbf r),
     \qquad
-    \rho(\mathbf r) = \sum_{\mu\nu} P_{\mu\nu}\,\chi_\mu(\mathbf r)\,\chi_\nu(\mathbf r),
+    \rho(\mathbf r) = \sum_{\mu\nu} P_{\mu\nu}\,\chi_\mu(\mathbf r)\,\chi_\nu(\mathbf r).
     $$
 
-    where $P_{\mu\nu}$ is the density matrix built from the coefficients. The calculation only chooses the numbers
-    $C_{\mu i}$; a bigger basis gives it more freedom.
+    The calculation only chooses the numbers $C_{\mu i}$; a bigger basis gives it more freedom. The letters that this notebook adds to the table of
+    `basis_sets_from_base_states.py`, section 6:
 
     | Piece | Means | Why |
     |---|---|---|
-    | **def2** | the family of basis sets designed by Weigend and Ahlrichs, defined for most of the periodic table | one consistent family, so the labels `def2-SVP`, `def2-TZVP`, ... are comparable |
-    | **SV, TZ, QZ** | split-valence, triple-zeta, quadruple-zeta: the valence orbital is described by 2, 3 or 4 functions of different widths, so it can swell or shrink in a bond | flexibility of the valence region |
-    | **P** | polarization functions: higher angular momentum than the atom has in its ground state ($d$ on carbon, $p$ on hydrogen) | lets the density shift off the nucleus and form a bond |
+    | **SV, QZ** | split-valence (the valence orbital is described by 2 functions of different widths), quadruple-zeta (4 functions) | the TZ of the earlier table has 3: flexibility of the valence region |
     | **PP** | a second set of polarization functions (on hydrogen too) | more freedom for the bond region |
-    | **D** | diffuse functions: very wide, very low-exponent functions | anions, hydrogen bonds and dispersion all live far from the nuclei |
 
-    The basis functions are the contracted Gaussians of `basis_sets_from_base_states.py`, section 4. The table below counts contracted
-    shells **for one atom** (an $s$ shell is 1 function, $p$ is 3, $d$ is 5, $f$ is 7), with the same shell data as the water table there.
+    The shells of each basis for water (an $s$ shell is 1 function, $p$ is 3, $d$ is 5, $f$ is 7) are in the table of `basis_sets_from_base_states.py`, section 5; the figure plots
+    the resulting number of functions in H$_2$O (the same PySCF counts).
     """)
     return
 
 
 @app.cell
-def _(mo, shell_label, basis_figure, basis_data):
-    _rows = ["| Basis | O shells | H shells (each) | Functions in H₂O |", "|---|---|---|---|"]
-    for _b, _v in basis_data["basis"].items():
-        _rows.append(f"| {_b} | {shell_label(_v['O_shells'])} | {shell_label(_v['H_shells'])} | {_v['n_basis']} |")
-    mo.vstack([mo.md("\n".join(_rows)), basis_figure(basis_data)])
+def _(basis_figure, basis_data):
+    basis_figure(basis_data)
     return
 
 
@@ -328,7 +273,7 @@ def _(mo, shell_label, basis_figure, basis_data):
 def _(mo):
     mo.md(r"""
     Compare `def2-TZVPD` with `def2-TZVPPD`: they are identical on oxygen, and the difference is entirely on hydrogen,
-    which gets one more $p$ shell and a $d$ shell (3s2p against 3s3p1d in the table). That is why SPICE's water has more basis functions (74) than OMol25's (58).
+    which gets one more $p$ shell and a $d$ shell (3s2p against 3s3p1d in the table above). That is why SPICE's water has more basis functions (74) than OMol25's (58).
 
     ### Why the D matters: counterpoise and the basis-set superposition error
 
@@ -607,12 +552,12 @@ def _(mo):
     10.26434/chemrxiv-2024-2svr7, a preprint, not peer reviewed). A force field is a cheap formula for the energy of
     a molecule, with parameters fitted to reference calculations. This paper uses **four different levels of theory**, one for each job:
 
-    | Job in the paper | Label as printed |
-    |---|---|
-    | (a) optimise the geometries of about 500 metal complexes; electrostatic potential (ESP) with and without a uniform electric field of $0.02$ a.u. | ωB97x-D3/lacvp+* |
-    | (b) energy scans of the metal-ligand distance and of ligand rotations | ωB97x-D3/def2-tzvpd(-f) |
-    | (c) energy of a $+1$ point charge held $3.5$ Å and $4.0$ Å above the centre of a benzene ring | ωB97X-D/6-311++G** |
-    | (d) reference interaction energies of charged groups (acetate, guanidine, ammonium ions) | CCSD(T)/CBS |
+    | Job in the paper | Label as printed | Geometry optimised in the calculation? |
+    |---|---|---|
+    | (a) optimise the geometries of about 500 metal complexes; electrostatic potential (ESP) with and without a uniform electric field of $0.02$ a.u. | ωB97x-D3/lacvp+* | yes: "optimise the geometries" |
+    | (b) energy scans of the metal-ligand distance and of ligand rotations | ωB97x-D3/def2-tzvpd(-f) | scan points are prescribed geometries; whether the other coordinates were relaxed at each point is not stated in the source I read |
+    | (c) energy of a $+1$ point charge held $3.5$ Å and $4.0$ Å above the centre of a benzene ring | ωB97X-D/6-311++G** | no: the charge is placed at fixed, prescribed positions; how the benzene geometry was obtained is not stated in the source I read |
+    | (d) reference interaction energies of charged groups (acetate, guanidine, ammonium ions) | CCSD(T)/CBS | not stated in the source; the origin of the geometries is not stated in the source I read |
 
     The new pieces are the functional ωB97X-D3, the basis `lacvp+*` with an effective core potential, the suffix
     `(-f)`, the Pople basis `6-311++G**`, and `CBS`, which is not a basis set at all. They are taken in turn.
@@ -790,6 +735,32 @@ def _(mo):
     | ECP | yes, heavy elements | not recorded here | yes, Hay-Wadt, for the metals | yes for heavy atoms (def2 ECP) | none, no heavy atoms | none |
     | Program | ORCA 6.0.0 | Psi4 | not stated in the paper | not stated in the paper | not stated in the paper | not stated |
     | Use | training labels for ML potentials | training labels for ML potentials | geometries, ESP | metal-ligand scans | polarizability fit | reference energies |
+    | Geometry optimised in the calculation? | mostly no (short optimisations of at most five steps for some subsets) | not stated in the source I could read | yes | prescribed scan points | no (fixed charge positions) | not stated |
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    #### Which calculations optimise the geometry?
+
+    A label says which method and basis were used, not whether the geometry was optimised. The two are separate choices: a **single point** stops after one SCF at the
+    given $\mathbf R$ (`hartree_fock_mean_field.py`, section 7), gives the energy and, almost for free, the forces, and takes $\mathbf R$ as an input; an **optimisation** runs many SCFs,
+    one per step of the outer loop of `from_atoms_to_molecules.py`, section 2.1, and gives $\mathbf R_{\text{opt}}$ and its energy. A dataset of energies and forces needs only
+    single points, whereas a geometry for a force-field fit needs the loop. What the sources say about the two datasets (read on 2026-11-12, short quotes in quotation marks;
+    the OPLS5 jobs are in the table above):
+
+    | Dataset | Geometry optimised in the calculation? | What the source says |
+    |---|---|---|
+    | **SPICE** (original paper, Eastman et al., *Sci. Data* 10, 11, 2023) | no DFT optimisation is stated; energies and gradients are computed on given structures | "Forces and energies for all conformations were calculated" with Psi4. Structures: 10 RDKit conformers, then "100 ps of molecular dynamics at a temperature of 500 K" (force-field MD, OpenMM/Amber14) for the high-energy set; "five iterations of L-BFGS energy minimization" (partial, "did not fully minimize it") plus 1 ps at 100 K for the low-energy partner; ion pairs on a grid of distances |
+    | **SPICE II** (Eastman et al., arXiv 2406.13112) | not stated in the source | I could read only the abstract of this paper. Whether its sampling differs from SPICE 1 is unchecked |
+    | **OMol25** (the dataset paper, arXiv 2505.08762) | mostly no, but not all subsets | "over 140 million DFT single-point calculations". Structures come from MD (classical and machine-learned potentials), ring-polymer MD, docking followed by MD, generated metal complexes, reaction paths and a few "rattled" structures. Some subsets were "optimized for up to five steps" (metal complexes, 3 Å electrolyte clusters, small-molecule combinations); the text I read does not say with which method |
+
+    So the usual picture, that SPICE and OMol25 are energies and forces on structures made elsewhere (by force-field or machine-learned MD, conformer
+    generators and reaction-path tools), holds, with one correction: the OMol25 paper describes short optimisations of at most five steps for some of
+    its subsets. Neither dataset is a set of relaxed minima, and that is deliberate: a force field or a machine-learned potential has to be accurate away from
+    the minimum too, because MD visits strained geometries.
     """)
     return
 
@@ -815,15 +786,25 @@ def _(mo):
 
     **Still from memory:**
 
-    - whether the other fitted parameters of ωB97M-D3(BJ) were also refit when D3(BJ) replaced VV10, and the exact
-      citation of that functional (I believe Najibi and Goerigk, J. Chem. Theory Comput. 2018; the journal page could not
-      be fetched, so the title, volume and pages are unchecked);
-    - the other sources: Becke 1997 (B97), Chai and Head-Gordon 2008 (ωB97X), Vydrov and Van Voorhis 2010 (VV10), Grimme
-      and co-workers (D3), Weigend and Ahlrichs 2005 (def2), Rappoport and Furche 2010 (diffuse def2);
+    - whether the other fitted parameters of ωB97M-D3(BJ) were also refit when D3(BJ) replaced VV10, and whether Najibi
+      and Goerigk is where that functional is defined (the reference itself now exists, see the next list: J. Chem. Theory
+      Comput. 14, 5725, 2018, but I have not read it);
     - the damping figure in section 7 shows the shape only: PySCF has no ωB97M-D3(BJ) built in, so no D3(BJ) calculation
       appears here;
-    - the pieces of $F_{11}$ quoted in section 3 come from a one-off PySCF script that is not part of `compute_dft_data.py`,
-      and the statements about the cost of Hartree-Fock, DFT and CCSD(T) are general knowledge, not measured here.
+    - the statements about the cost of Hartree-Fock, DFT and CCSD(T) are general knowledge, not measured here. (The matrix elements of the Kohn-Sham matrix are in
+      `data_ks.json`, section 4 of `kohn_sham_matrix.py`.)
+
+    **Bibliographic records checked on 2026-11-13** (title, authors, year, journal, volume and pages compared with the
+    Crossref record of the DOI; the papers themselves were **not** read, so only the references are confirmed, not what they say):
+
+    - Becke 1997 (B97), J. Chem. Phys. 107, 8554, doi 10.1063/1.475007;
+    - Chai and Head-Gordon 2008 (ωB97X), J. Chem. Phys. 128, 084106, doi 10.1063/1.2834918, and (ωB97X-D) Phys. Chem. Chem. Phys. 10, 6615, doi 10.1039/b810189b;
+    - Vydrov and Van Voorhis 2010 (VV10), J. Chem. Phys. 133, 244103, doi 10.1063/1.3521275;
+    - Grimme, Antony, Ehrlich and Krieg 2010 (D3), J. Chem. Phys. 132, 154104, doi 10.1063/1.3382344, and Grimme, Ehrlich and Goerigk 2011 (the Becke-Johnson damping, D3(BJ)), J. Comput. Chem. 32, 1456, doi 10.1002/jcc.21759;
+    - Weigend and Ahlrichs 2005 (def2), Phys. Chem. Chem. Phys. 7, 3297, doi 10.1039/b508541a; Rappoport and Furche 2010 (diffuse def2 functions), J. Chem. Phys. 133, 134105, doi 10.1063/1.3484283; Weigend 2006 (Coulomb-fitting sets), Phys. Chem. Chem. Phys. 8, 1057, doi 10.1039/b515623h;
+    - Najibi and Goerigk 2018, J. Chem. Theory Comput. 14, 5725, doi 10.1021/acs.jctc.8b00842, and Lin, Li, Mao and Chai (ωB97X-D3), J. Chem. Theory Comput. 9, 263, doi 10.1021/ct300715s;
+    - Hay and Wadt 1985, J. Chem. Phys. 82, 270, doi 10.1063/1.448799 (the transition-metal potentials, Sc to Hg);
+    - the OMol25 paper (arXiv 2505.08762), SPICE (Sci. Data 10, 11, 2023, doi 10.1038/s41597-022-01882-6) and OPLS5 (ChemRxiv, doi 10.26434/chemrxiv-2024-2svr7) exist with those titles. The SPICE II paper is probably the JCTC 2024 article "Nutmeg and SPICE" (doi 10.1021/acs.jctc.4c00794), but that is not confirmed.
 
     **The OPLS5 labels (section 9, third source), checked on 2026-11-05:**
 
@@ -843,7 +824,11 @@ def _(mo):
     the form $A\,X^{-3}$ of the extrapolation, and which one the CCSD(T)/CBS values of the paper's Table 3 (taken from the OPLS4 paper by Lu et al.) used.
     The paper cites Hay and Wadt, J. Chem. Phys. 82 (1985) 270 and Weigend, Phys. Chem. Chem. Phys. 8 (2006) 1057 (a Coulomb-fitting set, an
     auxiliary basis for the density) for its labels, but not the Weigend-Ahlrichs paper that defines def2 itself. I did not open the ACS, ChemRxiv or Wiley
-    pages of these papers, so their details beyond the preprint's reference list are not verified.
+    pages of these papers on 2026-11-05; the bibliographic records of the Chai-Head-Gordon, Hay-Wadt and Weigend papers were checked on 2026-11-13 (previous list), but their contents are not verified.
+
+    **Which calculations optimise the geometry (section 9), read on 2026-11-12:** the SPICE paper (PMC full text) and the OMol25 paper (arXiv HTML version 2), each quoted
+    in the table. For SPICE II the sampling is not stated in any source I could read (only the abstract). For OMol25 I could not read the appendix, so which method does
+    the five-step optimisations is open; OPLS5 (b) to (d) were not re-read in the preprint beyond what is quoted above.
 
     **Computed here** (not from memory): all numbers and figures in sections 2 to 8 and the tables of section 9 marked as computed, from PySCF 2.14 on the rigid
     geometries in `compute_dft_data.py`.
@@ -857,6 +842,32 @@ def _(mo):
     **Next.** Section 3 stated the equation $FC=SC\varepsilon$ and listed what is in $F$ without deriving either.
     `kohn_sham_matrix.py` does that for the same water calculation, term by term. After it, `coupled_cluster.py` explains the
     method that this notebook used as its reference (CCSD(T)).
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    ## Further reading
+
+    Free or open-access sources where possible; papers are given by DOI and marked when they need publisher access. Checked on 2026-11-13; the full table, with what each source covers, is in `SOURCES.md`. For papers only the bibliographic record was checked, not the content.
+
+    **Textbook-style** (Hartree-Fock itself is in the further reading of `hartree_fock_mean_field.py`)
+
+    - [The ABC of DFT (K. Burke, free draft)](https://dft.uci.edu/learnDFT.php) and [Review of approximations for the exchange-correlation energy (J. Toulouse, arXiv 2103.02645)](https://arxiv.org/abs/2103.02645): Kohn-Sham theory, Jacob's ladder, range separation (intro to reference).
+    - [Best-practice DFT protocols for basic molecular computational chemistry (Bursch, Mewes, Hansen, Grimme, 2022)](https://doi.org/10.1002/anie.202205735) and [Thirty years of density functional theory in computational chemistry (Mardirossian and Head-Gordon, 2017)](https://doi.org/10.1080/00268976.2017.1333644): choosing functionals, basis sets and dispersion corrections (reference).
+    - [PySCF: density functional theory](https://pyscf.org/user/dft.html) (integration grids), [PySCF: molecular structure](https://pyscf.org/user/gto.html) (basis sets and ECPs), [Psi4: DFT functionals](https://psicode.org/psi4manual/master/dft_byfunctional.html) (what each label means in code) and [Psi4: basis set superposition corrections](https://psicode.org/psi4manual/master/nbody.html) (counterpoise).
+    - [Basis Set Exchange](https://www.basissetexchange.org/) and [Basis sets in quantum chemistry (Sherrill)](https://vergil.chemistry.gatech.edu/basis-sets.pdf): look up and understand a basis set (reference, intro).
+
+    **Primary papers (DOI)**
+
+    - Kohn-Sham theory: [Hohenberg and Kohn 1964](https://doi.org/10.1103/PhysRev.136.B864), [Kohn and Sham 1965](https://doi.org/10.1103/PhysRev.140.A1133), [Perdew's Jacob's ladder, 2001](https://doi.org/10.1063/1.1390175).
+    - Functionals: [B97 (Becke 1997)](https://doi.org/10.1063/1.475007), [ωB97X (Chai and Head-Gordon 2008)](https://doi.org/10.1063/1.2834918), [ωB97X-D](https://doi.org/10.1039/b810189b), [ωB97X-D3 (Lin et al. 2013)](https://doi.org/10.1021/ct300715s), [ωB97M-V (Mardirossian and Head-Gordon 2016)](https://doi.org/10.1063/1.4952647), [Najibi and Goerigk 2018](https://doi.org/10.1021/acs.jctc.8b00842).
+    - Dispersion: [VV10 (Vydrov and Van Voorhis 2010)](https://doi.org/10.1063/1.3521275), [D3 (Grimme et al. 2010)](https://doi.org/10.1063/1.3382344), [D3(BJ) (Grimme, Ehrlich and Goerigk 2011)](https://doi.org/10.1002/jcc.21759), [review (Grimme et al. 2016)](https://doi.org/10.1021/acs.chemrev.5b00533).
+    - Basis sets: [def2 (Weigend and Ahlrichs 2005)](https://doi.org/10.1039/b508541a), [diffuse def2 (Rappoport and Furche 2010)](https://doi.org/10.1063/1.3484283), [Coulomb fitting (Weigend 2006)](https://doi.org/10.1039/b515623h), [counterpoise (Boys and Bernardi 1970)](https://doi.org/10.1080/00268977000101561).
+    - Grids and core potentials: [Treutler and Ahlrichs 1995](https://doi.org/10.1063/1.469408), [SG-1 (Gill, Johnson and Pople 1993)](https://doi.org/10.1016/0009-2614%2893%2980125-9), [SG-2 and SG-3 (Dasgupta and Herbert 2017)](https://doi.org/10.1002/jcc.24761), [Hay and Wadt 1985](https://doi.org/10.1063/1.448799), [relativistic pseudopotentials review (Dolg and Cao 2012)](https://doi.org/10.1021/cr2001383).
+    - Datasets and force field: [OMol25 (arXiv)](https://arxiv.org/abs/2505.08762), [SPICE (Eastman et al. 2023)](https://doi.org/10.1038/s41597-022-01882-6), [Nutmeg and SPICE (Eastman et al. 2024)](https://doi.org/10.1021/acs.jctc.4c00794), [OPLS5 (ChemRxiv)](https://doi.org/10.26434/chemrxiv-2024-2svr7).
     """)
     return
 

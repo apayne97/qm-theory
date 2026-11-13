@@ -114,7 +114,7 @@ def _(mo):
 
     **Read first:** `standing_waves_in_boxes.py` (this folder), and `../quantization`, section 5, which states the hydrogen
     quantum numbers without deriving them. This notebook supplies the reasons, and the later notebooks (`from_atoms_to_molecules.py`,
-    `basis_sets_from_base_states.py`, `../dft/`) use $n$, $\ell$, $m_\ell$ and the orbital shapes unchanged.
+    `basis_sets_from_base_states.py`, `hartree_fock_mean_field.py`, `../dft/`) use $n$, $\ell$, $m_\ell$ and the orbital shapes unchanged.
 
     **Contents**
 
@@ -1637,8 +1637,9 @@ def _(mo):
 
     Hydrogen is one of the very few problems in chemistry that can be solved exactly, because there is one electron and one
     centre of force. Anything larger loses the separation into a radial and an angular part. The next notebooks take the path
-    from here to the labels of modern calculations: `from_atoms_to_molecules.py` (fixed nuclei, one orbital per electron,
-    hybrids, methane), then `basis_sets_from_base_states.py` (which functions to put on the atoms), then the DFT notebooks
+    from here to the labels of modern calculations: `from_atoms_to_molecules.py` (fixed nuclei,
+    hybrids, methane), then `basis_sets_from_base_states.py` (which functions to put on the atoms), then `hartree_fock_mean_field.py` (one orbital per
+    electron in the average field of the others, and why $2s$ lies below $2p$), then the DFT notebooks
     starting with `../dft/reading_a_dft_label.py`.
 
     **Takeaways for a slide**
@@ -1657,6 +1658,22 @@ def _(mo):
     **What was checked, and what was not.** All the numerical statements marked above are tested in `test_hydrogen.py`.
     The restriction $\lvert m_\ell\rvert\le\ell$, the full separation of the Schrödinger equation and the whole of
     section 7 are stated without derivation or calculation here.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    ## Further reading
+
+    Free sources, checked on 2026-11-13 (the full table, with what each covers, is in `SOURCES.md`).
+
+    - [Central forces (Physics LibreTexts, UC Davis Physics 9HC, 7.3)](https://phys.libretexts.org/Courses/University_of_California_Davis/UCD:_Physics_9HC__Introduction_to_Waves_Physical_Optics_and_Quantum_Theory/7:_Quantum_Theory_in_Three_Dimensions/7.3:_Central_Forces): the Laplacian in spherical coordinates and the separation into radial and angular parts (derivation).
+    - [Spherical harmonics (LibreTexts, Pacific Union College, 6.2)](https://chem.libretexts.org/Courses/Pacific_Union_College/Quantum_Chemistry/06:_The_Hydrogen_Atom/6.02:_The_Wavefunctions_of_a_Rigid_Rotator_are_Called_Spherical_Harmonics): the angular solutions (intro).
+    - [Hydrogen orbitals and the three quantum numbers (LibreTexts, Pacific Union College, 6.4)](https://chem.libretexts.org/Courses/Pacific_Union_College/Quantum_Chemistry/06%3A_The_Hydrogen_Atom/6.04%3A_Hydrogen_Atomic_Orbitals_Depend_upon_Three_Quantum_Numbers): $n$, $\ell$, $m_\ell$ (intro).
+    - [The hydrogen atom (Physics LibreTexts, Fowler, 4.6)](https://phys.libretexts.org/Bookshelves/Quantum_Mechanics/Quantum_Mechanics_%28Fowler%29/04:_Angular_Momentum_Spin_and_the_Hydrogen_Atom/4.06:_The_Hydrogen_Atom): the radial equation and its Laguerre-polynomial solutions (derivation).
+    - [Orbital angular momentum and the p-orbitals (LibreTexts, Grinnell College, 6.6)](https://chem.libretexts.org/Courses/Grinnell_College/CHM_364:_Physical_Chemistry_2_%28Grinnell_College%29/06:_The_Hydrogen_Atom/6.06:_Orbital_Angular_Momentum_and_the_p-Orbitals): $p_x$ and $p_y$ as combinations of the $m_\ell=\pm1$ functions, real versus complex (intro).
     """)
     return
 

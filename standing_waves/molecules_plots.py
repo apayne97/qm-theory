@@ -1,4 +1,5 @@
-"""Figures for the bridge notebook `from_atoms_to_molecules.py`. Each function returns a matplotlib Figure. Colours come from qmstyle.py."""
+"""Figures for the bridge notebook `from_atoms_to_molecules.py` and the Hartree-Fock notebook `hartree_fock_mean_field.py` (the scf, helium, average-field,
+screening and orbital-size figures). Each function returns a matplotlib Figure. Colours come from qmstyle.py."""
 
 import sys
 from pathlib import Path
@@ -26,7 +27,7 @@ def _style(ax):
 
 
 # ---------------------------------------------------------------------------------------------------------------
-# Section 2
+# Bridge notebook, section 2
 
 def born_oppenheimer_figure(state=0, mass_factor=1.0):
     """Left: the electronic energy of H2+ as a potential for the nuclei, the nuclear levels in it and one nuclear wave.
@@ -71,7 +72,7 @@ def born_oppenheimer_figure(state=0, mass_factor=1.0):
 
 
 # ---------------------------------------------------------------------------------------------------------------
-# Section 2: flowcharts of a geometry optimisation
+# Section 2.1 of the bridge notebook: flowcharts of a geometry optimisation (scf_loop_figure is used in the Hartree-Fock notebook, section 7)
 
 def _canvas(width, height, figsize):
     fig, ax = plt.subplots(figsize=figsize)
@@ -115,13 +116,13 @@ def _arrow(ax, p, q, label=None, label_at=None, rad=0.0, colour=INK, size=10.5, 
 
 
 def scf_loop_figure():
-    """The self-consistent-field loop at one fixed set of nuclear positions R."""
+    """The self-consistent-field loop at one fixed set of nuclear positions R (Hartree-Fock, and Kohn-Sham with the exchange term replaced)."""
     fig, ax = _canvas(100, 62, (11, 6.8))
     inp = _box(ax, 15, 54, 26, 9, "fixed nuclei at $\\mathbf{R}$\n(charges at fixed points)", POT_COLOR)
     guess = _box(ax, 15, 38, 26, 9, "guess a density $n(\\mathbf{r})$\n(e.g. sum of atoms)", H_COLOR)
-    build = _box(ax, 50, 46, 34, 14, "build the Kohn-Sham operator $\\hat f$\n$\\hat f=T+V_{\\mathrm{nuc}}(\\mathbf{R})$\n$+\\,V_{\\mathrm{H}}[n]+V_{\\mathrm{xc}}[n]$", H_COLOR)
-    diag = _box(ax, 83, 46, 28, 14, "diagonalise $\\hat f$\n$\\hat f\\varphi_i=\\varepsilon_i\\varphi_i$", H_COLOR)
-    new = _box(ax, 83, 22, 28, 15, "new density from the\noccupied orbitals\n\n$n=\\sum_{i\\in\\mathrm{occ}}|\\varphi_i|^2$", H_COLOR)
+    build = _box(ax, 50, 46, 36, 15, "build the operator $\\hat f$ from $n$\n$\\hat f=-\\frac{1}{2}\\nabla^2+V_{\\mathrm{nuc}}(\\mathbf{R})+\\hat J[n]-\\hat K[n]$\n(Kohn-Sham: $\\hat J[n]+V_{\\mathrm{xc}}[n]$)", H_COLOR, size=10.5)
+    diag = _box(ax, 86, 46, 25, 14, "solve $\\hat f\\varphi_i=\\varepsilon_i\\varphi_i$\n(matrix: $\\mathbf{Fc}=\\varepsilon\\mathbf{Sc}$)", H_COLOR)
+    new = _box(ax, 86, 22, 25, 15, "new density from the\noccupied orbitals\n\n$n=\\sum_{i\\in\\mathrm{occ}}|\\varphi_i|^2$", H_COLOR)
     conv = _diamond(ax, 50, 22, 30, 15, "converged?\n$n$ and $E$ stopped\nchanging")
     out = _box(ax, 50, 5.5, 52, 9, "$E(\\mathbf{R})=E_{\\mathrm{el}}(\\mathbf{R})+E_{\\mathrm{nn}}(\\mathbf{R})$", OMEGA_COLOR, bold=True)
     _arrow(ax, inp["b"], guess["t"])
@@ -147,7 +148,7 @@ def geometry_optimization_figure():
     # nested SCF box
     ax.add_patch(FancyBboxPatch((28, 40), 44, 22, boxstyle="round,pad=0,rounding_size=1.5", fc=H_COLOR, ec=H_COLOR, alpha=0.10, lw=0, zorder=0.5))
     ax.add_patch(FancyBboxPatch((28, 40), 44, 22, boxstyle="round,pad=0,rounding_size=1.5", fc="none", ec=H_COLOR, lw=2, ls="--", zorder=0.5))
-    ax.text(50, 59.2, "SCF loop (inner loop, previous figure)", fontsize=10.5, color=H_COLOR, ha="center", va="center", fontweight="bold")
+    ax.text(50, 59.2, "SCF loop (inner loop, see the Hartree-Fock notebook)", fontsize=10.5, color=H_COLOR, ha="center", va="center", fontweight="bold")
     scf = _box(ax, 50, 49, 38, 12, "electrons solved with the nuclei held\nat the fixed points $\\mathbf{R}_k$\n(Born-Oppenheimer)", POT_COLOR, fill=0.10)
     energy = _box(ax, 87, 52, 21, 11, "energy\n$E(\\mathbf{R}_k)$", OMEGA_COLOR)
     forces = _box(ax, 87, 30, 21, 15, "forces on nuclei\n$\\mathbf{F}=-\\partial E/\\partial\\mathbf{R}$\nHellmann-Feynman\n+ Pulay term", OMEGA_COLOR, size=10)
@@ -210,7 +211,7 @@ def optimisation_toy_figure(start=3.0, hessian0=0.3):
 
 
 # ---------------------------------------------------------------------------------------------------------------
-# Section 3
+# Hartree-Fock notebook, sections 2 to 4
 
 def helium_figure(zeta=1.6875):
     """Left: energy of the helium atom against the orbital exponent zeta, with and without electron repulsion.
@@ -238,6 +239,49 @@ def helium_figure(zeta=1.6875):
     bx.set_ylabel(r"probability per Å, $4\pi r^2|\varphi|^2$")
     bx.legend(frameon=False, fontsize=9)
     _style(bx)
+    fig.tight_layout()
+    return fig
+
+
+def average_field_figure(zeta=1.6875, zeta_li=2.6875):
+    """Left: the potential v_J(r) that one electron in the orbital exp(-zeta r) makes (helium's other electron), with the density behind it.
+    Right: Zeff(r) = 3 - 2 r v_J(r) of lithium, whose two core electrons make the field the third one sees; the core density behind it."""
+    fig, (ax, bx) = plt.subplots(1, 2, figsize=(11, 4.0))
+    r = np.linspace(1e-3, 4.5, 600)  # bohr
+    for axis, z, ylim in ((ax, zeta, None), (bx, zeta_li, None)):
+        twin = axis.twinx()
+        n_el = 1 if axis is ax else 2
+        twin.fill_between(r * AB, n_el * 4 * z**3 * r**2 * np.exp(-2 * z * r) / AB, color=H_COLOR, alpha=0.18, lw=0)
+        twin.set_ylim(0, 1.8 * n_el * 4 * z**3 * (1 / z) ** 2 * np.exp(-2) / AB)
+        twin.set_yticks([])
+        for side in ("top", "right"):
+            twin.spines[side].set_visible(False)
+        axis.set_zorder(twin.get_zorder() + 1)
+        axis.patch.set_visible(False)
+        _style(axis)
+    v = mol.coulomb_potential_1s(r, zeta)
+    ax.plot(r * AB, v, color=POT_COLOR, lw=2.4, label=r"$v_J(r)$, the field of the other electron")
+    ax.plot(r * AB, 1 / r, color=GREY, lw=1.2, ls=":", label=r"$1/r$ (a point charge)")
+    ax.axhline(zeta, color=GREY, lw=1, ls="--")
+    ax.text(4.4 * AB, zeta * 1.04, r"$\zeta$ at $r=0$", ha="right", fontsize=9, color=INK)
+    ax.set_xlim(0, 4.5 * AB)
+    ax.set_ylim(0, 2.6)
+    ax.set_xlabel("$r$ (Å)")
+    ax.set_ylabel("potential energy of an electron (hartree)")
+    ax.set_title(rf"helium: $\varphi\propto e^{{-\zeta r}}$, $\zeta={zeta:.4g}$ (shading: where the other electron is)", fontsize=9, color=INK)
+    ax.legend(frameon=False, fontsize=8, loc="upper right")
+
+    zeff = mol.effective_charge(r, 3.0, zeta_li)
+    bx.plot(r * AB, zeff, color=POT_COLOR, lw=2.4)
+    bx.axhline(3.0, color=GREY, lw=0.8, ls="--")
+    bx.axhline(1.0, color=GREY, lw=0.8, ls="--")
+    bx.text(4.4 * AB, 3.05, "bare nucleus (charge 3)", ha="right", fontsize=8, color=INK)
+    bx.text(4.4 * AB, 1.05, "nucleus seen through the $1s^2$ core (charge 1)", ha="right", va="bottom", fontsize=8, color=INK)
+    bx.set_xlim(0, 4.5 * AB)
+    bx.set_ylim(0, 3.4)
+    bx.set_xlabel("$r$ (Å)")
+    bx.set_ylabel(r"effective charge $Z_{\mathrm{eff}}(r)=3-2\,r\,v_J(r)$")
+    bx.set_title("lithium: the $2s$ electron in the field of the two $1s$ electrons (shading: the core)", fontsize=9, color=INK)
     fig.tight_layout()
     return fig
 
@@ -315,7 +359,7 @@ def orbital_size_figure(z=1.0):
 
 
 # ---------------------------------------------------------------------------------------------------------------
-# Section 4
+# Bridge notebook, section 3
 
 def hybrid_figure():
     """Hybrids s + sqrt(n) p for n = 1, 2, 3 in the plane that holds them: the angular amplitude, blue positive, red negative."""
@@ -346,7 +390,7 @@ def hybrid_figure():
 
 
 # ---------------------------------------------------------------------------------------------------------------
-# Section 5
+# Bridge notebook, section 4
 
 def methane_figure(bond=0):
     """Left: levels of the symmetry toy for methane. Right: weight of one localised bond orbital on the eight functions."""

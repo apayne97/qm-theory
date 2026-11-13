@@ -1,4 +1,5 @@
-"""Tests for molecules.py (the bridge notebook). Run from the repository root: pytest standing_waves."""
+"""Tests for molecules.py (the bridge notebook `from_atoms_to_molecules.py` and the Hartree-Fock notebook `hartree_fock_mean_field.py`).
+Run from the repository root: pytest standing_waves."""
 
 import numpy as np
 import pytest
@@ -7,7 +8,7 @@ import molecules as m
 import hydrogen as hy
 
 
-# ---- section 1
+# ---- from_atoms_to_molecules.py, section 1
 
 def test_coordinate_counts():
     assert m.coordinate_count(1, 1) == 6  # hydrogen atom
@@ -16,7 +17,7 @@ def test_coordinate_counts():
     assert m.grid_values(2, 10) == 100
 
 
-# ---- section 2
+# ---- from_atoms_to_molecules.py, section 2
 
 def test_h2plus_minimum_matches_the_large_basis_points():
     r_e, e_min = m.h2plus_minimum()
@@ -59,7 +60,7 @@ def test_electrons_are_the_fast_ones():
     assert m.timescale_ratio() < 0.15
 
 
-# ---- section 3
+# ---- hartree_fock_mean_field.py, sections 2 and 3: helium
 
 def test_helium_variational_minimum():
     zeta = np.linspace(1.0, 2.5, 150001)
@@ -100,7 +101,7 @@ def test_screening_puts_s_below_p_below_d():
     assert e[(1, 0)] < e[(2, 0)] < e[(2, 1)]
 
 
-# ---- section 4
+# ---- from_atoms_to_molecules.py, section 3: hybrids
 
 @pytest.mark.parametrize("n,angle", [(1, 180.0), (2, 120.0), (3, np.degrees(np.arccos(-1 / 3)))])
 def test_hybrid_angles(n, angle):
@@ -148,7 +149,7 @@ def test_hybrid_profile_normalised_over_the_sphere():
         assert np.sum(m.hybrid_profile(n, g) ** 2 * np.sin(g)) * np.pi / 4000 / 2 == pytest.approx(1.0, abs=1e-5)
 
 
-# ---- section 5
+# ---- from_atoms_to_molecules.py, section 4: methane
 
 def test_toy_levels_have_the_a1_t2_pattern():
     e, _ = m.methane_toy_levels()
@@ -201,7 +202,7 @@ def test_real_methane_numbers_are_consistent():
     assert sum(r["bond_orbital_on_carbon"].values()) == pytest.approx(1.0, abs=2e-3)
 
 
-# ---- section 3: orbital size and nuclear charge
+# ---- hartree_fock_mean_field.py, section 4: orbital size and nuclear charge
 
 @pytest.mark.parametrize("n,l", [(1, 0), (2, 0), (2, 1), (3, 0), (3, 1), (3, 2)])
 def test_mean_radius_formula_against_integration(n, l):
@@ -240,7 +241,7 @@ def test_atom_sizes_data():
     assert rr["Na"] > rr["Ne"] and rr["Li"] > rr["He"]  # a new shell makes the atom larger
 
 
-# ---- section 2: geometry optimisation of the H2+ bond length
+# ---- from_atoms_to_molecules.py, section 2.1: geometry optimisation of the H2+ bond length
 
 def test_force_is_minus_the_slope_of_the_curve():
     fit = m.h2plus_fit()
@@ -266,3 +267,107 @@ def test_optimisation_finds_the_minimum_and_lowers_the_energy_each_step(start):
 def test_optimisation_from_the_minimum_stops_at_once():
     r_e, _ = m.h2plus_minimum()
     assert len(m.optimise_bond_length(r_e)["r"]) == 1
+
+
+# ---- hartree_fock_mean_field.py, section 3: the average field of the other electron
+
+def _radial_integral(f, upper=40.0, n=400001):
+    r = np.linspace(1e-9, upper, n)
+    return np.trapezoid(f(r), r)
+
+
+@pytest.mark.parametrize("zeta", [0.8, 1.6875, 2.0, 2.6875])
+def test_coulomb_potential_closed_form_against_numerical_integral(zeta):
+    """v_J(r) = int rho(r') / |r - r'| d r' for rho = |phi|^2, by integrating over r' and the angle between r and r' (the angular integral of 1/|r - r'| is 2 pi (|r + r'| - |r - r'|) / (r r'))."""
+    rp = np.linspace(1e-9, 30, 600001)
+    rho = zeta**3 / np.pi * np.exp(-2 * zeta * rp)
+    for r in (0.05, 0.4, 1.0, 2.5, 6.0):
+        angular = 2 * np.pi * (r + rp - np.abs(r - rp)) / (r * rp)  # int dOmega' / |r - r'|, in closed form
+        # the angular integral equals 4 pi / max(r, r'); written out above so the test does not repeat the shell theorem
+        assert angular[1000] == pytest.approx(4 * np.pi / max(r, rp[1000]), rel=1e-9)
+        numeric = np.trapezoid(rho * rp**2 * angular, rp)
+        assert m.coulomb_potential_1s(r, zeta) == pytest.approx(numeric, rel=1e-6)
+
+
+def test_coulomb_potential_limits():
+    zeta = 1.6875
+    assert m.coulomb_potential_1s(0.0, zeta) == pytest.approx(zeta)  # inside the cloud the charge outside cancels
+    assert m.coulomb_potential_1s(1e-3, zeta) == pytest.approx(zeta, rel=1e-5)
+    far = np.array([15.0, 30.0])
+    assert np.allclose(m.coulomb_potential_1s(far, zeta), 1 / far, rtol=1e-9)  # the cloud looks like a point charge
+    r = np.linspace(1e-6, 10, 2000)
+    v = m.coulomb_potential_1s(r, zeta)
+    assert np.all(np.diff(v) < 0) and np.all(v < 1 / r + 1e-12)  # falls steadily, always below the point-charge 1/r
+    # the small-r series (used below zeta r = 1e-4) and the closed form join smoothly
+    just_below, just_above = 0.99e-4 / zeta, 1.01e-4 / zeta
+    assert m.coulomb_potential_1s(just_below, zeta) == pytest.approx(m.coulomb_potential_1s(just_above, zeta), rel=1e-7)
+
+
+@pytest.mark.parametrize("zeta", [1.0, 1.6875, 2.5])
+def test_five_eighths_zeta_is_the_orbital_in_the_field_of_the_other(zeta):
+    """5 zeta / 8 = int |phi|^2 v_J d r, and the helium energy is 2 <h> + <phi| v_J |phi>."""
+    dens = lambda r: 4 * np.pi * r**2 * zeta**3 / np.pi * np.exp(-2 * zeta * r)
+    assert _radial_integral(lambda r: dens(r)) == pytest.approx(1.0, abs=1e-7)
+    in_field = _radial_integral(lambda r: dens(r) * m.coulomb_potential_1s(r, zeta))
+    assert in_field == pytest.approx(5 * zeta / 8, rel=1e-6)
+    # one-electron part <h> = zeta^2/2 - Z zeta, from <-nabla^2/2> = zeta^2/2 and <1/r> = zeta
+    mean_inverse_r = _radial_integral(lambda r: dens(r) / r)
+    assert mean_inverse_r == pytest.approx(zeta, rel=1e-6)
+    assert 2 * (zeta**2 / 2 - 2.0 * mean_inverse_r) + in_field == pytest.approx(m.helium_energy(zeta), rel=1e-6)
+
+
+def test_helium_repulsion_term_is_the_other_electrons_field_with_the_self_part_removed():
+    """Closed shell, one orbital: J[rho_total] phi = 2 v phi and the exchange term K phi = v phi (both electrons are in phi),
+    so (J - K/2) phi = v phi: the field of the *one* other electron, with no self-repulsion left."""
+    zeta = 1.6875
+    r = np.linspace(0.01, 8, 50)
+    v = m.coulomb_potential_1s(r, zeta)
+    j_total, half_k = 2 * v, 0.5 * 2 * v  # J from the density of both electrons; K/2 with the density of both electrons
+    assert np.allclose(j_total - half_k, v)
+
+
+def test_effective_charge_limits_and_lithium_closed_form():
+    z, zeta = 3.0, m.helium_best_zeta(3.0)
+    assert zeta == pytest.approx(2.6875)
+    assert m.effective_charge(0.0, z) == pytest.approx(3.0)  # the bare nucleus close in
+    assert m.effective_charge(40.0, z) == pytest.approx(1.0, abs=1e-9)  # nucleus seen through two core electrons
+    r = np.linspace(0.0, 6, 200)
+    assert np.allclose(m.effective_charge(r, z), 1 + 2 * np.exp(-2 * zeta * r) * (1 + zeta * r))
+    zeff = m.effective_charge(r, z)
+    assert np.all(np.diff(zeff) <= 1e-12) and zeff.min() >= 1.0  # falls steadily from 3 to 1
+    # the potential is -Zeff/r
+    assert np.allclose(m.screened_potential(r[1:], 3.0, 1 / (2 * zeta)), -zeff[1:] / r[1:])
+    # a point with z = 10 (neon-like core of 2): the same two-electron core, asymptote z - 2
+    assert m.effective_charge(40.0, 10.0) == pytest.approx(8.0, abs=1e-9)
+
+
+def test_lithium_effective_charge_is_the_integral_of_the_core_density():
+    """Zeff(r) = Z - (charge of the core inside r) - r (field of the core charge outside r): the shell theorem, by direct integration."""
+    z, zeta = 3.0, 2.6875
+    rho = lambda r: 2 * zeta**3 / np.pi * np.exp(-2 * zeta * r)  # two 1s electrons
+    for r0 in (0.1, 0.5, 1.5):
+        rr = np.linspace(1e-9, 30, 600001)
+        inside = np.trapezoid(np.where(rr < r0, 4 * np.pi * rr**2 * rho(rr), 0), rr)
+        outside = np.trapezoid(np.where(rr >= r0, 4 * np.pi * rr * rho(rr), 0), rr)
+        assert m.effective_charge(r0, z, zeta) == pytest.approx(z - inside - r0 * outside, rel=1e-4)
+
+
+def test_helium_orbital_energy_and_the_double_counted_repulsion():
+    zeta = 1.6875
+    eps = m.helium_orbital_energy(zeta)
+    assert eps == pytest.approx(-0.896484375)
+    assert 2 * eps - 5 * zeta / 8 == pytest.approx(m.helium_energy(zeta))  # E = 2 eps - <v_J>
+    assert m.helium_energy(zeta) < 2 * eps  # the sum of the orbital energies lies above the total energy: it counts the repulsion twice
+    dens = lambda r: 4 * np.pi * r**2 * zeta**3 / np.pi * np.exp(-2 * zeta * r)
+    in_field = _radial_integral(lambda r: dens(r) * m.coulomb_potential_1s(r, zeta))
+    assert eps == pytest.approx(zeta**2 / 2 - 2.0 * zeta + in_field, rel=1e-6)
+
+
+def test_lithium_core_in_the_screened_potential_puts_2s_below_2p():
+    """The numbers quoted in the notebook: lithium's own core, zeta = 2.6875, i.e. a = 1/(2 zeta) = 0.0985 angstrom."""
+    decay = 1 / (2 * m.helium_best_zeta(3.0))
+    assert decay * m.BOHR_ANGSTROM == pytest.approx(0.0985, abs=5e-4)
+    e = m.screened_levels(decay=decay, z=3.0)
+    assert e[(2, 0)] == pytest.approx(-0.1749, abs=1e-3)
+    assert e[(2, 1)] == pytest.approx(-0.1259, abs=1e-3)
+    assert e[(1, 0)] < e[(2, 0)] < e[(2, 1)]

@@ -368,5 +368,18 @@ def _(mo):
     return
 
 
+@app.cell
+def _(mo):
+    mo.md(r"""
+    ## Further reading
+
+    Free sources, checked on 2026-11-13 (the full table, with what each covers, is in `SOURCES.md`).
+
+    - [Particle in a 1D box (LibreTexts, *Physical Chemistry* 3.5)](https://chem.libretexts.org/Bookshelves/Physical_and_Theoretical_Chemistry_Textbook_Maps/Physical_Chemistry_%28LibreTexts%29/03:_The_Schrodinger_Equation_and_a_Particle_in_a_Box/3.05:_The_Energy_of_a_Particle_in_a_Box_is_Quantized): quantised energies, nodes, the non-zero lowest energy (intro).
+    - [A particle in a 3D box (LibreTexts, *Physical Chemistry* 3.9)](https://chem.libretexts.org/Bookshelves/Physical_and_Theoretical_Chemistry_Textbook_Maps/Physical_Chemistry_%28LibreTexts%29/03:_The_Schrodinger_Equation_and_a_Particle_in_a_Box/3.09:_A_Particle_in_a_Three-Dimensional_Box): energy as a sum of squares of three whole numbers, degeneracy of the cube (intro).
+    """)
+    return
+
+
 if __name__ == "__main__":
     app.run()
