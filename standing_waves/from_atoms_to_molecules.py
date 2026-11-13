@@ -15,25 +15,33 @@ def _():
         MASS_RANGE,
         STATE_MAX,
         born_oppenheimer_figure,
+        geometry_optimization_figure,
         helium_figure,
         hybrid_figure,
         methane_figure,
+        optimisation_toy_figure,
         orbital_size_figure,
+        scf_loop_figure,
         screening_figure,
+        surface_uses_figure,
     )
 
     return (
         MASS_RANGE,
         STATE_MAX,
         born_oppenheimer_figure,
+        geometry_optimization_figure,
         helium_figure,
         hybrid_figure,
         methane_figure,
         mo,
         mol,
+        optimisation_toy_figure,
         orbital_size_figure,
         plt,
+        scf_loop_figure,
         screening_figure,
+        surface_uses_figure,
     )
 
 
@@ -59,7 +67,7 @@ def _(mo):
     **Contents**
 
     1. Why hydrogen's recipe stops
-    2. Fixed nuclei: the Born-Oppenheimer approximation
+    2. Fixed nuclei: the Born-Oppenheimer approximation (2.1: how a geometry optimization uses it)
     3. One orbital per electron: helium, and why $2s$ lies below $2p$
     4. Hybrid orbitals: how many $p$ in an $s$-$p$ mixture, and the angle
     5. Methane: one level, then three
@@ -189,6 +197,158 @@ def _(mo):
 
     The calculations in the rest of the talk, wB97M-V energies and geometries from `def2` basis sets, are all Born-Oppenheimer
     calculations: $\mathbf R$ is an input.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    ### 2.1 How a geometry optimization uses Born-Oppenheimer
+
+    A geometry optimization asks: for which nuclear positions $\mathbf R$ is the energy $E(\mathbf R)$ lowest? Born-Oppenheimer
+    is what makes the question well posed, because it turns the energy into a function of the nuclear positions alone. The
+    calculation is two loops, one inside the other. In both figures, $\mathbf R$ stands for all nuclear positions at once, $E$ is the
+    Born-Oppenheimer energy of section 2 (electrons plus nuclear repulsion), and $\mathbf F=-\partial E/\partial\mathbf R$ is the
+    **force** on the nuclei: the negative slope of the energy surface, one vector per nucleus.
+
+    **Inner loop: the electrons, at fixed $\mathbf R$.** The Kohn-Sham operator $\hat f$ (decoded in `../dft/kohn_sham_matrix.py`)
+    contains the potential of the nuclei, which are fixed charges at $\mathbf R$, and the potentials of the electron density $n(\mathbf r)$ itself
+    (the Hartree repulsion $V_{\mathrm H}$ and the exchange-correlation potential $V_{\mathrm{xc}}$). The density is
+    needed to build the operator and the operator gives the orbitals that make the density, so one iterates until the density stops changing.
+    This is the **self-consistent field** (SCF) loop.
+    """)
+    return
+
+
+@app.cell
+def _(mo, plt, scf_loop_figure):
+    _fig = scf_loop_figure()
+    _out = mo.as_html(_fig)
+    plt.close(_fig)
+    _out
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    **Outer loop: the nuclei.** The SCF gives $E(\mathbf R)$. The force on each nucleus follows from the converged wave without a new SCF:
+    the **Hellmann-Feynman** part is the force that the electron cloud exerts on the nucleus, as if the cloud were frozen; the **Pulay term**
+    corrects it for the fact that the basis functions are centred on the atoms and move with them (it is zero for a complete basis).
+    The optimiser then moves the nuclei downhill. It keeps an approximate matrix $H$ of second derivatives of $E$ (the Hessian), updated from the
+    change in the forces from one step to the next (BFGS is the usual update), and takes the step $\Delta\mathbf R=-H^{-1}\mathbf g$ with
+    $\mathbf g=-\mathbf F$ the gradient. Real programs write $\mathbf R$ in **internal coordinates** (bond lengths, angles, torsions), because $E$
+    changes along these in a simpler way than along the Cartesian $x,y,z$. The loop stops when the largest and the root-mean-square force, the
+    largest displacement and the change of energy are all below thresholds.
+
+    The Born-Oppenheimer assumption sits in the box inside the dashed line: for the electrons, $\mathbf R_k$ is a set of fixed charges
+    and nothing is said yet about how the nuclei move. The motion of the nuclei is then handled by the outer loop, as in the nuclear equation of section 2 but
+    here without quantum waves: the optimiser only looks for the minimum of $E$ (the nuclear problem at zero temperature, in the classical limit).
+    """)
+    return
+
+
+@app.cell
+def _(geometry_optimization_figure, mo, plt):
+    _fig = geometry_optimization_figure()
+    _out = mo.as_html(_fig)
+    plt.close(_fig)
+    _out
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    The same surface $E(\mathbf R)$ and the same forces serve three jobs. They differ in what they do with $\mathbf R$ after the SCF:
+
+    - a **single point** stops after one SCF and reports the energy (and the forces, which cost little extra);
+    - an **optimization** moves $\mathbf R$ downhill until the forces vanish;
+    - **ab initio molecular dynamics** moves $\mathbf R$ by Newton's equation, $M\ddot{\mathbf R}=\mathbf F$ ($M$ the nuclear mass),
+      and runs an SCF at every time step.
+
+    Vibrational **frequencies** are taken from the second derivatives of $E$ at an optimized geometry.
+    """)
+    return
+
+
+@app.cell
+def _(mo, plt, surface_uses_figure):
+    _fig = surface_uses_figure()
+    _out = mo.as_html(_fig)
+    plt.close(_fig)
+    _out
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    **A toy optimization: the H$_2^+$ bond length.** There is one coordinate, the proton separation $R$, so $H$ is a single number. Each
+    step takes the energy and force from the H$_2^+$ curve of section 2 (standing in for one SCF), moves by $\Delta R=F/h$, and then
+    replaces the approximate second derivative $h$ by the one measured from the last two forces (this is the BFGS update in one dimension).
+    A step that would raise the energy is shortened, as a line search does in a real program. Choose the starting separation below.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    opt_start = mo.ui.slider(0.8, 2.0, step=0.1, value=1.6, label="starting $R$ (Å)", show_value=True)
+    return (opt_start,)
+
+
+@app.cell
+def _(mo, mol, opt_start, optimisation_toy_figure, plt):
+    _fig = optimisation_toy_figure(start=opt_start.value / mol.BOHR_ANGSTROM)
+    _out = mo.vstack([opt_start, mo.as_html(_fig)])
+    plt.close(_fig)
+    _out
+    return
+
+
+@app.cell
+def _(mo, mol):
+    _run = mol.optimise_bond_length(1.6 / mol.BOHR_ANGSTROM)
+    _rows = "".join(
+        f"| {k} | {r * mol.BOHR_ANGSTROM:.3f} | {e:.5f} | {f:+.5f} | {h:.3f} |\n"
+        for k, (r, e, f, h) in enumerate(zip(_run["r"], _run["energy"], _run["force"], _run["hessian"]))
+    )
+    mo.md(
+        "Starting from $R=1.60$ Å, the steps are (force and second derivative in atomic units per bohr; $h$ is the "
+        "approximate second derivative used for the next step):\n\n| step | $R$ (Å) | $E$ (hartree) | $F$ (hartree/bohr) | $h$ (hartree/bohr$^2$) |\n|---|---|---|---|---|\n"
+        + _rows
+        + "\nThe first step is a guess ($h=0.3$ is a typical starting value for a bond); the update then corrects $h$ towards the true second derivative "
+        "(about $0.10$, which is what the vibrational frequency of section 2 measures), after which the steps are Newton steps and the energy falls "
+        "quickly. A real molecule has $3N_{\\text{nuclei}}-6$ coordinates, so $H$ is a matrix and each SCF is much more expensive, but the loop is this one.\n"
+    )
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    **Which calculations optimize the geometry?** The labels decoded in `../dft/reading_a_dft_label.py` say which method and basis were used,
+    not whether the geometry was optimized. The two are separate choices: a dataset of energies and forces needs only single points, whereas
+    a geometry for a force-field fit needs the loop above. What the sources say (read on 2026-11-12, short quotes in quotation marks):
+
+    | Calculation | Geometry optimized in the calculation? | What the source says |
+    |---|---|---|
+    | any single point | no: one SCF at the given $\mathbf R$ | gives $E$, and $\mathbf F$ almost for free; $\mathbf R$ is an input |
+    | any optimization | yes: many SCFs, one per step | gives $\mathbf R_{\mathrm{opt}}$ and its energy |
+    | **SPICE** (original paper, Eastman et al., *Sci. Data* 10, 11, 2023) | no DFT optimization is stated; energies and gradients are computed on given structures | "Forces and energies for all conformations were calculated" with Psi4. Structures: 10 RDKit conformers, then "100 ps of molecular dynamics at a temperature of 500 K" (force-field MD, OpenMM/Amber14) for the high-energy set; "five iterations of L-BFGS energy minimization" (partial, "did not fully minimize it") plus 1 ps at 100 K for the low-energy partner; ion pairs on a grid of distances |
+    | **SPICE II** (Eastman et al., arXiv 2406.13112) | not stated in the source | I could read only the abstract of this paper. Whether its sampling differs from SPICE 1 is unchecked |
+    | **OMol25** (the dataset paper, arXiv 2505.08762) | mostly no, but not all subsets | "over 140 million DFT single-point calculations". Structures come from MD (classical and machine-learned potentials), ring-polymer MD, docking followed by MD, generated metal complexes, reaction paths and a few "rattled" structures. Some subsets were "optimized for up to five steps" (metal complexes, 3 Å electrolyte clusters, small-molecule combinations); the text I read does not say with which method |
+    | **OPLS5** (a) | yes: "optimise the geometries" of about 500 metal complexes | as in `reading_a_dft_label.py` section 9 |
+    | **OPLS5** (b) | energy scans of metal-ligand distance and ligand rotations | scan points are prescribed geometries; whether the other coordinates were relaxed at each point is not stated in the source I read |
+    | **OPLS5** (c) | no optimization of the probe: a $+1$ point charge placed $3.5$ Å and $4.0$ Å above the ring centre | fixed, prescribed positions; how the benzene geometry was obtained is not stated in the source I read |
+    | **OPLS5** (d) | not stated in the source | reference interaction energies, CCSD(T)/CBS; the origin of the geometries is not stated in the source I read |
+
+    So the usual picture, that SPICE and OMol25 are energies and forces on structures made elsewhere (by force-field or machine-learned MD, conformer
+    generators and reaction-path tools), holds, with one correction: the OMol25 paper describes short optimizations of at most five steps for some of
+    its subsets. Neither dataset is a set of relaxed minima, and that is deliberate: a force field or a machine-learned potential has to be accurate away from
+    the minimum too, because MD visits strained geometries.
     """)
     return
 
@@ -553,7 +713,16 @@ def _(mo):
       coupling; the four bond orbitals are orthonormal, span the occupied space exactly, put the largest weight on their own hydrogen and point
       along the corners; the carbon $s{:}p$ ratio is not exactly $1{:}3$.
 
+    - *Section 2.1.* The force $F=-dE/dR$ against a finite difference of the fitted curve; the toy optimization reaches the minimum
+      of the curve ($R=1.99$ bohr) from four starting separations, never raises the energy, ends with $|F|<10^{-4}$ hartree/bohr in at most 12 SCFs, and stops at once if it starts at the minimum.
+      The datasets in the table were read on 2026-11-12: the SPICE paper (PMC full text) and the OMol25 paper (arXiv HTML version 2), each quoted
+      above. The OPLS5 rows repeat the notebook-05 reading of the preprint.
+
     **Not checked here, or stated from memory.**
+
+    - *Section 2.1.* The flowcharts are textbook descriptions (not computed): the Hellmann-Feynman and Pulay terms, BFGS, internal coordinates and the
+      convergence criteria are stated from general knowledge. For SPICE II the sampling is not stated in any source I could read. For OMol25 I could not read
+      the appendix, so which method does the five-step optimizations is open; OPLS5 (b) to (d) were not re-read in the preprint.
 
     - The numbers of the real methane calculation (orbital energies, the $20/76/4$ composition) are copied from
       `qm-calculations/methane/methane_output.txt`, not recomputed here.

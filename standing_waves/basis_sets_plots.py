@@ -89,6 +89,8 @@ def h2plus_figure(r):
     z = np.linspace(-6.5, 6.5, 600)
     fa, fb = bs.slater_1s(np.abs(z + r / 2)), bs.slater_1s(np.abs(z - r / 2))
     _, c = bs.h2plus_lcao(r)
+    # The sign of an eigenvector is arbitrary (psi and -psi are the same state), so fix it: c_A > 0 for both orbitals.
+    c = c * np.where(c[0, :] < 0, -1.0, 1.0)
     ax.plot(z * AB, fa, color=GREY, lw=1.2, ls="--")
     ax.plot(z * AB, fb, color=GREY, lw=1.2, ls="--")
     ax.plot(z * AB, c[0, 0] * fa + c[1, 0] * fb, color=H_COLOR, lw=2.2, label="bonding $c_A=c_B$")
@@ -314,5 +316,79 @@ def water_basis_figure(water):
     ax.set_xlabel("number of basis functions in H$_2$O")
     ax.set_ylabel("energy above def2-QZVP (milli-hartree)")
     _style(ax)
+    fig.tight_layout()
+    return fig
+
+
+# ----------------------------------------------------------------------------------------------------------------
+# Section 4: why atom-centred functions? (numerics in basis_comparison.py)
+
+N_GAUSS_MAX = 8  # s Gaussians in the hydrogen-atom curve
+N_GAUSS_H2PLUS_MAX = 6  # s Gaussians (plus one p_z) per proton in the H2+ curve
+CHEMICAL_ACCURACY = 1.6e-3  # hartree, about 1 kcal/mol
+
+
+def comparison_error_figure(box):
+    """Energy above the exact value against the number of basis functions: box standing waves (side `box` bohr) and Gaussians."""
+    import basis_comparison as bc
+
+    ns = bc.box_function_counts()
+    fig, (ax, bx) = plt.subplots(1, 2, figsize=(11.5, 4.0), sharey=True)
+    e_box = bc.box_energies(box, ns) - bc.E_H_EXACT
+    ax.loglog(ns, e_box, "o-", color=A_COLOR, ms=4, lw=1.6, label=f"box waves, side {box * AB:.1f} Å")
+    ng = np.arange(1, N_GAUSS_MAX + 1)
+    ax.loglog(ng, [bc.gaussian_atom_energy(int(k)) - bc.E_H_EXACT for k in ng], "s-", color=H_COLOR, ms=4, lw=1.6,
+              label="s Gaussians on the nucleus")
+    ax.set_title("hydrogen atom (one nucleus)", color=INK, fontsize=10)
+
+    e_box2 = bc.box_energies(box, ns, bc.R_H2PLUS) - bc.E_H2PLUS_EXACT
+    bx.loglog(ns, e_box2, "o-", color=A_COLOR, ms=4, lw=1.6, label="box waves")
+    ns_s = np.arange(1, N_GAUSS_H2PLUS_MAX + 1)
+    bx.loglog(2 * ns_s, [bc.gaussian_h2plus_energy_s_analytic(int(k)) - bc.E_H2PLUS_EXACT for k in ns_s], "s--", color=H_COLOR,
+              ms=4, lw=1.3, label="s Gaussians on each proton")
+    bx.loglog(2 * (ns_s + 1), [bc.gaussian_h2plus_general(tuple(bc.gaussian_exponents(int(k))), (bc.gaussian_p_exponent(int(k)),))
+                               - bc.E_H2PLUS_EXACT for k in ns_s], "s-", color=H_COLOR, ms=4, lw=1.6,
+              label="s Gaussians and one $p_z$ on each proton")
+    bx.set_title(f"H$_2^+$, protons {bc.R_H2PLUS * AB:.2f} Å apart", color=INK, fontsize=10)
+    for a_ in (ax, bx):
+        a_.axhline(CHEMICAL_ACCURACY, color=GREY, lw=0.8, ls=":")
+        a_.set_xlim(0.8, 3000)
+        a_.set_ylim(1e-6, 1)
+        a_.set_xlabel("number of basis functions $N$")
+        a_.legend(frameon=False, fontsize=8, loc="upper right")
+        _style(a_)
+    ax.text(1.0, CHEMICAL_ACCURACY * 1.25, "1.6 mhartree (about 1 kcal/mol)", fontsize=8, color=INK)
+    ax.set_ylabel("energy above the exact value (hartree)")
+    fig.tight_layout()
+    return fig
+
+
+def comparison_shape_figure(box, n_box, n_gauss):
+    """Hydrogen 1s density along a line through the nucleus: exact, best n_box box waves, best n_gauss Gaussians."""
+    import basis_comparison as bc
+
+    fig, (ax, bx) = plt.subplots(1, 2, figsize=(11.5, 4.0))
+    r = np.linspace(0, box / 2, 800)
+    exact = bs.density_slater(r)
+    psi_box = bc.box_psi_on_axis(box, n_box, r)
+    psi_g = bc.gaussian_psi(r, n_gauss)
+    series = [("exact $e^{-2r}/\\pi$", exact, INK, "--"),
+              (f"{n_box} box waves", psi_box**2, A_COLOR, "-"),
+              (f"{n_gauss} Gaussian{'s' if n_gauss > 1 else ''}", psi_g**2, H_COLOR, "-")]
+    near = r <= 1.6
+    for lab, y, col, ls in series:
+        ax.plot(r[near] * AB, y[near] / AB**3, color=col, lw=2, ls=ls, label=lab)
+        bx.semilogy(r * AB, np.maximum(y, 1e-30) / AB**3, color=col, lw=2, ls=ls)
+    ax.set_xlim(0, 1.6 * AB)
+    ax.set_xlabel("distance from the nucleus $r$ (Å)")
+    ax.set_ylabel(r"electron density $\rho$ (Å$^{-3}$)")
+    ax.set_title("at the nucleus: the cusp", color=INK, fontsize=10)
+    ax.legend(frameon=False, fontsize=9)
+    bx.set_xlim(0, box / 2 * AB)
+    bx.set_ylim(1e-12 / AB**3, 1 / AB**3)
+    bx.set_xlabel("distance from the nucleus $r$ (Å)")
+    bx.set_title("far away (log scale): the tail and the walls", color=INK, fontsize=10)
+    for a_ in (ax, bx):
+        _style(a_)
     fig.tight_layout()
     return fig

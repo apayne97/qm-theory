@@ -352,3 +352,86 @@ def test_binding_energies_quoted_in_the_notebook():
     assert de_lcao == pytest.approx(1.76, abs=0.02)
     assert de_big == pytest.approx(2.79, abs=0.02)
     assert de_lcao / de_big == pytest.approx(0.63, abs=0.01)
+
+
+# ----------------------------------------------------------------------------------------------------------------
+# Section 3b: box standing waves against atom-centred Gaussians (basis_comparison.py)
+
+import basis_comparison as bc  # noqa: E402
+
+BOX = 16.0  # bohr
+
+
+def test_gaussian_sum_stands_in_for_one_over_r():
+    r = np.array([1e-3, 1e-2, 0.1, 1.0, 5.0, 20.0, 30.0])
+    assert np.allclose(bc.coulomb_gaussian_sum(r) * r, 1.0, atol=2e-4)
+
+
+def test_box_matrices_reproduce_a_gaussian_expectation_value():
+    """<g|H|g> for g = exp(-alpha r^2) projected onto the box functions, against the closed form -4/(3 pi) at alpha = 8/(9 pi)."""
+    alpha = 8 / (9 * np.pi)
+    c = bc.box_projection_of_gaussian(BOX, alpha)
+    assert c @ c == pytest.approx(1.0, abs=1e-6)
+    h = bc._box_hamiltonian(BOX, None, bc.M_BOX)
+    assert c @ h @ c == pytest.approx(-4 / (3 * np.pi), abs=1e-4)
+
+
+def test_box_energies_are_variational_and_fall_with_n():
+    ns = bc.box_function_counts()
+    for r in (None, bc.R_H2PLUS):
+        e = bc.box_energies(BOX, ns, r)
+        exact = bc.E_H_EXACT if r is None else bc.E_H2PLUS_EXACT
+        assert np.all(e > exact)
+        assert np.all(np.diff(e) < 1e-9)  # never rises when functions are added
+    assert bc.box_energies(BOX, ns)[-1] - bc.E_H_EXACT < 0.02
+
+
+def test_bigger_box_is_worse_for_few_functions():
+    ns = (10, bc.M_BOX**3)
+    small, big = bc.box_energies(10.0, ns), bc.box_energies(20.0, ns)
+    assert big[0] > small[0]  # the same N spread over a larger volume
+
+
+def test_box_counting_grows_with_volume():
+    """At a fixed kinetic cutoff the number of functions grows as the volume L^3."""
+    n1, n2 = bc.box_count_below_cutoff(10.0, 4.0), bc.box_count_below_cutoff(20.0, 4.0)
+    assert n2 / n1 == pytest.approx(8.0, rel=0.15)
+
+
+def test_gaussian_hydrogen_matches_known_values():
+    assert bc.gaussian_atom_energy(1) == pytest.approx(-4 / (3 * np.pi), abs=1e-10)  # the notebook's "about -0.424"
+    e = np.array([bc.gaussian_atom_energy(n) for n in range(1, 7)])
+    assert np.all(e > -0.5) and np.all(np.diff(e) < 0)
+    for n in (3, 6):  # free coefficients and optimised exponents do at least as well as the tabulated STO-nG contraction
+        sto = b.hydrogen_energy_of_contraction(*b.sto_ng_fit(n)[:2])
+        assert e[n - 1] <= sto + 1e-9
+    assert e[2] == pytest.approx(-0.497, abs=0.001)
+    assert e[5] == pytest.approx(-0.99995 / 2, abs=0.0002)
+
+
+def test_general_gaussian_code_matches_the_closed_form_s_integrals():
+    for n in (1, 3, 6):
+        a = tuple(bc.gaussian_exponents(n))
+        assert bc.gaussian_h2plus_general(a) == pytest.approx(bc.gaussian_h2plus_energy_s_analytic(n), abs=1e-4)
+
+
+def test_gaussian_h2plus_is_variational_and_p_functions_help():
+    assert all(bc.gaussian_h2plus_energy_s_analytic(n) > bc.E_H2PLUS_EXACT for n in (1, 3, 6))
+    n = 4
+    a = tuple(bc.gaussian_exponents(n))
+    e_sp = bc.gaussian_h2plus_general(a, (bc.gaussian_p_exponent(n),))
+    assert bc.E_H2PLUS_EXACT < e_sp < bc.gaussian_h2plus_energy_s_analytic(n) - 5e-3
+    assert e_sp - bc.E_H2PLUS_EXACT < 3e-3
+
+
+def test_few_gaussians_beat_a_thousand_box_waves():
+    box_error = bc.box_energies(BOX, (bc.M_BOX**3,))[0] - bc.E_H_EXACT
+    assert bc.gaussian_atom_energy(4) - bc.E_H_EXACT < box_error / 5
+
+
+def test_neither_expansion_has_the_cusp():
+    """Exact 1s density: relative slope -2 at the nucleus. Both finite expansions are much flatter there."""
+    r = np.array([0.0, 0.02])
+    for psi in (bc.box_psi_on_axis(BOX, 1000, r), bc.gaussian_psi(r, 4)):
+        slope = (psi[1] ** 2 - psi[0] ** 2) / 0.02 / psi[0] ** 2
+        assert slope > -1.0

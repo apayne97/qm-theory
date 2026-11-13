@@ -238,3 +238,31 @@ def test_atom_sizes_data():
     assert all(0.8 < v < 4.5 for v in rr.values())  # valence orbitals stay between ~0.4 and ~2.3 angstrom
     assert rr["Li"] > rr["Be"] > rr["B"] > rr["C"] > rr["N"] > rr["O"] > rr["F"] > rr["Ne"] - 0.1  # contraction across period 2
     assert rr["Na"] > rr["Ne"] and rr["Li"] > rr["He"]  # a new shell makes the atom larger
+
+
+# ---- section 2: geometry optimisation of the H2+ bond length
+
+def test_force_is_minus_the_slope_of_the_curve():
+    fit = m.h2plus_fit()
+    h = 1e-5
+    for r in (1.6, 2.0, 2.8):
+        numeric = -(fit(r + h) - fit(r - h)) / (2 * h)
+        assert m.h2plus_force(r, fit) == pytest.approx(numeric, abs=1e-8)
+    assert m.h2plus_force(3.0, fit) < 0 < m.h2plus_force(1.5, fit)  # stretched bond pulls in, squeezed bond pushes out
+
+
+@pytest.mark.parametrize("start", [1.5, 2.6, 3.0, 3.8])
+def test_optimisation_finds_the_minimum_and_lowers_the_energy_each_step(start):
+    fit = m.h2plus_fit()
+    run = m.optimise_bond_length(start, fit)
+    r_e, e_min = m.h2plus_minimum(fit)
+    assert run["r"][-1] == pytest.approx(r_e, abs=2e-3)
+    assert run["energy"][-1] == pytest.approx(e_min, abs=1e-6)
+    assert abs(run["force"][-1]) < 1e-4
+    assert all(b <= a + 1e-12 for a, b in zip(run["energy"], run["energy"][1:]))
+    assert len(run["r"]) <= 12  # a quasi-Newton step needs a handful of evaluations in one dimension
+
+
+def test_optimisation_from_the_minimum_stops_at_once():
+    r_e, _ = m.h2plus_minimum()
+    assert len(m.optimise_bond_length(r_e)["r"]) == 1
