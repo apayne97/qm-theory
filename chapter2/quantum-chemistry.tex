@@ -61,7 +61,7 @@ The first set of notes in this series. These notes start where it stops: with a 
 \noindent {\bf Modern Quantum Chemistry}, Szabo and Ostlund \\
 A standard text for Hartree--Fock, configuration interaction and coupled cluster (sections \ref{sec:hf} and \ref{sec:cc}).
 
-% TODO: add the original papers for the functionals and basis sets named in section 8 (Becke 97, $\omega$B97M-V, VV10, D3, def2) once the citations are verified.
+\noindent The sources for each section are listed at the end of that section (\emph{Further reading}) and in the bibliography at the end. They are free to read where possible (LibreTexts, lecture notes, software documentation, arXiv); the papers carry a DOI, and some of those need publisher access.
 
 \vfill
 \eject
@@ -77,9 +77,9 @@ The first set of notes ended with stationary states: waves that keep their shape
 \begin{enumerate}
 \item \textbf{Standing waves in a box} (section \ref{sec:box}): a confined wave must fit, which gives whole numbers, energy levels and degeneracy.
 \item \textbf{Spheres and atoms} (section \ref{sec:hydrogen}): the same idea in spherical coordinates gives the spherical harmonics and the hydrogen orbitals.
-\item \textbf{From atoms to molecules} (section \ref{sec:bridge}): three approximations (fixed nuclei, one orbital per electron, atom-centred functions) and what each costs.
+\item \textbf{From atoms to molecules} (section \ref{sec:bridge}): fixed nuclei (Born--Oppenheimer), and the hybrid and bond orbitals that orbitals built from atom-centred functions give.
 \item \textbf{Basis sets} (section \ref{sec:basis}): the fixed functions from which orbitals are built.
-\item \textbf{Hartree--Fock} (section \ref{sec:hf}): the orbital approximation made precise.
+\item \textbf{Hartree--Fock} (section \ref{sec:hf}): one orbital per electron in the average field of the others, the Fock operator and the SCF loop.
 \item \textbf{Density functional theory} (sections \ref{sec:dft} and \ref{sec:label}): the Kohn--Sham equations, and how to read a functional/basis-set label.
 \item \textbf{Coupled cluster} (section \ref{sec:cc}): the reference method, and why it is the reference.
 \end{enumerate}
@@ -165,6 +165,8 @@ More dimensions give many more states at the same energy, and the levels of a la
 
 \paragraph{From a box to an atom.} An atom has no hard wall: the electron is held by the pull of the nucleus. Three things carry over: the wave must fit its surroundings (only some waves are allowed), each independent direction brings one whole number, and symmetry produces degeneracy. What changes is the choice of directions, which are no longer $x,y,z$ but distance $r$, polar angle $\vartheta$ and azimuth $\varphi$.
 
+\paragraph{Further reading.} \cite{lt35,lt39}.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% HYDROGEN
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -209,7 +211,7 @@ The term $\ell(\ell+1)/2r^2$ is a barrier that keeps waves with $\ell>0$ away fr
 \[
 E_n=-\frac1{2n^2}\ \text{hartree}=-\frac{13.6}{n^2}\ \text{eV},\qquad n=n_r+\ell+1 .
 \]
-The energy depends on $n$ only, so level $n$ has $n^2$ orbitals ($2n^2$ with spin). That the energy does not depend on $\ell$ is special to the potential $-1/r$; the oscillator and the drumhead differ, and so does every atom with more than one electron (section \ref{sec:bridge}).
+The energy depends on $n$ only, so level $n$ has $n^2$ orbitals ($2n^2$ with spin). That the energy does not depend on $\ell$ is special to the potential $-1/r$; the oscillator and the drumhead differ, and so does every atom with more than one electron (section \ref{sec:hf}).
 
 \begin{figure}[H]
 \centering
@@ -227,15 +229,17 @@ The quantum numbers $(n_r,n_\vartheta,n_\varphi)$ say how many spheres, cones an
 \caption{Sampled densities of hydrogen orbitals.}
 \end{figure}
 
+\paragraph{Further reading.} \cite{uc73,puc62,puc64,fowler,grinnell}.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% BRIDGE
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section{From atoms to molecules: three approximations}\label{sec:bridge}
+\section{From atoms to molecules: fixed nuclei, hybrids, methane}\label{sec:bridge}
 
 \noindent\emph{Notebook: \texttt{from\_atoms\_to\_molecules.py}.}
 
-Hydrogen is one of very few exactly solvable problems. A molecule has three complications: every particle adds three coordinates, the electrons push on each other through $1/\lvert\mathbf r_i-\mathbf r_j\rvert$, and there is no single centre of force. A table of the wave function on a grid with ten points per coordinate needs $10^N$ numbers for $N=3(N_{\text{nuclei}}+N_{\text{electrons}})$ coordinates: 45 coordinates for methane, 378 for caffeine. Three approximations, made one after the other, make a calculation possible.
+Hydrogen is one of very few exactly solvable problems. A molecule has three complications: every particle adds three coordinates, the electrons push on each other through $1/\lvert\mathbf r_i-\mathbf r_j\rvert$, and there is no single centre of force. A table of the wave function on a grid with ten points per coordinate needs $10^N$ numbers for $N=3(N_{\text{nuclei}}+N_{\text{electrons}})$ coordinates: 45 coordinates for methane, 378 for caffeine. Three approximations, made one after the other, make a calculation possible: fixed nuclei, one orbital per electron (an orbital is a one-electron wave, two electrons of opposite spin to an orbital, each electron moving in the field of the nuclei and the average cloud of the others; section \ref{sec:hf}), and orbitals built from atom-centred functions (section \ref{sec:basis}). This section works out the first and shows the orbitals that the other two give: hybrids and the orbitals of methane.
 
 \subsection{Fixed nuclei: Born--Oppenheimer}
 
@@ -251,29 +255,6 @@ whose levels have $0,1,2,\dots$ nodes. The two lowest are $0.010$~hartree ($0.27
 \centering
 \includegraphics[width=\linewidth]{figures/bridge-born-oppenheimer.png}
 \caption{H$_2^+$: the electronic energy as a potential for the nuclei, the lowest nuclear levels (left), and the level spacing against nuclear mass (right).}
-\end{figure}
-
-\subsection{One orbital per electron}
-
-The orbital approximation writes the many-electron wave as a product (made antisymmetric in section \ref{sec:hf}) of one orbital per electron, each electron moving in the field of the nucleus plus the \emph{average} cloud of the others. In helium, take both electrons in the hydrogen-like function $e^{-\zeta r}$; the energy in hartree is
-\[
-E(\zeta)=\underbrace{\zeta^2}_{\text{kinetic}}\;\underbrace{-\,2Z\zeta}_{\text{attraction}}\;
-{}+\underbrace{\tfrac58\zeta}_{\text{electron repulsion}},\qquad Z=2 .
-\]
-Without the repulsion the minimum is at $\zeta=2$ and $E=-4$. With it the minimum moves to $\zeta=Z-\tfrac5{16}=1.6875$, $E=-2.8477$ hartree: the repulsion acts as a \emph{screening}, and the orbital swells. The exact energy is $-2.9037$ and the best possible orbital product (the Hartree--Fock limit) is $-2.8617$. The orbital picture recovers 98\,\% of the energy, but the missing $0.042$~hartree ($1.1$~eV) is larger than most chemical energy differences. It is the \emph{correlation energy}: electrons dodge each other, which no product of orbitals can express.
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=\linewidth]{figures/bridge-helium.png}
-\caption{Helium with one shared $1s$ orbital: energy against the orbital exponent $\zeta$ (left) and the radial density of the orbital (right).}
-\end{figure}
-
-Screening also splits $s$ from $p$ at the same $n$. An inner electron screens the nucleus, so the effective charge seen by an outer electron is large close in and small far out. An $s$ wave is large near the nucleus and feels the strong pull there; a $p$ wave is kept away by the barrier $\ell(\ell+1)/2r^2$, feels the screened charge, and lies higher. In a toy model with a filled $1s$ shell, $Z_{\text{eff}}(r)=1+2e^{-r/a}$, the order is $s<p<d$ at each $n$, and the splitting grows with $a$. This is the origin of the familiar filling order. (The toy has one parameter, set by hand rather than fitted to any atom, so only the ordering is a result.)
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=\linewidth]{figures/bridge-screening.png}
-\caption{Levels of the toy atom with a filled $1s$ shell (left) and its effective charge (right).}
 \end{figure}
 
 \subsection{Hybrid orbitals}
@@ -305,6 +286,8 @@ The canonical orbitals are spread over the whole molecule. The four combinations
 \includegraphics[width=\linewidth]{figures/bridge-methane.png}
 \caption{A symmetry toy for methane (invented parameters; only the pattern is a result): its levels (left) and the weights of one localised bond orbital (right).}
 \end{figure}
+
+\paragraph{Further reading.} \cite{lt92,puc8,morsch,rioux,sherrillnotes}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% BASIS SETS
@@ -358,17 +341,62 @@ A basis function is a radial part times a real spherical harmonic. A \emph{shell
 \end{itemize}
 In the label \texttt{def2-TZVPD}: \texttt{def2} is one consistent family of Gaussian basis sets (designed by Weigend and Ahlrichs), \texttt{TZ} is triple zeta, \texttt{V} says the extra functions are for the valence shells, \texttt{P} polarization, \texttt{D} diffuse. Water has 58 basis functions in \texttt{def2-TZVPD} and 74 in \texttt{def2-TZVPPD}, which differs only on hydrogen (one more $p$ shell and a $d$ shell).
 
+\paragraph{Further reading.} \cite{sherrillbasis,hehre,bse,def2,bsse}.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% HARTREE-FOCK
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section{Hartree--Fock: the bridge to DFT}\label{sec:hf}
+\section{Hartree--Fock: one orbital per electron in the field of the others}\label{sec:hf}
 
-\noindent\emph{Notebook: \texttt{reading\_a\_dft\_label.py}, section 2.}
+\noindent\emph{Notebook: \texttt{hartree\_fock\_mean\_field.py}.}
 
-With $N$ electrons the repulsion $1/r_{12}$ depends on two positions at once. The first practical approximation gives each electron \emph{its own orbital} $\psi_i$ and lets it feel only the average of the others. Two ideas turn this into a method.
+Orbitals are exact only for one-electron systems; for more electrons they are a construction, and Hartree--Fock finds the best ones. The order of this section follows Sherrill's introduction \cite{sherrillnotes}. The problem is the electronic Schr\"odinger equation at fixed nuclei, whose energy $E_{\text{el}}(\mathbf R)$ is the potential energy surface; everything difficult is in the electron repulsion $1/r_{12}$, which depends on two positions at once. If it were absent the problem would separate and the wave would be a product of one-electron functions, a \emph{Hartree product}. The orbital approximation keeps the product, gives each electron \emph{its own orbital} $\psi_i$ (a one-electron wave), and lets it feel the nuclei and the \emph{average} cloud of the others. This section shows where the average field comes from, writes it down, repairs the product's one symmetry defect, and explains the operator $\hat f$ that every later section uses.
 
-\paragraph{Antisymmetry.} Electrons are fermions: swapping two of them must flip the sign of $\Psi$ (the previous notes show where this comes from). A product of orbitals does not do this, but a determinant does:
+\subsection{One orbital per electron: helium}
+
+For helium, take both electrons in the hydrogen-like function $\varphi\propto e^{-\zeta r}$ (two electrons may share one spatial orbital only if their spins are opposite); the energy in hartree is
+\[
+E(\zeta)=\underbrace{\zeta^2}_{\text{kinetic}}\;\underbrace{-\,2Z\zeta}_{\text{attraction}}\;
+{}+\underbrace{\tfrac58\zeta}_{\text{electron repulsion}},\qquad Z=2 .
+\]
+Without the repulsion the minimum is at $\zeta=2$ and $E=-4$. With it the minimum moves to $\zeta=Z-\tfrac5{16}=1.6875$, $E=-2.8477$ hartree: the repulsion acts as a \emph{screening}, and the orbital swells. The exact energy is $-2.9037$ and the best possible orbital product (the Hartree--Fock limit) is $-2.8617$.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{figures/bridge-helium.png}
+\caption{Helium with one shared $1s$ orbital: energy against the orbital exponent $\zeta$ (left) and the radial density of the orbital (right).}
+\end{figure}
+
+\subsection{The average field of the other electrons}
+
+In helium ``the average of the others'' is one electron, and $\tfrac58\zeta$ does not look like a field; it is one. Let the other electron have the density $\rho_{\text{other}}=\lvert\varphi\rvert^2$. An electron at $\mathbf r$ has the potential energy
+\[
+v_J(\mathbf r)=\int\frac{\rho_{\text{other}}(\mathbf r')}{\lvert\mathbf r-\mathbf r'\rvert}\,d\mathbf r',
+\qquad
+v_J(r)=\frac1r\Bigl[1-e^{-2\zeta r}(1+\zeta r)\Bigr]\ \text{ for }\varphi\propto e^{-\zeta r}.
+\]
+It tends to $1/r$ far away (the cloud looks like a point charge) and to the finite value $\zeta$ at $r=0$ (inside the cloud the charge outside cancels). The energy of one electron in this field is the average of $v_J$ over its own cloud, $\int\lvert\varphi\rvert^2v_J\,d\mathbf r=\tfrac58\zeta$: exactly the repulsion term of $E(\zeta)$. In lithium the two $1s$ electrons (exponent $\zeta_c=2.6875$) make the field $2v_J$, and the third electron sees the effective charge $Z_{\text{eff}}(r)=Z-2rv_J(r)=1+2e^{-2\zeta_cr}(1+\zeta_cr)$, which falls from $3$ at the nucleus to $1$ outside the core. The sum over all electrons in $v_J$ includes the electron's own cloud; the exchange term of the Fock operator removes this self-part.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{figures/hf-average-field.png}
+\caption{Left: the field $v_J(r)$ of the other electron in helium, with the density that makes it (shading). Right: $Z_{\text{eff}}(r)$ of lithium.}
+\end{figure}
+
+\subsection{Screening: why $2s$ lies below $2p$}
+
+In an atom with several electrons the potential seen by one electron is $-Z_{\text{eff}}(r)/r$, large close in and small far out. An $s$ wave is large near the nucleus and feels the strong pull there; a $p$ wave is kept away by the barrier $\ell(\ell+1)/2r^2$, feels the screened charge, and lies higher. In the toy with lithium's $Z_{\text{eff}}(r)$ and the core size $a=1/2\zeta_c$ as the one free parameter, the order is $s<p<d$ at each $n$, and the splitting grows with $a$; this is the origin of the familiar filling order. (The toy has one parameter, so only the ordering is a result.)
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{figures/bridge-screening.png}
+\caption{Levels of the toy atom with a filled $1s$ shell (left) and its effective charge (right).}
+\end{figure}
+
+\subsection{Why the product fails: the Slater determinant}
+
+Electrons also have a spin coordinate, and a spin orbital is a spatial orbital times $\alpha$ or $\beta$. Electrons are fermions: swapping the space-spin coordinates of two of them must flip the sign of $\Psi$ (the previous notes show where this comes from). A Hartree product does not do this, since $\psi_1(\mathbf x_2)\psi_2(\mathbf x_1)$ is in general not $-\psi_1(\mathbf x_1)\psi_2(\mathbf x_2)$, but a determinant does:
 \[
 \Psi(1,\dots,N)=\frac1{\sqrt{N!}}
 \begin{vmatrix}
@@ -377,15 +405,45 @@ With $N$ electrons the repulsion $1/r_{12}$ depends on two positions at once. Th
 \psi_1(N)&\cdots&\psi_N(N)
 \end{vmatrix}.
 \]
-Swapping two electrons swaps two rows, which flips the sign. Two electrons in the same orbital make two columns equal, so $\Psi=0$: the Pauli principle comes out for free.
+Swapping two electrons swaps two rows, which flips the sign. Two electrons in the same orbital make two columns equal, so $\Psi=0$: the Pauli principle comes out for free. Each electron is associated with every orbital, so the electrons are indistinguishable. A single determinant is equivalent to each electron moving independently except for the Coulomb repulsion of the average positions of all electrons and an exchange interaction that keeps electrons of the same spin apart: Hartree--Fock is a mean-field model.
 
-\paragraph{The variational principle.} Any trial wave function has an energy at or above the true ground-state energy, so the best orbitals are those that make the energy of the determinant as low as possible. This gives the Hartree--Fock (HF) equations,
+\subsection{The energy of a determinant}
+
+Write the Hamiltonian with a one-electron operator $h=-\frac12\nabla^2-\sum_AZ_A/r_{iA}$ and a two-electron operator $v=1/r_{ij}$, so that $\hat H_{\text{el}}=\sum_ih(i)+\sum_{i<j}v(i,j)+V_{NN}$ with $V_{NN}$ constant. By the variational principle the best orbitals minimise $E=\langle\Psi|\hat H_{\text{el}}|\Psi\rangle$, and for a determinant this is
 \[
-\hat f\psi_i=\varepsilon_i\psi_i,\qquad \hat f=-\tfrac12\nabla^2+v_{\text{nuc}}+\hat J-\hat K ,
+E_{\text{HF}}=\sum_i\langle i|h|i\rangle+\tfrac12\sum_{i,j}\bigl(J_{ij}-K_{ij}\bigr),
 \]
-where $\hat J$ is the classical repulsion from the average density and $\hat K$ is \emph{exchange}, a correction with no classical counterpart that comes entirely from antisymmetry. It removes the unphysical self-repulsion that $\hat J$ alone contains and keeps electrons of the same spin apart. Written in a basis set, the equations become the matrix equation $\mathbf F\mathbf C=\mathbf S\mathbf C\boldsymbol\varepsilon$ of the next section.
+with the Coulomb integral $J_{ij}$ (repulsion of the charge clouds of orbitals $i$ and $j$) and the exchange integral $K_{ij}$ (the same with the two orbitals swapped, non-zero only for equal spins); the terms $i=j$ cancel. For helium, $J_{12}=\frac58\zeta$ and $K_{12}=0$ recover $E(\zeta)$.
 
-\paragraph{What Hartree--Fock misses.} Each electron sees only the \emph{average} position of the others; real electrons dodge each other, and the energy this saves is the correlation energy. It is a small fraction of the total, but of the size of the energy differences chemistry cares about. Dispersion, the attraction between two uncharged molecules, is a pure correlation effect, so HF cannot produce it: HF finds two methane molecules repulsive. Two ways forward exist: wave-function methods (MP2, coupled cluster; section \ref{sec:cc}), accurate but with steeply rising cost, and density functional theory (next), with a cost close to HF's but an approximate exchange--correlation term.
+\subsection{The Fock operator}
+
+Minimising $E_{\text{HF}}$ with respect to the orbitals, which stay orthonormal (Lagrange multipliers), gives the Hartree--Fock equations
+\[
+\hat f\psi_i=\varepsilon_i\psi_i,\qquad \hat f=-\tfrac12\nabla^2+v_{\text{nuc}}+\hat J-\hat K .
+\]
+Here $\hat f$ is not an orbital: it is the \emph{one-electron effective Hamiltonian}, an operator that takes a function and returns another function. The equation is an eigenvalue equation; the orbitals $\psi_i$ are its eigenfunctions and the orbital energies $\varepsilon_i$ its eigenvalues. $-\frac12\nabla^2$ is the kinetic energy and $v_{\text{nuc}}$ the attraction to the nuclei. $\hat J$ is the average field of all the electrons, the $v_J$ above: $\hat J\psi_i=v_J\,\psi_i$. $\hat K$ is exchange, a correction for electrons of the same spin with no classical counterpart that comes entirely from antisymmetry; it mixes the other occupied orbitals into $\psi_i$, and its $j=i$ term cancels the self-repulsion contained in $\hat J$ (for one electron, $\hat J-\hat K=0$). The sum of the orbital energies counts every repulsion twice, so it is not the total energy. Because $\hat J$ and $\hat K$ are built from the occupied orbitals, $\hat f$ depends on its own solutions, which is why the equations are solved by iteration (below). Sherrill's $J_j$ and $K_j$ are the operators whose sums give our $\hat J$ and $\hat K$.
+
+In a basis, $\psi_i=\sum_\mu C_{\mu i}\phi_\mu$, the equation becomes the matrix equation
+\[
+\mathbf F\mathbf C=\mathbf S\mathbf C\boldsymbol\varepsilon,\qquad F_{\mu\nu}=\int\phi_\mu\hat f\phi_\nu\,d\mathbf r,\quad S_{\mu\nu}=\int\phi_\mu\phi_\nu\,d\mathbf r,
+\]
+with $\mathbf F$ the Fock matrix and $\mathbf S$ the overlap matrix of the basis functions. Kohn--Sham DFT (next section) has the same form, with $\hat J-\hat K$ replaced by an effective potential: $\hat f=-\frac12\nabla^2+v_{\text{eff}}[\rho]$.
+
+\subsection{The self-consistent loop}
+
+At one set of nuclear positions: guess the orbitals (or the density), build $\hat f$ from them, solve $\hat f\psi_i=\varepsilon_i\psi_i$, form the new density from the occupied orbitals, and repeat until the density that built $\hat f$ and the density it gives agree.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\linewidth]{figures/hf-scf-loop.png}
+\caption{The self-consistent-field loop, the same for Hartree--Fock and Kohn--Sham.}
+\end{figure}
+
+\subsection{What Hartree--Fock misses}
+
+Each electron sees only the \emph{average} position of the others; real electrons dodge each other, and the energy this saves is the correlation energy: $1.1$~eV in helium ($0.042$ hartree, 2\,\% of the energy). It is a small fraction of the total, but of the size of the energy differences chemistry cares about. Dispersion, the attraction between two uncharged molecules, is a pure correlation effect, so HF cannot produce it: HF finds two methane molecules repulsive. Two ways forward exist: wave-function methods (MP2, coupled cluster; section \ref{sec:cc}), accurate but with steeply rising cost, and density functional theory (next), with a cost close to HF's but an approximate exchange--correlation term.
+
+\paragraph{Further reading.} \cite{sherrillnotes,puc8,psi4np}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% DFT
@@ -418,10 +476,9 @@ Column $i$ of $\mathbf C$ holds the weights of orbital $i$, and $\boldsymbol\var
 \]
 where $\mathbf D=2\mathbf C_{\text{occ}}\mathbf C_{\text{occ}}^T$ is the density matrix. $\mathbf T$ (kinetic) and $\mathbf V$ (nuclear attraction) depend only on geometry and basis; $\mathbf J$ is the Coulomb repulsion of an electron with the whole density; $\mathbf V^{xc}$ is the exchange--correlation term, evaluated on a numerical grid; $a\mathbf K$ is the fraction $a$ of exact (Hartree--Fock) exchange that a hybrid functional mixes in ($a=0$ pure functional; $a=1$ with no $\mathbf V^{xc}$ is Hartree--Fock itself); and the ``-V'' in $\omega$B97M-V adds one more, non-local term. For the first element $F_{11}$ of water at $\omega$B97M-V/\texttt{def2-TZVPD} the pieces are (hartree) $T=+76.978$, $V=-99.580$, $J=+19.827$, $V^{xc}=-3.611$, VV10 $+0.005$ and exact exchange $-1.024$, adding up to $-7.404$. The big terms $T$, $V$ and $J$ nearly cancel; exchange--correlation is a small correction, which is why its approximation matters so much for energy \emph{differences}.
 
-Everything except $\mathbf T$ and $\mathbf V$ depends on $\mathbf D$, which comes from solving with $\mathbf F$. That circularity is why the self-consistent-field (SCF) loop is repeated:
-\begin{enumerate}
-\item guess a density; \item build $\mathbf F$ from it; \item solve $\mathbf F\mathbf C=\mathbf S\mathbf C\boldsymbol\varepsilon$; \item form the new density and repeat until the energy stops changing.
-\end{enumerate}
+Everything except $\mathbf T$ and $\mathbf V$ depends on $\mathbf D$, which comes from solving with $\mathbf F$. That circularity is why the self-consistent-field (SCF) loop of section \ref{sec:hf} is repeated until the density stops changing.
+
+\paragraph{Further reading.} \cite{kohn,burke,psi4np,pyscfdft}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% LABEL
@@ -521,6 +578,8 @@ The test is two methane molecules 3.8~\AA{} apart, which have no hydrogen bond o
 
 DFT integrals of $E_{xc}$ are done numerically on a grid of points around each atom, specified as (radial, angular) points; the water calculations in these notes use $(99,590)$. Meta-GGAs and non-local terms are more sensitive to the grid than plain GGAs. The grid, the convergence criteria and the program (PySCF, ORCA, Psi4, Q-Chem) are not part of the label, so two groups with the ``same'' level of theory may differ by small amounts.
 
+\paragraph{Further reading.} \cite{perdew,bursch,becke97,wb97x,wb97mv,vv10,d3,najibi,def2,grids,ecp,omol}.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% COUPLED CLUSTER
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -577,6 +636,8 @@ The connected triples are left out of CCSD (the largest correction left at the u
 
 \paragraph{In four lines.} (1) Hartree--Fock misses the correlation energy, and the exact answer needs every excitation from $\Phi_0$ at a cost that grows exponentially. (2) Truncating the excitations (CISD) is not size consistent; writing the wave function as $e^{\hat T}\Phi_0$ with $\hat T=\hat T_1+\hat T_2$ is. (3) The amplitudes follow from projecting $e^{-\hat T}\hat He^{\hat T}\Phi_0=E\Phi_0$, and the series ends at fourth order (from memory). (4) CCSD(T) is the reference for the dimers above, where dispersion is a correlation effect that Hartree--Fock cannot give.
 
+\paragraph{Further reading.} \cite{cc,triples,psi4np,crawfordcode,cbs}.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% TECHNICAL
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -589,7 +650,7 @@ In $\psi_i=\sum_\mu C_{\mu i}\phi_\mu$ the basis functions $\phi_\mu$ are fixed 
 
 \subsection{Why the hydrogen $\ell$-degeneracy is special}
 
-The energy $-1/2n^2$ depends on $n$ only because the potential is exactly $-1/r$. In a many-electron atom the potential seen by one electron is $-Z_{\text{eff}}(r)/r$ with $Z_{\text{eff}}$ decreasing outward (section \ref{sec:bridge}), which splits $s$, $p$ and $d$; and for the oscillator or the drumhead the ladder is different again. The shapes (the angular parts) survive in every spherically symmetric problem; the degeneracy in $\ell$ does not.
+The energy $-1/2n^2$ depends on $n$ only because the potential is exactly $-1/r$. In a many-electron atom the potential seen by one electron is $-Z_{\text{eff}}(r)/r$ with $Z_{\text{eff}}$ decreasing outward (section \ref{sec:hf}), which splits $s$, $p$ and $d$; and for the oscillator or the drumhead the ladder is different again. The shapes (the angular parts) survive in every spherically symmetric problem; the degeneracy in $\ell$ does not.
 
 \subsection{What was checked, and what was not}
 
@@ -598,9 +659,10 @@ Every number below was computed in the notebooks of the \texttt{qm-theory} repos
 \paragraph{Checked numerically.}
 \begin{itemize}
 \item \emph{Boxes and hydrogen:} the box energies and node counts, the degeneracies of the square and cube, the orthonormality of the spherical harmonics and of whole orbitals, $\ell(\ell+1)$ by finite differences, the radial energies against $-1/2n^2$, the degeneracy $n^2$, and that the nodes of orbitals lie on the stated spheres, cones and planes.
-\item \emph{Bridge:} the H$_2^+$ curve (minimum at $R\approx2.0$ bohr; harmonic wavenumber $2312\ \text{cm}^{-1}$ and level spacing $2189\ \text{cm}^{-1}$ from the nuclear problem), the helium minimum $\zeta=1.6875$ with $E=-2.84766$ and the electron-repulsion term $\frac58\zeta$ by numerical integration, $s<p<d$ in the screened toy, the hybrid angles and orthonormality (also by integration over the sphere), the methane toy levels against its $2\times2$ blocks, and that the four bond orbitals span the occupied space exactly.
+\item \emph{Bridge:} the H$_2^+$ curve (minimum at $R\approx2.0$ bohr; harmonic wavenumber $2312\ \text{cm}^{-1}$ and level spacing $2189\ \text{cm}^{-1}$ from the nuclear problem), the hybrid angles and orthonormality (also by integration over the sphere), the methane toy levels against its $2\times2$ blocks, and that the four bond orbitals span the occupied space exactly.
+\item \emph{Hartree--Fock:} the helium minimum $\zeta=1.6875$ with $E=-2.84766$; the closed form of $v_J(r)$ and the identity $\int\lvert\varphi\rvert^2v_J\,d\mathbf r=\frac58\zeta$ by numerical integration; $Z_{\text{eff}}(r)$ of lithium; $s<p<d$ in the screened toy; the helium orbital energy.
 \item \emph{Basis sets:} the H$_2^+$ two-function integrals against quadrature, the STO-3G and STO-6G coefficients against PySCF, the Gaussian product theorem, the shell sizes and the water basis-function counts.
-\item \emph{DFT:} the water SCF and the $\omega$B97M-V exchange fractions (from PySCF; the pieces of $F_{11}$ come from a one-off PySCF check that is not stored with the data), and the methane and water dimer interaction energies (stored PySCF runs).
+\item \emph{DFT:} the water SCF and the $\omega$B97M-V exchange fractions (from PySCF; the matrix elements of $\mathbf F$ are stored with the data), and the methane and water dimer interaction energies (stored PySCF runs).
 \item \emph{Coupled cluster:} a numpy implementation of CISD, CCSD and (T) agrees with PySCF to better than $10^{-8}$ hartree on H$_2$ and water; the size-consistency test on two H$_2$ molecules.
 \end{itemize}
 
@@ -608,9 +670,84 @@ Every number below was computed in the notebooks of the \texttt{qm-theory} repos
 \begin{itemize}
 \item The helium exact and Hartree--Fock-limit energies ($-2.9037$, $-2.8617$ hartree) and the real methane numbers (orbital energies, the $20/76/4$ composition) are literature or stored values, not recomputed here.
 \item The cost exponents of HF, DFT, CCSD and CCSD(T), that the series of equations ends at fourth order, that the connected triples are the largest correction left after CCSD, and that CCSD(T) reaches a fraction of a kcal/mol for interaction energies in large basis sets are from memory.
-\item The toy models (screening, methane) use invented parameters and show only the ordering and the pattern of levels.
+\item The toy models (screening with one free core size, methane) use invented parameters and show only the ordering and the pattern of levels.
 \item The CCSD(T) reference for the dimers is in one basis (\texttt{def2-TZVPD}) and is not extrapolated to the complete-basis limit.
-\item The functional and basis-set citations (Becke 97, $\omega$B97M-V, VV10, D3, \texttt{def2}) have not yet been verified against the papers.
+\item The functional and basis-set citations (Becke 97, $\omega$B97X, $\omega$B97M-V, VV10, D3, D3(BJ), \texttt{def2}, and others in the bibliography) were checked on 13 November 2026 for title, authors, year, journal, volume and pages against the Crossref record of the DOI; the papers themselves were not read. Open: whether Najibi and Goerigk (2018) defines $\omega$B97M-D3(BJ).
 \end{itemize}
+
+
+\begin{thebibliography}{99}
+\bibitem{lt35} LibreTexts, \emph{Physical Chemistry}, 3.5, ``The energy of a particle in a box is quantized''. \url{https://chem.libretexts.org/Bookshelves/Physical_and_Theoretical_Chemistry_Textbook_Maps/Physical_Chemistry_(LibreTexts)/03:_The_Schrodinger_Equation_and_a_Particle_in_a_Box/3.05:_The_Energy_of_a_Particle_in_a_Box_is_Quantized}
+
+\bibitem{lt39} LibreTexts, \emph{Physical Chemistry}, 3.9, ``A particle in a three-dimensional box''. \url{https://chem.libretexts.org/Bookshelves/Physical_and_Theoretical_Chemistry_Textbook_Maps/Physical_Chemistry_(LibreTexts)/03:_The_Schrodinger_Equation_and_a_Particle_in_a_Box/3.09:_A_Particle_in_a_Three-Dimensional_Box}
+
+\bibitem{uc73} Physics LibreTexts (UC Davis, Physics 9HC), 7.3, ``Central forces''. \url{https://phys.libretexts.org/Courses/University_of_California_Davis/UCD:_Physics_9HC__Introduction_to_Waves_Physical_Optics_and_Quantum_Theory/7:_Quantum_Theory_in_Three_Dimensions/7.3:_Central_Forces}
+
+\bibitem{puc62} LibreTexts (Pacific Union College, \emph{Quantum Chemistry}), 6.2, ``The wavefunctions of a rigid rotator are called spherical harmonics''. \url{https://chem.libretexts.org/Courses/Pacific_Union_College/Quantum_Chemistry/06:_The_Hydrogen_Atom/6.02:_The_Wavefunctions_of_a_Rigid_Rotator_are_Called_Spherical_Harmonics}
+
+\bibitem{puc64} LibreTexts (Pacific Union College), 6.4, ``Hydrogen atomic orbitals depend upon three quantum numbers''. \url{https://chem.libretexts.org/Courses/Pacific_Union_College/Quantum_Chemistry/06\%3A_The_Hydrogen_Atom/6.04\%3A_Hydrogen_Atomic_Orbitals_Depend_upon_Three_Quantum_Numbers}
+
+\bibitem{fowler} Physics LibreTexts (Fowler, \emph{Quantum Mechanics}), 4.6, ``The hydrogen atom''. \url{https://phys.libretexts.org/Bookshelves/Quantum_Mechanics/Quantum_Mechanics_(Fowler)/04:_Angular_Momentum_Spin_and_the_Hydrogen_Atom/4.06:_The_Hydrogen_Atom}
+
+\bibitem{grinnell} LibreTexts (Grinnell College, CHM 364), 6.6, ``Orbital angular momentum and the p-orbitals'' (real and complex orbitals). \url{https://chem.libretexts.org/Courses/Grinnell_College/CHM_364:_Physical_Chemistry_2_(Grinnell_College)/06:_The_Hydrogen_Atom/6.06:_Orbital_Angular_Momentum_and_the_p-Orbitals}
+
+\bibitem{lt92} LibreTexts, \emph{Physical Chemistry}, 9.2, ``The H$_2^+$ prototypical species'' (Born--Oppenheimer, LCAO). \url{https://chem.libretexts.org/Bookshelves/Physical_and_Theoretical_Chemistry_Textbook_Maps/Physical_Chemistry_(LibreTexts)/09\%3A_Chemical_Bonding_in_Diatomic_Molecules/9.02\%3A_The_H_Prototypical_Species}
+
+\bibitem{puc8} LibreTexts (Pacific Union College), chapter 8, ``Multielectron atoms'': 8.2 helium and the variational method, 8.3 the self-consistent field method, 8.6 Slater determinants. \url{https://chem.libretexts.org/Courses/Pacific_Union_College/Quantum_Chemistry/08\%3A_Multielectron_Atoms}
+
+\bibitem{morsch} LibreTexts, \emph{Organic Chemistry} (Morsch et al.), 1.6, ``sp$^3$ hybrid orbitals and the structure of methane''. \url{https://chem.libretexts.org/Bookshelves/Organic_Chemistry/Organic_Chemistry_(Morsch_et_al.)/01:_Structure_and_Bonding/1.06:_sp_Hybrid_Orbitals_and_the_Structure_of_Methane}
+
+\bibitem{rioux} LibreTexts, Rioux, \emph{Quantum Tutorials}, 3.18, ``A molecular orbital approach to bonding in methane''. \url{https://chem.libretexts.org/Bookshelves/Physical_and_Theoretical_Chemistry_Textbook_Maps/Quantum_Tutorials_(Rioux)/03:_Chemical_Bonding/3.18:_A_Molecular_Orbital_Approach_to_Bonding_in_Methane}
+
+\bibitem{sherrillnotes} C. D. Sherrill, ``An introduction to Hartree--Fock molecular orbital theory'', Georgia Institute of Technology, June 2000 (8 pages; read in full on 13 November 2026; the order of section \ref{sec:hf} follows it). \url{https://vergil.chemistry.gatech.edu/static/content/hf-intro.pdf}
+
+\bibitem{sherrillbasis} C. D. Sherrill, ``Basis sets in quantum chemistry'' (lecture slides), Georgia Institute of Technology. \url{https://vergil.chemistry.gatech.edu/basis-sets.pdf}
+
+\bibitem{hehre} W. J. Hehre, R. F. Stewart and J. A. Pople, J. Chem. Phys. \textbf{51}, 2657 (1969). \href{https://doi.org/10.1063/1.1672392}{doi:10.1063/1.1672392}
+
+\bibitem{bse} Basis Set Exchange, \url{https://www.basissetexchange.org/}; B. P. Pritchard et al., J. Chem. Inf. Model. \textbf{59}, 4814 (2019), \href{https://doi.org/10.1021/acs.jcim.9b00725}{doi:10.1021/acs.jcim.9b00725}
+
+\bibitem{def2} F. Weigend and R. Ahlrichs, Phys. Chem. Chem. Phys. \textbf{7}, 3297 (2005), \href{https://doi.org/10.1039/b508541a}{doi:10.1039/b508541a}; D. Rappoport and F. Furche, J. Chem. Phys. \textbf{133}, 134105 (2010), \href{https://doi.org/10.1063/1.3484283}{doi:10.1063/1.3484283}
+
+\bibitem{bsse} S. F. Boys and F. Bernardi, Mol. Phys. \textbf{19}, 553 (1970), \href{https://doi.org/10.1080/00268977000101561}{doi:10.1080/00268977000101561}
+
+\bibitem{kohn} W. Kohn and L. J. Sham, Phys. Rev. \textbf{140}, A1133 (1965), \href{https://doi.org/10.1103/PhysRev.140.A1133}{doi:10.1103/PhysRev.140.A1133}
+
+\bibitem{burke} K. Burke, \emph{The ABC of DFT} (free draft), \url{https://dft.uci.edu/learnDFT.php}; J. Toulouse, ``Review of approximations for the exchange-correlation energy in density-functional theory'', \href{https://arxiv.org/abs/2103.02645}{arXiv:2103.02645}
+
+\bibitem{psi4np} Psi4NumPy tutorials (Hartree--Fock, density functional theory, CEPA0 and CCD), \url{https://github.com/psi4/psi4numpy/tree/master/Tutorials}
+
+\bibitem{perdew} J. P. Perdew, AIP Conf. Proc. \textbf{577}, 1 (2001), \href{https://doi.org/10.1063/1.1390175}{doi:10.1063/1.1390175}
+
+\bibitem{bursch} M. Bursch, J.-M. Mewes, A. Hansen and S. Grimme, Angew. Chem. Int. Ed. \textbf{61}, e202205735 (2022), \href{https://doi.org/10.1002/anie.202205735}{doi:10.1002/anie.202205735}; N. Mardirossian and M. Head-Gordon, Mol. Phys. \textbf{115}, 2315 (2017), \href{https://doi.org/10.1080/00268976.2017.1333644}{doi:10.1080/00268976.2017.1333644}
+
+\bibitem{becke97} A. D. Becke, J. Chem. Phys. \textbf{107}, 8554 (1997), \href{https://doi.org/10.1063/1.475007}{doi:10.1063/1.475007}
+
+\bibitem{wb97x} J.-D. Chai and M. Head-Gordon, J. Chem. Phys. \textbf{128}, 084106 (2008), \href{https://doi.org/10.1063/1.2834918}{doi:10.1063/1.2834918} ($\omega$B97X); Phys. Chem. Chem. Phys. \textbf{10}, 6615 (2008), \href{https://doi.org/10.1039/b810189b}{doi:10.1039/b810189b} ($\omega$B97X-D)
+
+\bibitem{wb97mv} N. Mardirossian and M. Head-Gordon, J. Chem. Phys. \textbf{144}, 214110 (2016), \href{https://doi.org/10.1063/1.4952647}{doi:10.1063/1.4952647}
+
+\bibitem{vv10} O. A. Vydrov and T. Van Voorhis, J. Chem. Phys. \textbf{133}, 244103 (2010), \href{https://doi.org/10.1063/1.3521275}{doi:10.1063/1.3521275}
+
+\bibitem{d3} S. Grimme, J. Antony, S. Ehrlich and H. Krieg, J. Chem. Phys. \textbf{132}, 154104 (2010), \href{https://doi.org/10.1063/1.3382344}{doi:10.1063/1.3382344}; S. Grimme, S. Ehrlich and L. Goerigk, J. Comput. Chem. \textbf{32}, 1456 (2011), \href{https://doi.org/10.1002/jcc.21759}{doi:10.1002/jcc.21759} (D3(BJ))
+
+\bibitem{najibi} A. Najibi and L. Goerigk, J. Chem. Theory Comput. \textbf{14}, 5725 (2018), \href{https://doi.org/10.1021/acs.jctc.8b00842}{doi:10.1021/acs.jctc.8b00842}
+
+\bibitem{pyscfdft} PySCF documentation, ``Density functional theory (DFT)'' (integration grids) and ``Molecular structure'' (basis sets, ECPs), \url{https://pyscf.org/user/dft.html}, \url{https://pyscf.org/user/gto.html}
+
+\bibitem{grids} R. Treutler and R. Ahlrichs, J. Chem. Phys. \textbf{102}, 346 (1995), \href{https://doi.org/10.1063/1.469408}{doi:10.1063/1.469408}; S. Dasgupta and J. M. Herbert, J. Comput. Chem. \textbf{38}, 869 (2017), \href{https://doi.org/10.1002/jcc.24761}{doi:10.1002/jcc.24761}
+
+\bibitem{ecp} P. J. Hay and W. R. Wadt, J. Chem. Phys. \textbf{82}, 270 (1985), \href{https://doi.org/10.1063/1.448799}{doi:10.1063/1.448799}; M. Dolg and X. Cao, Chem. Rev. \textbf{112}, 403 (2012), \href{https://doi.org/10.1021/cr2001383}{doi:10.1021/cr2001383}
+
+\bibitem{omol} D. S. Levine et al., ``The Open Molecules 2025 (OMol25) dataset, evaluations, and models'', \href{https://arxiv.org/abs/2505.08762}{arXiv:2505.08762}; P. Eastman et al., Sci. Data \textbf{10}, 11 (2023), \href{https://doi.org/10.1038/s41597-022-01882-6}{doi:10.1038/s41597-022-01882-6}
+
+\bibitem{cc} T. D. Crawford and H. F. Schaefer, Rev. Comput. Chem. \textbf{14}, 33 (2000), \href{https://doi.org/10.1002/9780470125915.ch2}{doi:10.1002/9780470125915.ch2}; R. J. Bartlett and M. Musia{\l}, Rev. Mod. Phys. \textbf{79}, 291 (2007), \href{https://doi.org/10.1103/RevModPhys.79.291}{doi:10.1103/RevModPhys.79.291}
+
+\bibitem{triples} K. Raghavachari, G. W. Trucks, J. A. Pople and M. Head-Gordon, Chem. Phys. Lett. \textbf{157}, 479 (1989), \href{https://doi.org/10.1016/S0009-2614(89)87395-6}{doi:10.1016/S0009-2614(89)87395-6}
+
+\bibitem{cbs} T. Helgaker, W. Klopper, H. Koch and J. Noga, J. Chem. Phys. \textbf{106}, 9639 (1997), \href{https://doi.org/10.1063/1.473863}{doi:10.1063/1.473863}; Psi4 manual, \texttt{cbs()}, \url{https://psicode.org/psi4manual/master/api/psi4.driver.cbs.html}
+
+\bibitem{crawfordcode} Crawford group, \emph{Programming Projects}, \url{https://github.com/CrawfordGroup/ProgrammingProjects}
+\end{thebibliography}
 
 \end{document}

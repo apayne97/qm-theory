@@ -71,10 +71,10 @@ def _(mo):
     case for every molecule. The previous notebook (`from_atoms_to_molecules.py`) named LCAO, orbitals built from
     atom-centred functions, as the third approximation of chemistry and used it for methane with invented numbers. This notebook
     asks which functions to use and how the coefficients are found. The answer, **a basis set**, is the thing named in the
-    second half of a label such as `def2-TZVPD`, and the DFT notebooks that follow start from it.
+    second half of a label such as `def2-TZVPD`, and the Hartree-Fock and DFT notebooks that follow start from it.
 
     **Read first:** `spherical_harmonics_and_hydrogen.py` (this folder), for the hydrogen orbitals and the real spherical
-    harmonics that reappear in section 5, and `from_atoms_to_molecules.py`, sections 1 and 5, for why molecules have no
+    harmonics that reappear in section 5, and `from_atoms_to_molecules.py`, sections 1 and 4, for why molecules have no
     closed-form base states and what LCAO looks like.
 
     **Contents**
@@ -82,9 +82,9 @@ def _(mo):
     1. From stationary states to base states
     2. A truncated expansion on a toy problem
     3. Many nuclei: atom-centred functions and LCAO
-    3b. Why atom-centred functions? A test against standing waves in a box
     4. Which functions? Slater and Gaussian, and the contraction STO-$n$G
     5. Shells, zeta, polarization and diffuse functions
+    5b. Why atom-centred functions? A test against standing waves in a box
     6. Where this leads: the `def2` label
     7. What was checked, and what was not
 
@@ -266,7 +266,7 @@ def _(mo):
     \psi(\mathbf r)=\sum_\mu c_\mu\,\chi_\mu(\mathbf r).
     $$
 
-    This is the **LCAO** idea, already used for methane in `from_atoms_to_molecules.py`, section 5. The functions on an atom look like atomic orbitals, because an electron near a
+    This is the **LCAO** idea, already used for methane in `from_atoms_to_molecules.py`, section 4. The functions on an atom look like atomic orbitals, because an electron near a
     nucleus mostly feels that nucleus, and the coefficients mix them into bonds. Whether the shapes are
     well chosen is checked by the variational principle: lower energy is better.
 
@@ -335,131 +335,20 @@ def _(mo):
 @app.cell
 def _(mo):
     mo.md(r"""
-    ## 3b Why atom-centred functions?
+    **Basis functions are not orbitals.** The two sets are easy to confuse, so they get different indices from here on.
 
-    Section 1 said that *any* complete set of functions works if enough terms are kept, and the box standing waves of
-    `standing_waves_in_boxes.py` are a complete set. Why, then, does every molecular program use functions centred on the
-    atoms? The reason is the number of terms needed for a given accuracy. This section measures it on the two smallest
-    problems of this notebook, with exact answers to compare with.
+    | | basis functions $\chi_\mu$ | orbitals $\psi_i$ |
+    |---|---|---|
+    | index | $\mu,\nu$ | $i,j$ |
+    | where they come from | chosen before the calculation (here $1s$ on each proton) | the *result* of solving $\mathbf H\mathbf c=E\mathbf S\mathbf c$ |
+    | shape | fixed functions, each centred on one atom | sums of basis functions, $\psi_i=\sum_\mu c_{\mu i}\chi_\mu$, spread over the molecule |
+    | overlap | not orthogonal in general: $S_{\mu\nu}\neq0$ | orthonormal: $\int\psi_i\psi_j\,d\mathbf r=\delta_{ij}$, in matrix form $\mathbf C^T\mathbf S\mathbf C=\mathbf 1$ |
 
-    **Setup.** One electron, atomic units. The two problems are the hydrogen atom (exact energy $-\tfrac12$ hartree) and
-    H$_2^+$ with the protons $1.06$ Å ($2$ bohr) apart (exact energy $-0.6026$ hartree, including the repulsion of the protons).
-    Two kinds of basis are compared, each solved by the equation $\mathbf H\mathbf c=E\mathbf S\mathbf c$ of section 1.
-
-    - **Box waves.** A cube of side $L$ with the nucleus at its centre (the protons on the vertical axis for H$_2^+$) and
-      hard walls, where $\psi=0$. The functions are products $\cos(k_xx)\cos(k_yy)\cos(k_zz)$ with
-      $k=\pi/L,\,3\pi/L,\,5\pi/L,\dots$, the standing waves of the box notebook that are even about the centre. The ground
-      state is even, so the odd waves play no role and are left out; the count $N$ below therefore *favours* the box (the full set of
-      standing waves of the cube is about eight times larger). They are added in order of their kinetic energy $\tfrac12(k_x^2+k_y^2+k_z^2)$,
-      lowest first, which is the same rule as the energy cutoff of a plane-wave program. The attraction $-1/r$ is the only
-      integral that is not a product of one-dimensional integrals; it is written as a sum of
-      Gaussians, $1/r=\tfrac{2}{\sqrt\pi}\int_0^\infty e^{-s^2r^2}\,ds$, which makes every matrix element a sum of products.
-    - **Atom-centred Gaussians.** s functions $e^{-\alpha r^2}$ on each nucleus, as in section 4 below, with the exponents $\alpha$
-      chosen to give the lowest hydrogen-atom energy for the number of functions used. For H$_2^+$ the same exponents are put on each
-      proton, without readjusting them. $N$ counts all functions on both protons.
-
-    The slider sets the side $L$ of the box. A larger box lowers the energy that the walls take away (a wave squeezed into a box has extra kinetic energy) but spreads the same
-    number of waves over more volume. Computing a new box takes several seconds.
-    """)
-    return
-
-
-@app.cell
-def _(mo):
-    box_slider = mo.ui.slider(4.0, 12.0, step=1.0, value=8.0, label=r"box side $L$ (Å)", show_value=True, debounce=True)
-    return (box_slider,)
-
-
-@app.cell
-def _(ANGSTROM_PER_BOHR, box_slider, comparison_error_figure, mo, plt):
-    _fig = comparison_error_figure(box_slider.value / ANGSTROM_PER_BOHR)  # the numerics work in bohr
-    _out = mo.vstack([box_slider, _fig])
-    plt.close(_fig)
-    _out
-    return
-
-
-@app.cell
-def _(mo):
-    mo.md(r"""
-    **Reading the left panel.** The vertical axis is how far above the exact energy each calculation lies, on a
-    logarithmic scale, and the dotted line is $1.6$ millihartree, about 1 kcal/mol, a usual target for chemical accuracy.
-    Four Gaussians on the nucleus are already close to that line for the hydrogen atom, and eight are within $10^{-5}$ hartree. Over a thousand box waves are *still*
-    between $4\times10^{-3}$ and $2\times10^{-2}$ hartree above the exact value, depending on the box size on the slider (the best of the
-    sizes offered is 5 to 6 Å). The curve of the box flattens at large $N$ for two separate reasons, and the slider separates them:
-    in a small box the walls themselves cost energy, and in a large box the waves are too coarse to follow the sharp
-    structure at the nucleus.
-
-    **Reading the right panel.** The same for H$_2^+$. With only s functions the Gaussians stop improving at about $10^{-2}$ hartree: the
-    bonding orbital is stretched along the bond, which s functions on the protons cannot describe. Adding one $p_z$ function
-    on each proton (the polarization functions of section 5) removes this, and the error continues to fall to the
-    millihartree range at $N=14$. The box has no such problem, and no such help either: its error falls slowly, by a factor of about 3 to 5 for
-    every factor of 10 in $N$.
-
-    **Why, in words.** Two things in the exact wave are hard for a plane or standing wave and easy for an atom-centred function.
-    """)
-    return
-
-
-@app.cell
-def _(mo):
-    n_box_shape = mo.ui.dropdown({str(_n): _n for _n in (10, 46, 215, 1000)}, value="1000", label="box waves $N$")
-    n_gauss_shape = mo.ui.slider(1, 6, step=1, value=3, label="Gaussians $N$", show_value=True)
-    return n_box_shape, n_gauss_shape
-
-
-@app.cell
-def _(ANGSTROM_PER_BOHR, box_slider, comparison_shape_figure, mo, n_box_shape, n_gauss_shape, plt):
-    _fig = comparison_shape_figure(box_slider.value / ANGSTROM_PER_BOHR, n_box_shape.value, n_gauss_shape.value)
-    _out = mo.vstack([mo.hstack([n_box_shape, n_gauss_shape], justify="start"), _fig])
-    plt.close(_fig)
-    _out
-    return
-
-
-@app.cell
-def _(mo):
-    mo.md(r"""
-    The figure shows the hydrogen 1s electron density along a line through the nucleus (box side from the slider above), exact and as
-    the best sum of the chosen number of functions of each kind.
-
-    1. **The nucleus (left panel).** The exact density has a corner at the nucleus, the cusp of section 4,
-       and a waves-and-nodes basis has to build a corner out of smooth functions of ever shorter wavelength. The box waves
-       reach the top of the density only slowly with $N$: to resolve a small region they need short wavelengths in all three directions
-       at once, and the number of waves grows quickly with the shortest wavelength included. A handful of Gaussians of different widths, all centred on the nucleus, already follow the peak, because the width of each is a free
-       parameter that the calculation chooses. The Gaussians are not exact either: they stay flat at $r=0$ (section 4).
-    2. **The tail (right panel).** Far from the nucleus the exact density falls as a straight line on this logarithmic scale. Neither basis
-       follows it all the way. The box waves show ripples, because a sum of waves of fixed wavelengths has to cancel
-       itself out over a long distance, and end at the wall. The Gaussians fall away faster than the exact line (section 4).
-       Both errors sit where the density is below about $10^{-3}$ of its peak value, so they cost little energy: the large energy errors of the box come from the nucleus.
-
-    There are two further reasons, neither tested here.
-
-    3. **Atom-centred functions follow the atoms.** Move a nucleus and its functions move with it, so a functions-per-atom budget needs no
-       change. The box is fixed in space: a molecule that is twice as long needs a box twice as long in one direction, and the number of
-       waves needed at the same resolution grows with the *volume of the box*, which is counted in the tests (eight times the number of functions for twice the side at a
-       fixed cutoff). Most of that volume is empty space, where the electron density is
-       negligible. A localized basis grows with the number of atoms.
-    4. **The orbital is a few atomic orbitals mixed.** The bonding orbital of H$_2^+$ at the top of this section was already roughly right with
-       two functions (the minimal basis of section 3, about 63 % of the bond energy), the rest being refinement. A chemical bond is a small change of the atom's electron cloud, so the atom's own functions
-       are a good starting point.
-
-    **The answer is not universal.** Two cautions follow.
-
-    - *Plane waves are the standard choice for crystals.* In a periodic solid the box is the repeating cell, the waves fit it exactly, there
-      are no walls, the matrix elements are simple, and the cost no longer depends on where the atoms are. The
-      price is the nuclear region: the sharp structure of the electrons near each nucleus (the cusp and the oscillating inner
-      shells) needs a very short wavelength, so plane-wave programs replace the nucleus and its inner electrons
-      by a smooth effective potential, a *pseudopotential* (or use the projector-augmented-wave variant of it), and keep only the valence electrons. It is the same observation as above,
-      the shape near the nucleus decides the basis, handled by changing the problem and not the basis.
-    - *Atom-centred sets have their own flaws.* The basis is never complete, and the error depends on the choice of functions (the
-      subject of sections 4 to 6). Two molecules that approach each other borrow each other's functions to lower their energy, the
-      **basis-set superposition error**, and wide (diffuse) functions on neighbouring atoms can become nearly the same function, a
-      near **linear dependence** that makes $\mathbf S$ almost singular. A box or plane-wave basis has neither
-      problem, and a single parameter, the cutoff, improves it systematically.
-
-    Atom-centred Gaussians are therefore the pragmatic choice for isolated molecules and clusters, where they need the fewest functions, and
-    plane waves for periodic solids.
+    Here $\mathbf C$ is the matrix whose column $i$ holds the coefficients of orbital $i$, and $\delta_{ij}$ is $1$ for $i=j$ and $0$ otherwise. $N$ basis functions give exactly $N$
+    orbitals. The orbitals cannot simply be taken as the basis, because they are not known in advance: if the $\chi_\mu$ were the true orbitals, $\mathbf S$ would be the identity,
+    $\mathbf H$ would be diagonal, and there would be nothing to solve. The two meet in $\mathbf C^T\mathbf H\mathbf C=\boldsymbol\varepsilon$: in the basis of the orbitals the matrix is
+    diagonal, while in the basis of the $\chi_\mu$ it is full. The label a program prints for a basis function (`O 1s`, `O 2px`) only says what shape the function has; the
+    oxygen core orbital is not simply the function called `O 1s` but a mixture of several $s$-type functions of different spread.
     """)
     return
 
@@ -669,7 +558,7 @@ def _(mo):
 
     Two more ingredients, **P** and **D**, can be tested on the hydrogen atom, where the exact answer is
     known. With one electron, the lowest energy of the Hartree-Fock equations (the UHF energy; the method is explained in
-    `../dft/reading_a_dft_label.py`, section 2, and for one electron it just solves the one-electron problem in the basis)
+    `hartree_fock_mean_field.py`, and for one electron it just solves the one-electron problem in the basis)
     is exact *within* the basis, so every difference from $-\tfrac12$ hartree is a basis-set error. The figure shows, for several basis sets (PySCF):
 
     - **Left:** the polarizability $\alpha_{\text{pol}}$, how much dipole an electric field $F$ induces. The atom's
@@ -740,6 +629,158 @@ def _(mo, plt, water, water_basis_figure):
 @app.cell
 def _(mo):
     mo.md(r"""
+    ### Orbital sizes and exponents
+
+    The exponents of the functions depend on the element, because the orbitals of a heavier nucleus are smaller (`hartree_fock_mean_field.py`, section 4, shows
+    the sizes: the $1s$ orbital shrinks as $1/Z$, and an outer orbital of an atom is screened to a $Z_{\text{eff}}$ not much above $1$). What this asks of a basis set:
+
+    - **Exponents per element.** A Gaussian $e^{-\alpha r^{2}}$ has a size $\sim\alpha^{-1/2}$. Each element has its own exponents, small for the diffuse valence
+      orbital and large for the tight inner ones, as for the Slater exponent $\zeta$ of section 4.
+    - **Tight core functions for heavy atoms.** The $1s$ orbital shrinks as $1/Z$ and needs exponents that grow as $Z^{2}$ (a $2\times$ smaller orbital needs
+      a $4\times$ larger $\alpha$). In `def2-TZVP` the tightest Gaussian has $\alpha=34$ on hydrogen and about $7\times10^{4}$ on chlorine.
+    - **Effective core potentials** for the heaviest elements. The core electrons of, for example, platinum (in the OPLS5 labels of
+      `../dft/reading_a_dft_label.py`, section 9) are both numerous and very compact; they are replaced by a fixed potential that acts on the
+      valence electrons, so that only the valence orbitals, with sizes like those of the atoms H to Ar in `hartree_fock_mean_field.py`, are in the basis. (`def2-TZVP` does this for platinum:
+      its tightest Gaussian is $\alpha=30$, not tens of thousands.)
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    ## 5b Why atom-centred functions? A test against standing waves in a box
+
+    Section 1 said that *any* complete set of functions works if enough terms are kept, and the box standing waves of
+    `standing_waves_in_boxes.py` are a complete set. Why, then, does every molecular program use functions centred on the
+    atoms? The reason is the number of terms needed for a given accuracy. This section measures it on the two smallest
+    problems of this notebook (hydrogen and H$_2^+$, sections 3 and 5), with exact answers to compare with.
+
+    **Setup.** One electron, atomic units. The two problems are the hydrogen atom (exact energy $-\tfrac12$ hartree) and
+    H$_2^+$ with the protons $1.06$ Å ($2$ bohr) apart (exact energy $-0.6026$ hartree, including the repulsion of the protons).
+    Two kinds of basis are compared, each solved by the equation $\mathbf H\mathbf c=E\mathbf S\mathbf c$ of section 1.
+
+    - **Box waves.** A cube of side $L$ with the nucleus at its centre (the protons on the vertical axis for H$_2^+$) and
+      hard walls, where $\psi=0$. The functions are products $\cos(k_xx)\cos(k_yy)\cos(k_zz)$ with
+      $k=\pi/L,\,3\pi/L,\,5\pi/L,\dots$, the standing waves of the box notebook that are even about the centre. The ground
+      state is even, so the odd waves play no role and are left out; the count $N$ below therefore *favours* the box (the full set of
+      standing waves of the cube is about eight times larger). They are added in order of their kinetic energy $\tfrac12(k_x^2+k_y^2+k_z^2)$,
+      lowest first, which is the same rule as the energy cutoff of a plane-wave program. The attraction $-1/r$ is the only
+      integral that is not a product of one-dimensional integrals; it is written as a sum of
+      Gaussians, $1/r=\tfrac{2}{\sqrt\pi}\int_0^\infty e^{-s^2r^2}\,ds$, which makes every matrix element a sum of products.
+    - **Atom-centred Gaussians.** s functions $e^{-\alpha r^2}$ on each nucleus, as in section 4, with the exponents $\alpha$
+      chosen to give the lowest hydrogen-atom energy for the number of functions used. For H$_2^+$ the same exponents are put on each
+      proton, without readjusting them. $N$ counts all functions on both protons.
+
+    The slider sets the side $L$ of the box. A larger box lowers the energy that the walls take away (a wave squeezed into a box has extra kinetic energy) but spreads the same
+    number of waves over more volume. Computing a new box takes several seconds.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    box_slider = mo.ui.slider(4.0, 12.0, step=1.0, value=8.0, label=r"box side $L$ (Å)", show_value=True, debounce=True)
+    return (box_slider,)
+
+
+@app.cell
+def _(ANGSTROM_PER_BOHR, box_slider, comparison_error_figure, mo, plt):
+    _fig = comparison_error_figure(box_slider.value / ANGSTROM_PER_BOHR)  # the numerics work in bohr
+    _out = mo.vstack([box_slider, _fig])
+    plt.close(_fig)
+    _out
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    **Reading the left panel.** The vertical axis is how far above the exact energy each calculation lies, on a
+    logarithmic scale, and the dotted line is $1.6$ millihartree, about 1 kcal/mol, a usual target for chemical accuracy.
+    Four Gaussians on the nucleus are already close to that line for the hydrogen atom, and eight are within $10^{-5}$ hartree. Over a thousand box waves are *still*
+    between $4\times10^{-3}$ and $2\times10^{-2}$ hartree above the exact value, depending on the box size on the slider (the best of the
+    sizes offered is 5 to 6 Å). The curve of the box flattens at large $N$ for two separate reasons, and the slider separates them:
+    in a small box the walls themselves cost energy, and in a large box the waves are too coarse to follow the sharp
+    structure at the nucleus.
+
+    **Reading the right panel.** The same for H$_2^+$. With only s functions the Gaussians stop improving at about $10^{-2}$ hartree: the
+    bonding orbital is stretched along the bond, which s functions on the protons cannot describe. Adding one $p_z$ function
+    on each proton (the polarization functions of section 5) removes this, and the error continues to fall to the
+    millihartree range at $N=14$. The box has no such problem, and no such help either: its error falls slowly, by a factor of about 3 to 5 for
+    every factor of 10 in $N$.
+
+    **Why, in words.** Two things in the exact wave are hard for a plane or standing wave and easy for an atom-centred function.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    n_box_shape = mo.ui.dropdown({str(_n): _n for _n in (10, 46, 215, 1000)}, value="1000", label="box waves $N$")
+    n_gauss_shape = mo.ui.slider(1, 6, step=1, value=3, label="Gaussians $N$", show_value=True)
+    return n_box_shape, n_gauss_shape
+
+
+@app.cell
+def _(ANGSTROM_PER_BOHR, box_slider, comparison_shape_figure, mo, n_box_shape, n_gauss_shape, plt):
+    _fig = comparison_shape_figure(box_slider.value / ANGSTROM_PER_BOHR, n_box_shape.value, n_gauss_shape.value)
+    _out = mo.vstack([mo.hstack([n_box_shape, n_gauss_shape], justify="start"), _fig])
+    plt.close(_fig)
+    _out
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    The figure shows the hydrogen 1s electron density along a line through the nucleus (box side from the slider above), exact and as
+    the best sum of the chosen number of functions of each kind.
+
+    1. **The nucleus (left panel).** The exact density has a corner at the nucleus, the cusp of section 4,
+       and a waves-and-nodes basis has to build a corner out of smooth functions of ever shorter wavelength. The box waves
+       reach the top of the density only slowly with $N$: to resolve a small region they need short wavelengths in all three directions
+       at once, and the number of waves grows quickly with the shortest wavelength included. A handful of Gaussians of different widths, all centred on the nucleus, already follow the peak, because the width of each is a free
+       parameter that the calculation chooses. The Gaussians are not exact either: they stay flat at $r=0$ (section 4).
+    2. **The tail (right panel).** Far from the nucleus the exact density falls as a straight line on this logarithmic scale. Neither basis
+       follows it all the way. The box waves show ripples, because a sum of waves of fixed wavelengths has to cancel
+       itself out over a long distance, and end at the wall. The Gaussians fall away faster than the exact line (section 4).
+       Both errors sit where the density is below about $10^{-3}$ of its peak value, so they cost little energy: the large energy errors of the box come from the nucleus.
+
+    There are two further reasons, neither tested here.
+
+    3. **Atom-centred functions follow the atoms.** Move a nucleus and its functions move with it, so a functions-per-atom budget needs no
+       change. The box is fixed in space: a molecule that is twice as long needs a box twice as long in one direction, and the number of
+       waves needed at the same resolution grows with the *volume of the box*, which is counted in the tests (eight times the number of functions for twice the side at a
+       fixed cutoff). Most of that volume is empty space, where the electron density is
+       negligible. A localized basis grows with the number of atoms.
+    4. **The orbital is a few atomic orbitals mixed.** The bonding orbital of H$_2^+$ of section 3 was already roughly right with
+       two functions (the minimal basis there, about 63 % of the bond energy), the rest being refinement. A chemical bond is a small change of the atom's electron cloud, so the atom's own functions
+       are a good starting point.
+
+    **The answer is not universal.** Two cautions follow.
+
+    - *Plane waves are the standard choice for crystals.* In a periodic solid the box is the repeating cell, the waves fit it exactly, there
+      are no walls, the matrix elements are simple, and the cost no longer depends on where the atoms are. The
+      price is the nuclear region: the sharp structure of the electrons near each nucleus (the cusp and the oscillating inner
+      shells) needs a very short wavelength, so plane-wave programs replace the nucleus and its inner electrons
+      by a smooth effective potential, a *pseudopotential* (or use the projector-augmented-wave variant of it), and keep only the valence electrons. It is the same observation as above,
+      the shape near the nucleus decides the basis, handled by changing the problem and not the basis.
+    - *Atom-centred sets have their own flaws.* The basis is never complete, and the error depends on the choice of functions (the
+      subject of sections 4 to 6). Two molecules that approach each other borrow each other's functions to lower their energy, the
+      **basis-set superposition error**, and wide (diffuse) functions on neighbouring atoms can become nearly the same function, a
+      near **linear dependence** that makes $\mathbf S$ almost singular. A box or plane-wave basis has neither
+      problem, and a single parameter, the cutoff, improves it systematically.
+
+    Atom-centred Gaussians are therefore the pragmatic choice for isolated molecules and clusters, where they need the fewest functions, and
+    plane waves for periodic solids.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
     ## 6 Where this leads: the `def2` label
 
     Everything in the label `def2-TZVPD` now has a meaning:
@@ -754,12 +795,12 @@ def _(mo):
 
     The coefficients $c_\mu$ of the molecular orbitals come from an equation of the same form as $\mathbf H\mathbf c=E\mathbf S\mathbf c$
     (section 1), with the Fock or Kohn-Sham matrix in place of $\mathbf H$ (stated here, not derived). That matrix
-    is the subject of the DFT notebooks.
+    is the subject of the Hartree-Fock and DFT notebooks.
 
-    **To continue:** `../dft/reading_a_dft_label.py` takes the other half of the label. Its section 2 introduces Hartree-Fock,
-    the first method that supplies that matrix; its sections 3 to 7 explain the functional and the dispersion term; and its
-    section 4 returns to `def2-TZVPD` and `def2-TZVPPD` as used by OMol25 and SPICE II, adding only the counterpoise
-    test of why the diffuse functions matter between molecules. What this notebook explains is not repeated there.
+    **To continue:** `hartree_fock_mean_field.py` (next) introduces Hartree-Fock, the first method that supplies that matrix: what the operator
+    behind it is, why the calculation has to repeat itself, and what it misses. Then `../dft/reading_a_dft_label.py` takes the other half of the label:
+    its sections 3 to 7 explain the functional and the dispersion term, and its section 4 returns to `def2-TZVPD` and `def2-TZVPPD` as used by
+    OMol25 and SPICE II, adding only the counterpoise test of why the diffuse functions matter between molecules. What this notebook explains is not repeated there.
 
     **Takeaways for a slide**
 
@@ -767,7 +808,7 @@ def _(mo):
        $\mathbf H\mathbf c=E\mathbf S\mathbf c$ for the coefficients; the variational principle says that more functions never raise the energy.
     2. For molecules the functions are centred on the atoms (LCAO), because there are no closed-form molecular eigenfunctions.
     3. Gaussians replace Slater functions because their products are Gaussians, so integrals are fast; contraction repairs the shape.
-    4. Atom-centred functions need far fewer terms than box waves for one nucleus or one bond (section 3b): they carry the
+    4. Atom-centred functions need far fewer terms than box waves for one nucleus or one bond (section 5b): they carry the
        cusp and the decay of the atom and move with the nuclei. Plane waves remain the standard for periodic solids.
     5. Zeta gives flexible widths, P gives flexible shapes, D gives reach into the tails.
     """)
@@ -790,11 +831,6 @@ def _(mo):
       coordinates; the coefficients are $c_A=\pm c_B$ with the stated normalisation; the minimum of the two-function
       curve is at $R\approx1.32$ Å ($2.49$ bohr) with $E\approx-0.5648$ hartree (binding about 1.76 eV); it lies above the PySCF
       large-basis curve at all 14 distances; that curve gives about 2.79 eV.
-    - *Section 3b.* The sum of Gaussians for $1/r$ against $1/r$ from $10^{-3}$ to 30 bohr; the box hamiltonian against the closed-form
-      $-4/(3\pi)$ for a Gaussian trial function; box energies variational (never below $-\tfrac12$ or $-0.6026$ hartree) and never
-      rising with $N$; the Gaussian hydrogen energies against $-4/(3\pi)$ for one function, at or below the tabulated STO-3G and STO-6G
-      energies, and the general Gaussian code (including $p_z$) against closed-form s integrals; H$_2^+$ Gaussian energies variational;
-      four Gaussians beating 1331 box waves by a factor of at least 5; no cusp in either expansion; box function count growing as $L^3$.
     - *Section 4.* Normalisation of the Slater and Gaussian functions; the analytic Gaussian overlap, kinetic and
       attraction integrals against numerical radial integrals; the STO-3G and STO-6G exponents and coefficients against
       PySCF's tabulated sets; overlap and energy improving with $n$ and staying variational; zero cusp derivative for
@@ -803,10 +839,15 @@ def _(mo):
       59, 74, 117); parity of the $s$, $p_z$, $d_{z^2}$ shell functions; the ordering of the split-valence errors and that the projections
       reproduce them; the PySCF hydrogen numbers (variational energies, polarizability zero without p, TZVPD much larger than TZVP, equal TZVP and TZVPD
       densities, density tail at $r=5.3$ Å, 10 bohr); water energies falling with basis size.
+    - *Section 5b.* The sum of Gaussians for $1/r$ against $1/r$ from $10^{-3}$ to 30 bohr; the box hamiltonian against the closed-form
+      $-4/(3\pi)$ for a Gaussian trial function; box energies variational (never below $-\tfrac12$ or $-0.6026$ hartree) and never
+      rising with $N$; the Gaussian hydrogen energies against $-4/(3\pi)$ for one function, at or below the tabulated STO-3G and STO-6G
+      energies, and the general Gaussian code (including $p_z$) against closed-form s integrals; H$_2^+$ Gaussian energies variational;
+      four Gaussians beating 1331 box waves by a factor of at least 5; no cusp in either expansion; box function count growing as $L^3$.
 
     **Not checked here, or stated from memory.**
 
-    - *Section 3b.* Only these two problems were computed, with one box shape (a cube, even functions only), nuclei at the centre, and s
+    - *Section 5b.* Only these two problems were computed, with one box shape (a cube, even functions only), nuclei at the centre, and s
       Gaussians optimised for the atom. The reasons offered for the result are explanations consistent with the figures, not separate tests,
       apart from the volume count. Statements from general knowledge, checked only against general reading and not against the original
       papers: that plane waves are standard for periodic solids, that pseudopotentials or projector-augmented waves are used because of the nuclear

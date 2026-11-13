@@ -54,15 +54,14 @@ def _(mo):
     mo.md(r"""
     # Coupled Cluster Theory: Why CCSD(T) Is the Reference
 
-    The Hartree-Fock section of `reading_a_dft_label.py` (section 2) ends with two ways past Hartree-Fock: density functional theory,
-    which that notebook and `kohn_sham_matrix.py` followed, and wave-function methods that add the missing electron correlation on
+    The Hartree-Fock notebook (`hartree_fock_mean_field.py`, section 8) ends with two ways past Hartree-Fock: density functional theory,
+    which `reading_a_dft_label.py` and `kohn_sham_matrix.py` followed, and wave-function methods that add the missing electron correlation on
     top of the Hartree-Fock determinant. This last notebook takes the second way. `reading_a_dft_label.py` uses CCSD(T), a coupled
     cluster method, as the reference for the water dimer and the methane dimer; here we explain what that name means: where the
     method comes from, the equations behind it (with the derivation in small steps), a short working implementation, and what it costs.
 
-    **Read first:** `reading_a_dft_label.py`, section 2 (Hartree-Fock: Slater determinant, exchange, what HF misses), and
-    `../standing_waves/from_atoms_to_molecules.py`, section 3 (helium: the correlation energy as the gap between the best orbital
-    product and the exact energy).
+    **Read first:** `../standing_waves/hartree_fock_mean_field.py` (Hartree-Fock: Slater determinant, exchange, the Fock operator, and, in section 8, what HF misses: helium's
+    correlation energy as the gap between the best orbital product and the exact energy) and the table of HF against DFT and CCSD(T) in `reading_a_dft_label.py`, section 2.
 
     **Contents**
 
@@ -770,6 +769,22 @@ def _(ladder_summary, mo):
     2. Truncating the excitations (CISD) is not size consistent; writing the wave function as $e^{{\\hat T}}\\Phi_0$ with $\\hat T=\\hat T_1+\\hat T_2$ is.
     3. The amplitudes follow from projecting $e^{{-\\hat T}}\\hat H e^{{\\hat T}}\\Phi_0=E\\Phi_0$; the series ends at fourth order, and the cost is $N^6$ for CCSD and $N^7$ with the perturbative triples (T).
     4. In water, 6-31G, CCSD(T) recovers {ladder_summary['ccsdt']:.1f}% of the exact correlation energy (MP2 {ladder_summary['mp2']:.0f}%), one reason it is the reference for the dimers (in the large basis sets used there the case rests on accuracy that is *from memory*), where dispersion is a correlation effect that Hartree-Fock cannot give.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    ## Further reading
+
+    Free sources, checked on 2026-11-13 (the full table, with what each covers, is in `SOURCES.md`).
+
+    - [An introduction to coupled cluster theory for computational chemists (T. D. Crawford and H. F. Schaefer, 2000)](https://doi.org/10.1002/9780470125915.ch2): the standard introduction (intro to derivation; publisher access).
+    - [Coupled-cluster theory in quantum chemistry (R. J. Bartlett and M. Musial, Rev. Mod. Phys. 79, 291, 2007)](https://doi.org/10.1103/RevModPhys.79.291): review (reference; publisher access).
+    - [K. Raghavachari, G. W. Trucks, J. A. Pople and M. Head-Gordon, Chem. Phys. Lett. 157, 479 (1989)](https://doi.org/10.1016/S0009-2614%2889%2987395-6): the paper that introduces (T) (reference).
+    - [Psi4NumPy tutorial 08, CEPA0 and CCD](https://github.com/psi4/psi4numpy/tree/master/Tutorials/08_CEPA0_and_CCD) and [Crawford group programming projects](https://github.com/CrawfordGroup/ProgrammingProjects): coupled cluster written out in code (derivation).
+    - [T. Helgaker, W. Klopper, H. Koch and J. Noga, J. Chem. Phys. 106, 9639 (1997)](https://doi.org/10.1063/1.473863) and [Psi4's `cbs()` function](https://psicode.org/psi4manual/master/api/psi4.driver.cbs.html): extrapolation to the complete-basis limit (reference).
     """)
     return
 

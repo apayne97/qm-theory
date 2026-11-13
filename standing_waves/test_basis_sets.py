@@ -355,7 +355,7 @@ def test_binding_energies_quoted_in_the_notebook():
 
 
 # ----------------------------------------------------------------------------------------------------------------
-# Section 3b: box standing waves against atom-centred Gaussians (basis_comparison.py)
+# Section 5b: box standing waves against atom-centred Gaussians (basis_comparison.py)
 
 import basis_comparison as bc  # noqa: E402
 

@@ -41,10 +41,11 @@ def _(mo):
     It uses one real calculation as the example: water at ωB97M-V/def2-TZVPD, the same calculation as in
     `reading_a_dft_label.py` (58 basis functions, 5 occupied orbitals, total energy $-76.4334$ Ha).
 
-    **Read first:** `reading_a_dft_label.py`, sections 2 and 3, which state this equation and list the pieces of $F$, and
-    `../standing_waves/basis_sets_from_base_states.py`, section 1, which derives the same matrix equation for a general
-    Hamiltonian $H$. Here $H$ is replaced by the Kohn-Sham operator and the derivation is redone slowly, with the matrices
-    of a real molecule in front of you.
+    **Read first:** `../standing_waves/hartree_fock_mean_field.py`, section 7 (the Fock operator $\hat f$ in 7.1, its matrix form $FC=SC\varepsilon$ in 7.2 and the SCF loop in 7.3),
+    `reading_a_dft_label.py`, section 3, which states the Kohn-Sham equation and lists the pieces of $F$, and
+    `../standing_waves/basis_sets_from_base_states.py`, section 1, which derives the matrix equation for a general
+    Hamiltonian $H$, and section 3, which separates basis functions from orbitals. Here $H$ is replaced by the Kohn-Sham operator and the
+    matrices of a real molecule are in front of you.
 
     **Contents**
 
@@ -83,25 +84,11 @@ def _(mo):
     $\varepsilon_i$ is the energy of orbital $i$. This equation says: applying $\hat f$ to the orbital gives back the
     same orbital multiplied by a number.
 
-    **Writing the orbitals with a basis.** A computer cannot store a function of $\mathbf r$ exactly. Instead, as in
-    `basis_sets_from_base_states.py`, each orbital is written as a sum of $N$ fixed, known *basis functions* $\phi_\mu(\mathbf r)$ (Gaussian-type functions
-    centred on the atoms), with unknown numbers $C_{\mu i}$ as the weights:
-
-    $$
-    \psi_i(\mathbf r) = \sum_{\mu=1}^{N} C_{\mu i}\,\phi_\mu(\mathbf r).
-    $$
-
-    Now only the numbers $C_{\mu i}$ have to be found. The steps from the operator equation to a matrix equation are the ones of
-    `basis_sets_from_base_states.py`, section 1 (with $H$ replaced by $\hat f$), written out again with the matrix product made explicit:
-
-    - **(a) Insert the sum.** Put the sum into $\hat f\psi_i=\varepsilon_i\psi_i$. The operator acts on each
-      $\phi_\mu$ separately, because the weights $C_{\mu i}$ are just numbers:
-      $\sum_\mu C_{\mu i}\,\hat f\phi_\mu(\mathbf r)=\varepsilon_i\sum_\mu C_{\mu i}\,\phi_\mu(\mathbf r)$.
-    - **(b) Turn a function equation into number equations.** The two sides are functions of $\mathbf r$. Multiply both
-      sides by one basis function $\phi_\nu(\mathbf r)$ and integrate over all of space. This gives one number per side
-      for each choice of $\nu$, and there are $N$ choices:
-      $\sum_\mu C_{\mu i}\int\phi_\nu\,\hat f\,\phi_\mu\,d\mathbf r=\varepsilon_i\sum_\mu C_{\mu i}\int\phi_\nu\,\phi_\mu\,d\mathbf r$.
-    - **(c) Name the two integrals.**
+    **Writing the orbitals with a basis.** A computer cannot store a function of $\mathbf r$ exactly. Instead each orbital is a sum of $N$ fixed, known *basis functions*
+    $\phi_\mu(\mathbf r)$ (Gaussian-type functions centred on the atoms; called $\chi_\mu$ in `basis_sets_from_base_states.py`) with unknown numbers $C_{\mu i}$ as the weights,
+    $\psi_i(\mathbf r)=\sum_{\mu=1}^{N}C_{\mu i}\,\phi_\mu(\mathbf r)$. The steps from the operator equation to a matrix equation are those of
+    `basis_sets_from_base_states.py`, section 1, with $H$ replaced by $\hat f$: put the sum into $\hat f\psi_i=\varepsilon_i\psi_i$, multiply by one basis
+    function $\phi_\nu$ and integrate over all space, once for each $\nu$, and name the two integrals
 
     $$
     F_{\nu\mu}=\int\phi_\nu(\mathbf r)\,\hat f\,\phi_\mu(\mathbf r)\,d\mathbf r,
@@ -109,9 +96,11 @@ def _(mo):
     S_{\nu\mu}=\int\phi_\nu(\mathbf r)\,\phi_\mu(\mathbf r)\,d\mathbf r .
     $$
 
-    - **(d) Recognise matrix multiplication.** For two matrices, $(AB)_{\nu i}=\sum_\mu A_{\nu\mu}B_{\mu i}$: the entry in
-      row $\nu$ and column $i$ of the product is the sum over $\mu$ of row $\nu$ of $A$ times column $i$ of $B$. Step (b)
-      therefore reads $(FC)_{\nu i}=\varepsilon_i\,(SC)_{\nu i}$. Collecting all $i$ at once, with the energies placed
+    The last step is the one that is easy to skip:
+
+    - **Recognise matrix multiplication.** For two matrices, $(AB)_{\nu i}=\sum_\mu A_{\nu\mu}B_{\mu i}$: the entry in
+      row $\nu$ and column $i$ of the product is the sum over $\mu$ of row $\nu$ of $A$ times column $i$ of $B$. The equations for all $\nu$ therefore read
+      $(FC)_{\nu i}=\varepsilon_i\,(SC)_{\nu i}$. Collecting all $i$ at once, with the energies placed
       on the diagonal of a matrix $\varepsilon$, gives
 
     $$
@@ -158,17 +147,8 @@ def _(mo):
 @app.cell
 def _(mo):
     mo.md(r"""
-    **Basis functions and orbitals are different things.** The two sets of indices in the table keep them apart.
-
-    | | basis functions $\phi_\mu$ | orbitals $\psi_i$ |
-    |---|---|---|
-    | index | $\mu,\nu,\lambda,\sigma$ | $i,j$ |
-    | where they come from | chosen before the calculation (here def2-TZVPD) | the *result* of solving $FC=SC\varepsilon$ |
-    | shape | fixed Gaussian-type functions, each centred on one atom | sums of many basis functions, spread over the molecule |
-
-    The coefficients $C_{\mu i}$ connect the two: $\psi_i=\sum_\mu C_{\mu i}\phi_\mu$. The index $\mu$ runs down the rows of $C$
-    (which basis function) and $i$ along its columns (which orbital). The basis functions are fixed ingredients and each orbital is a
-    recipe that mixes them. Which matrix carries which index:
+    **Basis functions and orbitals are different things** (the table is in `basis_sets_from_base_states.py`, section 3). The coefficients $C_{\mu i}$ connect the two:
+    $\psi_i=\sum_\mu C_{\mu i}\phi_\mu$. The index $\mu$ runs down the rows of $C$ (which basis function) and $i$ along its columns (which orbital). Which matrix carries which index:
 
     - **Basis-function indices ($\mu\nu$):** $F$, $S$, $T$, $V$, $J$, $K$, $P$ and $D$. Each is built from integrals between two basis
       functions, for example $S_{\mu\nu}=\int\phi_\mu\phi_\nu\,d\mathbf r$.
@@ -180,10 +160,7 @@ def _(mo):
     water. Second, basis functions are often called *atomic orbitals* and the $\psi_i$ *molecular orbitals*, and the program labels the
     basis functions `O 1s`, `O 2px` and so on; such a label only says what shape the function has, and it is not the true atomic orbital.
 
-    The orbitals cannot simply be taken as the basis, because they are not known in advance. If the $\phi_\mu$ were the true
-    orbitals, $S$ would be the identity matrix and $F$ would be diagonal, and there would be nothing to solve. The basis is a fixed,
-    flexible set from which the orbitals are built, and solving $FC=SC\varepsilon$ finds the recipe $C$. The two meet in $C^TFC=\varepsilon$:
-    in the basis of the orbitals $F$ is diagonal, while in the basis of the $\phi_\mu$ it is the full $58\times58$ matrix.
+    The orbitals meet the basis in $C^TFC=\varepsilon$: in the basis of the orbitals $F$ is diagonal, while in the basis of the $\phi_\mu$ it is the full $58\times58$ matrix.
     """)
     return
 
@@ -214,24 +191,13 @@ def _(mo):
 
     The equation $FC=SC\varepsilon$ is called a *generalized eigenproblem*. If $S$ were the identity matrix it would
     be an ordinary eigenproblem $FC=C\varepsilon$: find the vectors that $F$ only stretches, and the stretch factors.
-    The overlap $S$ is what makes it generalized. The smallest example has two basis functions that overlap,
-    and a symmetric $F$. It is the H$_2^+$ calculation of `basis_sets_from_base_states.py`, section 3, with $a=H_{AA}$,
-    $b=H_{AB}$ and $s=S$ (the overlap integral there); the solution below is the same two-line argument:
+    The overlap $S$ is what makes it generalized. The smallest example is the H$_2^+$ calculation of `basis_sets_from_base_states.py`, section 3, with
+    $a=H_{AA}$, $b=H_{AB}$ and $s=S$ (the overlap integral there), where the solution is derived: for the in-phase and out-of-phase combinations
+    $c=(1,\pm1)$,
 
     $$
-    F=\begin{pmatrix}a&b\\ b&a\end{pmatrix},\qquad
-    S=\begin{pmatrix}1&s\\ s&1\end{pmatrix}.
-    $$
-
-    Think of two identical $1s$ functions on two atoms, with $a$ the energy of the function on its own, $b$ the
-    interaction between the two and $s$ their overlap. Because the matrices are symmetric under swapping the two functions, the solutions are the
-    in-phase and out-of-phase combinations, $c=(1,\,1)$ and $c=(1,\,-1)$ (up to a common factor).
-
-    - **(a)** For $c=(1,\pm1)$: $Fc=(a\pm b)\,(1,\pm1)$, because the first entry is $a\pm b$ and the second is $b\pm a=\pm(a\pm b)$.
-    - **(b)** For the same $c$: $Sc=(1\pm s)\,(1,\pm1)$, by the same argument.
-    - **(c)** $Fc=\varepsilon\,Sc$ then requires $a\pm b=\varepsilon\,(1\pm s)$, so
-
-    $$
+    F=\begin{pmatrix}a&b\\ b&a\end{pmatrix},\quad
+    S=\begin{pmatrix}1&s\\ s&1\end{pmatrix}\quad\Longrightarrow\quad
     \varepsilon_\pm=\frac{a\pm b}{1\pm s}.
     $$
 
@@ -347,7 +313,7 @@ def _(mo):
     $J$ is the repulsion between an electron and the total electron density. The steps from that statement to the formula
     above are these.
 
-    - **(a) The physical statement.** The density $\rho(\mathbf r)$ is the electron charge per unit volume at $\mathbf r$. An electron at
+    - **(a) The physical statement** (the average field of `hartree_fock_mean_field.py`, section 3, where $v_J$ is worked out for helium and lithium). The density $\rho(\mathbf r)$ is the electron charge per unit volume at $\mathbf r$. An electron at
       $\mathbf r_1$ is repelled by all the charge elsewhere, and the potential energy it feels is
       $v_J(\mathbf r_1)=\int\rho(\mathbf r_2)\,\lvert\mathbf r_1-\mathbf r_2\rvert^{-1}\,d\mathbf r_2$: the sum, over all small volumes $d\mathbf r_2$,
       of the charge in the volume divided by its distance from the electron (atomic units). This is the repulsion part of $v_{\text{eff}}$.
@@ -475,16 +441,13 @@ def _(mo):
     contain $D$, and $D$ is built from the orbitals $C$ that come out of solving $FC=SC\varepsilon$. So $F$ depends on its own
     solution. The way out is to iterate; this is the self-consistent-field (SCF) loop:
 
-    1. **Guess** a density matrix $D$ (PySCF superimposes atomic densities).
-    2. **Build** $F[D]$ from the six terms above.
-    3. **Solve** $FC=SC\varepsilon$ (section 3).
-    4. **Form** a new density from the five lowest orbitals: $D_{\text{new}}=2\,C_{\text{occ}}C_{\text{occ}}^T$.
-    5. **Mix** $D_{\text{new}}$ with the old $D$ and go back to step 2, until $D$ no longer changes.
+    The loop is described in `../standing_waves/hartree_fock_mean_field.py`, section 7.3 (guess, build, solve, form the new density, compare). For this water calculation the
+    steps are: **guess** a density matrix $D$ (PySCF superimposes atomic densities); **build** $F[D]$ from the six terms above; **solve** $FC=SC\varepsilon$ (section 3);
+    **form** a new density from the five lowest orbitals, $D_{\text{new}}=2\,C_{\text{occ}}C_{\text{occ}}^T$; **mix** $D_{\text{new}}$ with the old $D$ and go back, until $D$ no longer changes.
+    At the end, building $F$ from the final $D$ and solving gives back the same $D$. Production programs mix with a smarter scheme than the simple average used below
+    (DIIS), and so need fewer cycles.
 
-    At the end, building $F$ from the final $D$ and solving gives back the same $D$: the density is *self-consistent*.
-    Production programs mix with a smarter scheme than the simple average used below (DIIS), and so need fewer cycles.
-
-    **Hartree-Fock for comparison** (`reading_a_dft_label.py`, section 2). The loop and the equation $FC=SC\varepsilon$ are identical. Only the matrix differs:
+    **Hartree-Fock for comparison** (`hartree_fock_mean_field.py`, section 7.1). The loop and the equation $FC=SC\varepsilon$ are identical. Only the matrix differs:
     $F^{\text{HF}}=T+V+J-\tfrac12K$, with the full ($100\,\%$) exact exchange $K$ and no $V^{\text{xc}}$ or $V^{\text{nlc}}$. DFT replaces
     some or all of $K$ by $V^{\text{xc}}$, which also contains correlation.
     """)
@@ -623,6 +586,23 @@ def _(mo):
     **Next.** This notebook took the exchange-correlation term as given. `coupled_cluster.py` goes the other way past
     Hartree-Fock: it keeps the wave function and adds correlation excitation by excitation, which gives the CCSD(T) numbers that
     `reading_a_dft_label.py` used as the reference for the water and methane dimers.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    ## Further reading
+
+    Free sources, checked on 2026-11-13 (the full table, with what each covers, is in `SOURCES.md`).
+
+    - [An introduction to Hartree-Fock molecular orbital theory (C. D. Sherrill, 8-page notes)](https://vergil.chemistry.gatech.edu/static/content/hf-intro.pdf): the Roothaan matrix equation that the Kohn-Sham equation parallels (intro).
+    - [Psi4NumPy tutorial 03, Hartree-Fock](https://github.com/psi4/psi4numpy/tree/master/Tutorials/03_Hartree-Fock) and [tutorial 04, Density Functional Theory](https://github.com/psi4/psi4numpy/tree/master/Tutorials/04_Density_Functional_Theory): the Fock and Kohn-Sham matrices built in numpy (derivation).
+    - [Review of approximations for the exchange-correlation energy (J. Toulouse, arXiv 2103.02645)](https://arxiv.org/abs/2103.02645): the Kohn-Sham scheme and its equations (derivation).
+    - [The ABC of DFT (K. Burke, free draft)](https://dft.uci.edu/learnDFT.php): Kohn-Sham equations in a textbook setting (intro).
+    - [W. Kohn and L. J. Sham, Phys. Rev. 140, A1133 (1965)](https://doi.org/10.1103/PhysRev.140.A1133): the original paper (reference).
+    - [PySCF: density functional theory](https://pyscf.org/user/dft.html): integration grids and functionals in the code that produced these numbers (reference).
     """)
     return
 

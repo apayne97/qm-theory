@@ -44,6 +44,8 @@ FIGURES = {
     "bridge-born-oppenheimer.png": lambda: mp.born_oppenheimer_figure(0, 1.0),
     "bridge-helium.png": lambda: mp.helium_figure(1.6875),
     "bridge-screening.png": lambda: mp.screening_figure(0.5),
+    "hf-average-field.png": lambda: mp.average_field_figure(),
+    "hf-scf-loop.png": lambda: mp.scf_loop_figure(),
     "bridge-hybrids.png": lambda: mp.hybrid_figure(),
     "bridge-methane.png": lambda: mp.methane_figure(0),
     "basis-h2plus.png": lambda: bsp.h2plus_figure(2.0),

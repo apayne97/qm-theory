@@ -23,10 +23,10 @@ Draft v2, 2026-11-05 (renumbered after adding the basis-set notebook and the OPL
 
 | # | Kind | Statement | Consequence | Status | Notebook |
 |---|------|-----------|-------------|--------|----------|
-| A9 | Approximation | Born-Oppenheimer: nuclei are fixed, and the electrons are solved at each geometry. | Gives one energy surface $E(\text{geometry})$; fails near surface crossings. | standard | `spherical_harmonics_and_hydrogen` §7 |
+| A9 | Approximation | Born-Oppenheimer: nuclei are fixed, and the electrons are solved at each geometry. | Gives one energy surface $E(\text{geometry})$; fails near surface crossings. | standard | `from_atoms_to_molecules` §2 |
 | A10 | Setting | The label energy is a single electronic energy of one geometry, ground state, no vibrations, no temperature. | Zero-point energy and thermal terms are not included. | standard | `reading_a_dft_label` §1 |
-| A11 | Approximation | Orbital approximation: each electron occupies its own orbital; the many-electron wavefunction is built from them. | Neglects correlated motion of electrons (see A18, A20). | standard | `spherical_harmonics_and_hydrogen` §7, `reading_a_dft_label` §2 |
-| A12 | Requirement | The wavefunction must be antisymmetric under swapping two electrons (Pauli). | Not an approximation; a Slater determinant satisfies it. | standard | `reading_a_dft_label` §2 |
+| A11 | Approximation | Orbital approximation: each electron occupies its own orbital; the many-electron wavefunction is built from them. | Neglects correlated motion of electrons (see A18, A20). | standard | `hartree_fock_mean_field` §1-3 |
+| A12 | Requirement | The wavefunction must be antisymmetric under swapping two electrons (Pauli). | Not an approximation; a Slater determinant satisfies it. | standard | `hartree_fock_mean_field` §5 |
 | A13 | Approximation | LCAO: molecular orbitals are linear combinations of atom-centred functions. | Reduces the equations to a matrix problem; accuracy depends on the functions chosen (A14-A17). | standard | `basis_sets_from_base_states` §3, `kohn_sham_matrix` §1 |
 
 ## Part 3b. Basis sets: where the finite sum comes from
@@ -42,8 +42,8 @@ Draft v2, 2026-11-05 (renumbered after adding the basis-set notebook and the OPL
 
 | # | Kind | Statement | Consequence | Status | Notebook |
 |---|------|-----------|-------------|--------|----------|
-| A18 | Approximation | One Slater determinant; each electron feels the average field of the others (mean field). | Misses correlation. Water dimer CP $E_\text{int}$: HF −2.82 vs CCSD(T) −3.73 kcal/mol; methane dimer is unbound at HF (+0.28). | checked | `reading_a_dft_label` §2 |
-| A19 | Setting | The equations are solved self-consistently (SCF loop) to a convergence threshold. | Orbitals depend on the field they create, so the loop is repeated; OMol25 used tight convergence. | checked | `kohn_sham_matrix` §5 |
+| A18 | Approximation | One Slater determinant; each electron feels the average field of the others (mean field). | Misses correlation. Water dimer CP $E_\text{int}$: HF −2.82 vs CCSD(T) −3.73 kcal/mol; methane dimer is unbound at HF (+0.28). | checked | `hartree_fock_mean_field` §3, §5, §7.1, §8; numbers in `reading_a_dft_label` §2 |
+| A19 | Setting | The equations are solved self-consistently (SCF loop) to a convergence threshold. | Orbitals depend on the field they create, so the loop is repeated; OMol25 used tight convergence. | checked | `hartree_fock_mean_field` §7.3, `kohn_sham_matrix` §5 |
 
 ## Part 5. DFT and the labels
 
@@ -80,7 +80,7 @@ Draft v2, 2026-11-05 (renumbered after adding the basis-set notebook and the OPL
 ## Not yet settled
 
 - Whether OMol25/SPICE use effective core potentials for heavy elements (A30 is from the OPLS5 paper, not these datasets); whether they are gas-phase only; whether SPICE II refit any parameters (see `dft/reading_a_dft_label.py` §10).
-- The Najibi-Goerigk 2018 reference for ωB97M-D3(BJ), the Chai-Head-Gordon references for ωB97X and ωB97X-D, and the older citations are not verified.
+- Citations: the bibliographic records (title, authors, year, journal, volume, pages) of Becke 1997, Chai-Head-Gordon 2008 (ωB97X, ωB97X-D), VV10, D3, D3(BJ), def2, Rappoport-Furche, Najibi-Goerigk 2018 and Lin et al. 2013 were checked against Crossref on 2026-11-13 (see `SOURCES.md`); the papers were not read. Still open: whether Najibi-Goerigk defines ωB97M-D3(BJ), and whether the JCTC 2024 "Nutmeg and SPICE" paper is the SPICE II paper.
 - The meaning of `*` and `+` in LACVP+*, the CBS extrapolation formula, and the D3 coordination-number dependence (see §10 of the label notebook).
 - A29's error size comes only from the water dimer here; do not generalise on a slide.
 - A34 is only loosely part of the talk: keep it if you show the OPLS5 example, otherwise drop it and renumber.
